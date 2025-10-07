@@ -1,4 +1,4 @@
-# Portal Web Central Red Medicron IPS
+# portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas
 
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue.svg)](https://www.typescriptlang.org/)
@@ -7,7 +7,7 @@
 
 ## 📋 Descripción del Proyecto
 
-Portal Web Integral para la Central Red Medicron IPS, un sistema de gestión empresarial moderno diseñado específicamente para instituciones prestadoras de servicios de salud. La aplicación proporciona una plataforma unificada para la gestión de procesos organizacionales, indicadores de calidad, administración de proveedores, auditorías internas y control de acceso basado en roles.
+Esta solución es un portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas. Es una plataforma modular y escalable, pensada para organizaciones que necesitan trazabilidad, gobernanza y control sobre procesos, documentos, indicadores y proveedores. Está diseñada para facilitar la adopción en empresas de distintos sectores que buscan centralizar la gestión operativa y administrativa.
 
 ### 🎯 Objetivos Principales
 
@@ -129,9 +129,9 @@ cp .env.example .env
 Configurar las siguientes variables en el archivo `.env`:
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api
-VITE_APP_TITLE=Portal Web Medicron IPS
+VITE_APP_TITLE="portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas"
 VITE_JWT_SECRET=your-jwt-secret
-VITE_2FA_ISSUER=MedicronIPS
+VITE_2FA_ISSUER=YourCompany
 ```
 
 4. **Ejecutar en modo desarrollo**
@@ -429,8 +429,13 @@ Este proyecto es propiedad de **Central Red Medicron IPS** y está protegido baj
 
 ## 👥 Equipo de Desarrollo
 
-- **Edison Narváez** - Desarrollador Principal
-- **Central Red Medicron IPS** - Organización
+Este repositorio incluye perfiles y documentación pensada para coordinar un equipo formado por:
+
+- Un Senior Backend Developer (experto en APIs y arquitectura)
+- Un Senior Frontend/UX Developer (experto en React, UX y diseño de componentes)
+- Un Project Manager con amplia experiencia (20+ años)
+
+Detalles de responsabilidades, flujos y entregables están en `agents.md`.
 
 ---
 

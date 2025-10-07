@@ -1,6 +1,6 @@
-# 🤖 Agents de Desarrollo - Portal Web Medicron IPS
+# 🤖 Agents de Desarrollo - portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas
 
-Este documento define los perfiles y responsabilidades de los agentes especializados que colaborarán en el desarrollo y mantenimiento del Portal Web Central Red Medicron IPS.
+Este documento define los perfiles y responsabilidades de los agentes especializados que colaborarán en el desarrollo y mantenimiento del portal web comercial. Está pensado para facilitar la coordinación entre un Senior Backend Developer, un Senior Frontend/UX Developer y un Project Manager senior, manteniendo un enfoque orientado a negocio y adopción comercial.
 
 ## 🎯 Metodología de Trabajo
 
@@ -237,7 +237,7 @@ interface ComponentLibrary {
 #### 📊 Planificación y Estrategia
 ```mermaid
 gantt
-    title Portal Web Medicron IPS - Roadmap 2025
+  title portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas - Roadmap 2025
     dateFormat  YYYY-MM-DD
     section Phase 1 - Foundation
     Architecture Setup    :2025-01-01, 30d

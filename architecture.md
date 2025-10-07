@@ -1,4 +1,4 @@
-# 🏗️ Arquitectura del Sistema - Portal Web Medicron IPS
+# 🏗️ Arquitectura del Sistema - portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas
 
 ## 📋 Índice
 1. [Visión General](#-visión-general)
@@ -15,7 +15,11 @@
 
 ## 🌟 Visión General
 
-El Portal Web Central Red Medicron IPS está diseñado con **Clean Architecture** y **Domain-Driven Design (DDD)**, proporcionando una separación clara de responsabilidades y alta mantenibilidad. El sistema está organizado en módulos de dominio independientes que pueden evolucionar de forma autónoma.
+El portal web comercial está diseñado con **Clean Architecture** y **Domain-Driven Design (DDD)**, proporcionando una separación clara de responsabilidades y alta mantenibilidad. El sistema está organizado en módulos de dominio independientes que pueden evolucionar de forma autónoma. Este documento describe la arquitectura técnica y operativa pensada para una solución comercial enfocada en trazabilidad y control operativo.
+
+## 📚 Documentación de la API
+
+La API del backend está documentada utilizando OpenAPI/Swagger. Para la especificación completa (endpoints, esquemas y ejemplos) consulta `openapi_documentation.md` en la raíz del repositorio. Esta documentación cubre autenticación, usuarios, empresas, indicadores, gestión de proveedores, facturación y otros recursos clave.
 
 ### Principios Arquitectónicos
 - **Separation of Concerns**: Cada capa tiene responsabilidades específicas
