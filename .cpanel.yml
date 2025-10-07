@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home4/redmedi5/public_html/
+    - /bin/cp -R dist/* $DEPLOYPATH

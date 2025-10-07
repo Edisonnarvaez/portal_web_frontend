@@ -1,0 +1,113 @@
+# =======================================
+# Seguridad básica (limitada por HTTP)
+# =======================================
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "DENY"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# ❌ Desactivados porque no funcionan sin HTTPS
+# Header always set Cross-Origin-Embedder-Policy "require-corp"
+# Header always set Cross-Origin-Opener-Policy "same-origin"
+
+# =======================================
+# Content Security Policy (CSP)
+# =======================================
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://www.facebook.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: http: https:; connect-src 'self' http: https: wss: blob: http://186.115.218.10:8081 http://152.200.161.234:8081 https://script.google.com https://script.googleusercontent.com; frame-src 'self' blob: https://www.facebook.com https://www.youtube.com https://www.youtube-nocookie.com; object-src 'self' blob:; media-src 'self' blob: http: https:;"
+
+# =======================================
+# Forzar sin www (mantener en http por ahora)
+# =======================================
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+
+# =======================================
+# CORS (permitir frontend sin www y con http/https)
+# =======================================
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "http://red.redmedicronips.com.co https://red.redmedicronips.com.co"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header set Access-Control-Allow-Credentials "true"
+</IfModule>
+
+# Manejo de preflight OPTIONS
+<IfModule mod_headers.c>
+  <If "%{REQUEST_METHOD} == 'OPTIONS'">
+    Header always set Access-Control-Allow-Origin "http://red.redmedicronips.com.co https://red.redmedicronips.com.co"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Credentials "true"
+    Require all granted
+  </If>
+</IfModule>
+
+# =======================================
+# React SPA routing
+# =======================================
+RewriteBase /
+
+# Ignorar archivos y directorios reales
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# ⚠️ No redirigir Word, Excel ni PDF a React
+RewriteCond %{REQUEST_URI} !\.(doc|docx|xls|xlsx|ppt|pptx|pdf)$ [NC]
+
+# Redirigir el resto a index.html
+RewriteRule . /index.html [L]
+
+# =======================================
+# Cache de recursos estáticos
+# =======================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# =======================================
+# Compresión Gzip
+# =======================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# =======================================
+# Tipos MIME para descargas correctas
+# =======================================
+AddType application/msword .doc
+AddType application/vnd.openxmlformats-officedocument.wordprocessingml.document .docx
+AddType application/vnd.ms-excel .xls
+AddType application/vnd.openxmlformats-officedocument.spreadsheetml.sheet .xlsx
+AddType application/vnd.ms-powerpoint .ppt
+AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx
+AddType application/pdf .pdf
+
+# Forzar descarga en lugar de mostrar en navegador
+<FilesMatch "\.(doc|docx|xls|xlsx|ppt|pptx|pdf)$">
+  ForceType application/octet-stream
+  Header set Content-Disposition attachment
+</FilesMatch>
+
+# =======================================
+# Manejo de errores personalizados
+# =======================================
+ErrorDocument 404 /404.html
+ErrorDocument 500 "Error interno del servidor"
