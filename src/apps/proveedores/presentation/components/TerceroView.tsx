@@ -73,7 +73,6 @@ export default function TerceroView({
           <Button
             onClick={onEdit}
             variant="primary"
-            size="sm"
             className="flex items-center gap-2"
           >
             <HiPencil className="w-4 h-4" />

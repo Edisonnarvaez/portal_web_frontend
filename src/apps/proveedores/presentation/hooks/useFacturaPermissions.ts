@@ -6,6 +6,6 @@ export const useFacturaPermissions = () => {
   const { roles } = useAuthContext();
 
   return useMemo(() => {
-    return FacturaPermissionService.getPermissions(roles);
+    return FacturaPermissionService.getPermissions(roles.map(role => String(role)));
   }, [roles]);
 };
