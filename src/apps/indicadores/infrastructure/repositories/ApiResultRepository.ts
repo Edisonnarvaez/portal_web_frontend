@@ -53,4 +53,9 @@ export class ApiResultRepository implements ResultRepository {
   async getHeadquarters(): Promise<Array<{id: number, name: string}>> {
     return await this.apiService.getHeadquarters();
   }
+
+  // New: expose paginated results
+  async getPaginated(params?: { page?: number; page_size?: number; indicator?: number; headquarters?: number; period_start?: string; period_end?: string }): Promise<{ count: number; next: string | null; previous: string | null; results: Result[] }> {
+    return await this.apiService.getPaginatedResults(params);
+  }
 }

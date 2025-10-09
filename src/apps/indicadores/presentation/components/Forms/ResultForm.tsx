@@ -12,6 +12,19 @@ interface ResultFormProps {
   loading: boolean;
 }
 
+// Local form state type: keep indicator/headquarters as number | string | null
+interface FormState {
+  headquarters: number | string | null;
+  indicator: number | string | null;
+  numerator: number;
+  denominator: number;
+  year: number;
+  month?: number | null;
+  quarter?: number | null;
+  semester?: number | null;
+  user: number;
+}
+
 const ResultForm: React.FC<ResultFormProps> = ({
   result,
   indicators,
@@ -21,15 +34,15 @@ const ResultForm: React.FC<ResultFormProps> = ({
 }) => {
   const { user } = useAuthContext();
   
-  const [form, setForm] = useState<Partial<Result>>({
-    headquarters: result?.headquarters || 0,
-    indicator: result?.indicator || 0,
-    numerator: result?.numerator || 0,
-    denominator: result?.denominator || 0,
-    year: result?.year || new Date().getFullYear(),
-    month: result?.month || null,
-    quarter: result?.quarter || null,
-    semester: result?.semester || null,
+  const [form, setForm] = useState<FormState>({
+    headquarters: (typeof result?.headquarters === 'object' ? (result?.headquarters as any)?.id : result?.headquarters) ?? 0,
+    indicator: (typeof result?.indicator === 'object' ? (result?.indicator as any)?.id : result?.indicator) ?? 0,
+    numerator: result?.numerator ?? 0,
+    denominator: result?.denominator ?? 0,
+    year: result?.year ?? new Date().getFullYear(),
+    month: result?.month ?? null,
+    quarter: result?.quarter ?? null,
+    semester: result?.semester ?? null,
     user: user?.id || result?.user || 0,
   });
 
@@ -38,10 +51,11 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
   // 🔍 Buscar el indicador seleccionado para obtener la frecuencia
   useEffect(() => {
-    if (form.indicator) {
-      const indicator = indicators.find(ind => ind.id === form.indicator);
+    if (form.indicator !== undefined && form.indicator !== null && form.indicator !== '') {
+      const indicatorId = Number(form.indicator);
+      const indicator = indicators.find(ind => ind.id === indicatorId) ?? null;
       setSelectedIndicator(indicator);
-      
+
       // 🧹 Limpiar campos de período que no corresponden a la frecuencia
       if (indicator) {
         const newForm = { ...form };
@@ -56,6 +70,8 @@ const ResultForm: React.FC<ResultFormProps> = ({
         }
         setForm(newForm);
       }
+    } else {
+      setSelectedIndicator(null);
     }
   }, [form.indicator, indicators]);
 
@@ -65,13 +81,17 @@ const ResultForm: React.FC<ResultFormProps> = ({
     let processedValue: any = value;
     
     if (name === 'headquarters' || name === 'indicator' || name === 'year' || name === 'month' || name === 'quarter' || name === 'semester') {
-      processedValue = parseInt(value) || (name === 'month' || name === 'quarter' || name === 'semester' ? null : 0);
+      // Preserve empty string for selects so controlled value remains compatible
+      if (value === '') processedValue = '';
+      else processedValue = parseInt(value) || (name === 'month' || name === 'quarter' || name === 'semester' ? null : 0);
     } else if (name === 'numerator' || name === 'denominator') {
       processedValue = parseFloat(value) || 0;
     }
     
     setForm(prev => ({
       ...prev,
+      // TypeScript: index signature is fine since keys match FormState
+      // @ts-ignore
       [name]: processedValue
     }));
 
@@ -84,11 +104,11 @@ const ResultForm: React.FC<ResultFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.headquarters || form.headquarters === 0) {
+    if (!form.headquarters || form.headquarters === 0 || form.headquarters === '') {
       newErrors.headquarters = 'Debe seleccionar una sede';
     }
     
-    if (!form.indicator || form.indicator === 0) {
+    if (!form.indicator || form.indicator === 0 || form.indicator === '') {
       newErrors.indicator = 'Debe seleccionar un indicador';
     }
     
@@ -128,10 +148,15 @@ const ResultForm: React.FC<ResultFormProps> = ({
     
     if (!validateForm()) return;
 
-    const data = {
+    // Build payload ensuring indicator/headquarters are numbers for the API
+    const dataPayload: any = {
       ...form,
       user: user?.id || form.user || 0,
-    } as CreateResultRequest | UpdateResultRequest;
+      headquarters: typeof form.headquarters === 'string' ? Number(form.headquarters) : form.headquarters,
+      indicator: typeof form.indicator === 'string' ? Number(form.indicator) : form.indicator,
+    };
+
+    const data = dataPayload as CreateResultRequest | UpdateResultRequest;
 
     if (result?.id) {
       (data as UpdateResultRequest).id = result.id;
@@ -141,9 +166,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
   };
 
   const renderPeriodFields = () => {
-    if (!selectedIndicator) return null;
+  if (!selectedIndicator) return null;
 
-    const { measurementFrequency } = selectedIndicator;
+  const { measurementFrequency } = selectedIndicator;
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -155,7 +180,7 @@ const ResultForm: React.FC<ResultFormProps> = ({
             </label>
             <select
               name="month"
-              value={form.month || ''}
+              value={form.month ?? ''}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 errors.month ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -180,7 +205,7 @@ const ResultForm: React.FC<ResultFormProps> = ({
             </label>
             <select
               name="quarter"
-              value={form.quarter || ''}
+              value={form.quarter ?? ''}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 errors.quarter ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -205,7 +230,7 @@ const ResultForm: React.FC<ResultFormProps> = ({
             </label>
             <select
               name="semester"
-              value={form.semester || ''}
+              value={form.semester ?? ''}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 errors.semester ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -233,9 +258,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
             Sede *
           </label>
-          <select
+            <select
             name="headquarters"
-            value={form.headquarters || ''}
+            value={form.headquarters ?? ''}
             onChange={handleChange}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.headquarters ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -258,7 +283,7 @@ const ResultForm: React.FC<ResultFormProps> = ({
           </label>
           <select
             name="indicator"
-            value={form.indicator || ''}
+              value={form.indicator ?? ''}
             onChange={handleChange}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.indicator ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'

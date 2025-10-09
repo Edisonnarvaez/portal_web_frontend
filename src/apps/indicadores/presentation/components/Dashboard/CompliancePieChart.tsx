@@ -1,5 +1,5 @@
-import React from "react";
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts";
+import { getHeadquarterField, safeNumber } from '../../utils/dataHelpers';
 
 interface Props {
   data: any[];
@@ -15,8 +15,23 @@ export default function CompliancePieChart({ data, loading }: Props) {
   // Agrupar por sede y calcular % de cumplimiento
   const grouped: Record<string, { cumplidos: number; noCumplidos: number }> = data.reduce(
     (acc, curr) => {
-      const sede = curr.headquarterName;
-      const cumple = curr.calculatedValue >= curr.target;
+  const sede = curr.headquarterName ?? getHeadquarterField(curr, 'name', 'Sin sede');
+
+      // If the backend provided a compliant boolean, use it; otherwise fall back to numeric comparison with trend awareness
+      let cumple: boolean = false;
+      if (typeof curr.compliant === 'boolean') {
+        cumple = curr.compliant;
+      } else {
+  const calc = safeNumber(curr.calculatedValue ?? curr.calculated_value ?? curr.value ?? NaN, NaN);
+  const targ = safeNumber(curr.target ?? (curr.indicator && curr.indicator.target) ?? NaN, NaN);
+  const trend = String(curr.trend ?? (curr.indicator && curr.indicator.trend) ?? '').toLowerCase();
+        if (!isNaN(calc) && !isNaN(targ)) {
+          if (trend === 'decreasing') cumple = calc <= targ;
+          else cumple = calc >= targ;
+        } else {
+          cumple = false; // unknown
+        }
+      }
 
       if (!acc[sede]) acc[sede] = { cumplidos: 0, noCumplidos: 0 };
 

@@ -15,7 +15,7 @@ export interface Indicator {
   denominatorSource: string;
   denominatorDescription: string;
   trend: 'increasing' | 'decreasing';
-  target: string;
+  target: number;
   author: string;
   process: number; // ✅ Coincide con la API
   measurementFrequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual';
@@ -41,7 +41,7 @@ export interface CreateIndicatorRequest {
   denominatorSource: string;
   denominatorDescription: string;
   trend: 'increasing' | 'decreasing';
-  target: string;
+  target: number;
   author: string;
   process: number;
   measurementFrequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual';

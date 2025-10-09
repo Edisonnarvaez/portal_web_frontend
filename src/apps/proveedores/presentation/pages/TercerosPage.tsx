@@ -150,7 +150,9 @@ export default function TercerosPage() {
         handleCloseModals();
       }
     } catch (error) {
+      // Let the form display validation errors by rethrowing
       console.error('Error en handleSubmitTercero:', error);
+      throw error;
     } finally {
       setCrudLoading(false);
     }

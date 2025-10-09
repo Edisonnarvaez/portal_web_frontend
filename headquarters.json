@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "habilitationCode": "520010121301",
+    "name": "Aurora",
+    "departament": "Nariño",
+    "city": "Pasto",
+    "address": "Cra 26 # 9-22",
+    "habilitationDate": "2025-10-05",
+    "closingDate": "2025-10-06",
+    "status": true,
+    "creationDate": "2025-10-06",
+    "updateDate": "2025-10-06",
+    "company": 1
+  },
+  {
+    "id": 2,
+    "habilitationCode": "520010121319",
+    "name": "Obrero",
+    "departament": "Nariño",
+    "city": "PASTO",
+    "address": "Cra 37 calle 5 casa 9 apt 104",
+    "habilitationDate": "2025-10-05",
+    "closingDate": "2025-10-31",
+    "status": true,
+    "creationDate": "2025-10-06",
+    "updateDate": "2025-10-06",
+    "company": 1
+  }
+]

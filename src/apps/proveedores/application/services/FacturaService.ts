@@ -26,6 +26,20 @@ export class FacturaService {
     return this.facturaRepo.getAll();
   }
 
+  /**
+   * New: fetch facturas with filters via the plural 'facturas' endpoint.
+   * Returns the raw response from repository (paginated) so the UI can handle paging.
+   */
+  async getFacturasWithFilters(params?: { page?: number; page_size?: number; etapa?: string; estado?: number; fecha_desde?: string; fecha_hasta?: string }) {
+    // @ts-ignore - delegate to repository method
+    if (typeof (this.facturaRepo as any).getAllWithFilters === 'function') {
+      return (this.facturaRepo as any).getAllWithFilters(params);
+    }
+    // fallback to legacy getAll
+    const list = await this.getFacturas();
+    return { results: list };
+  }
+
   async updateFactura(id: number, data: any): Promise<Factura> {
     return this.facturaRepo.update(id, data);
   }

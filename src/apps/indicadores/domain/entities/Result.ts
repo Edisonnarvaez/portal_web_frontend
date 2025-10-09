@@ -1,7 +1,11 @@
+import type { Indicator } from './Indicator';
+import type { Headquarters } from '../../../menu/domain/types';
+
 export interface Result {
   id?: number;
-  headquarters: number;
-  indicator: number;
+  // The backend may return either the numeric id or the full nested object for these relations
+  headquarters: Headquarters | number;
+  indicator: Indicator | number;
   user: number;
   numerator: number;
   denominator: number;
@@ -20,7 +24,8 @@ export interface DetailedResult extends Result {
   headquarterName: string;
   measurementUnit: string;
   measurementFrequency: string;
-  target: string;
+  // Target should be numeric according to the backend contract
+  target: number;
   calculationMethod: string;
 }
 

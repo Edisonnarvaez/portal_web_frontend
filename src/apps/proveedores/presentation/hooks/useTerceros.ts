@@ -75,7 +75,8 @@ export const useTerceros = () => {
     } catch (err: any) {
       console.error('❌ Error al crear tercero:', err);
       notifyError(err.message || 'Error al crear el tercero');
-      return false;
+      // Rethrow so callers (form/page) can present field-level errors
+      throw err;
     }
   };
 
@@ -89,7 +90,8 @@ export const useTerceros = () => {
       return true;
     } catch (err: any) {
       notifyError(err.message || 'Error al actualizar el tercero');
-      return false;
+      // Rethrow so callers can handle validation errors
+      throw err;
     }
   };
 

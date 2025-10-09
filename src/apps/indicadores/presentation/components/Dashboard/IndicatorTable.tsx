@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { getIndicatorField, getHeadquarterField, safeNumber } from '../../utils/dataHelpers';
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { exportToExcel, exportToPDF } from "../../utils/exportUtils";
 import IndicatorDetailModal from "./IndicatorDetailModal";
@@ -24,22 +25,8 @@ function formatPeriodo(item: any) {
 }
 
 // 🔧 Función para extraer valores seguros de los datos
-function getIndicatorValue(item: any, field: string, defaultValue: any = 0) {
-    if (item[field] !== undefined && item[field] !== null) {
-        return item[field];
-    }
-    
-    // 🔍 Si el campo no existe directamente, intentar extraerlo de objetos anidados
-    if (item.indicator && typeof item.indicator === 'object' && item.indicator[field] !== undefined) {
-        return item.indicator[field];
-    }
-    
-    if (item.headquarters && typeof item.headquarters === 'object' && item.headquarters[field] !== undefined) {
-        return item.headquarters[field];
-    }
-    
-    return defaultValue;
-}
+// Safe getters separated for indicator and headquarter to avoid mixing fields
+// use shared helpers from utils/dataHelpers
 
 // 🔧 Función para formatear números de forma segura
 function safeFormatNumber(value: any, decimals: number = 2): string {
@@ -59,29 +46,27 @@ export default function IndicatorTable({ data, loading }: Props) {
 
     // 🔧 Procesar datos para asegurar que tengan la estructura correcta
     const processedData = data.map((item, index) => {
-        console.log(`🔍 Procesando item ${index}:`, item);
-        
-        const processedItem = {
+    const indicatorObj = item.indicator && typeof item.indicator === 'object' ? item.indicator : undefined;
+
+    const processedItem: any = {
             // 📊 Datos básicos
             id: item.id || index,
             
             // 🏢 Información de la sede
-            headquarterName: getIndicatorValue(item, 'name', 'Sin sede') || 
-                           getIndicatorValue(item, 'headquarterName', 'Sin sede'),
+            headquarterName: getHeadquarterField(item, 'name', getHeadquarterField(item, 'headquarterName', 'Sin sede')),
             headquarters: item.headquarters,
             
             // 📈 Información del indicador
-            indicatorName: getIndicatorValue(item, 'name', 'Sin nombre') ||
-                          getIndicatorValue(item, 'indicatorName', 'Sin nombre'),
-            indicatorCode: getIndicatorValue(item, 'code', 'Sin código') ||
-                          getIndicatorValue(item, 'indicatorCode', 'Sin código'),
+            indicatorName: getIndicatorField(item, 'name', getIndicatorField(item, 'indicatorName', 'Sin nombre')),
+            indicatorCode: getIndicatorField(item, 'code', getIndicatorField(item, 'indicatorCode', 'Sin código')),
             indicator: item.indicator,
             
             // 🔢 Valores numéricos
-            calculatedValue: parseFloat(item.calculatedValue || 0),
-            numerator: parseFloat(item.numerator || 0),
-            denominator: parseFloat(item.denominator || 0),
-            target: parseFloat(getIndicatorValue(item, 'target', 0)),
+            calculatedValue: safeNumber(item.calculatedValue ?? item.calculated_value ?? item.value ?? 0),
+            numerator: Number(item.numerator ?? 0),
+            denominator: Number(item.denominator ?? 0),
+            // Prefer numeric target coming from the enriched result, then indicator object
+            target: safeNumber(item.target ?? indicatorObj?.target ?? indicatorObj?.meta_target ?? 0),
             
             // 📅 Información temporal
             year: item.year || new Date().getFullYear(),
@@ -90,9 +75,9 @@ export default function IndicatorTable({ data, loading }: Props) {
             semester: item.semester,
             
             // 🏷️ Metadatos
-            measurementUnit: getIndicatorValue(item, 'measurementUnit', ''),
-            measurementFrequency: getIndicatorValue(item, 'measurementFrequency', 'annual'),
-            calculationMethod: getIndicatorValue(item, 'calculationMethod', ''),
+            measurementUnit: getIndicatorField(item, 'measurementUnit', indicatorObj?.measurementUnit ?? '' ) || '',
+            measurementFrequency: getIndicatorField(item, 'measurementFrequency', 'annual'),
+            calculationMethod: getIndicatorField(item, 'calculationMethod', ''),
             
             // 👤 Usuario
             user: item.user,
@@ -102,7 +87,6 @@ export default function IndicatorTable({ data, loading }: Props) {
             updateDate: item.updateDate
         };
         
-        console.log(`✅ Item procesado ${index}:`, processedItem);
         return processedItem;
     });
 
@@ -141,8 +125,22 @@ export default function IndicatorTable({ data, loading }: Props) {
                         </tr>
                     </thead>
                     <tbody>
-                        {processedData.map((item, idx) => {
-                            const cumple = item.calculatedValue >= item.target;
+                        {processedData.map((item: any, idx: number) => {
+                            // Use precomputed compliant if available, otherwise compute with trend awareness
+                            let cumple: boolean = false;
+                            if (typeof item.compliant === 'boolean') {
+                                cumple = item.compliant;
+                            } else {
+                                const calc = Number(item.calculatedValue ?? NaN);
+                                const targ = Number(item.target ?? NaN);
+                                const trend = String(item.trend ?? '').toLowerCase();
+                                if (!isNaN(calc) && !isNaN(targ)) {
+                                    if (trend === 'decreasing') cumple = calc <= targ;
+                                    else cumple = calc >= targ;
+                                } else {
+                                    cumple = false;
+                                }
+                            }
                             return (
                                 <tr key={item.id || idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-4 py-2">
@@ -153,7 +151,7 @@ export default function IndicatorTable({ data, loading }: Props) {
                                             }}
                                             className="text-blue-600 hover:underline dark:text-blue-400"
                                         >
-                                            {item.indicatorName}
+                                                {item.indicatorCode ? <span className="font-mono mr-2">{item.indicatorCode}</span> : null}{item.indicatorName}
                                         </button>
                                     </td>
                                     <td className="px-4 py-2 text-gray-900 dark:text-gray-100">

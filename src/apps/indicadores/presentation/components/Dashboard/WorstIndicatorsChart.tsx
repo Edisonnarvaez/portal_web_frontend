@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+import { safeNumber, getIndicatorField } from '../../utils/dataHelpers';
 import {
   BarChart,
   Bar,
@@ -19,44 +20,34 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
   if (loading) return <p className="text-center">Cargando ranking...</p>;
   if (!data || data.length === 0) return <p className="text-center">No hay datos para mostrar.</p>;
 
-  // 🔧 CORREGIR: Calcular diferencia contra la meta con validación
   const ranked = useMemo(() => {
-    console.log('🔍 Datos recibidos en WorstIndicatorsChart:', data);
-    
     return data
       .map((item) => {
         // 🔧 Validar y convertir valores a números
-        const calculatedValue = parseFloat(item.calculatedValue) || 0;
-        const target = parseFloat(item.target) || 0;
-        const diferencia = calculatedValue - target;
-        
-        console.log('📊 Procesando item:', {
-          id: item.id,
-          calculatedValue: calculatedValue,
-          target: target,
-          diferencia: diferencia,
-          indicatorName: item.indicatorName,
-          headquarterName: item.headquarterName
-        });
+  const calculatedValue = safeNumber(item.calculatedValue ?? item.calculated_value ?? 0);
+  const target = safeNumber(item.target ?? getIndicatorField(item, 'target', (item as any).target ?? 0));
+  const trend = String(item.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase();
+
+        let diferencia = typeof item.diferencia === 'number' ? item.diferencia : (calculatedValue - target);
+        if (typeof item.diferencia !== 'number') {
+          const direction = trend === 'decreasing' ? -1 : 1;
+          diferencia = (calculatedValue - target) * direction;
+        }
 
         return {
           ...item,
-          calculatedValue: calculatedValue,
-          target: target,
-          diferencia: diferencia,
-          // 🔧 Asegurar que los nombres estén disponibles
-          name: item.indicatorName || item.name || `Indicador ${item.id}`,
-          sede: item.headquarterName || item.sede || 'Sin sede',
-          // 🔧 Crear un identificador único para el gráfico
-          displayName: `${item.indicatorCode || item.code || 'IND'} - ${item.headquarterName || 'Sin sede'}`
+          calculatedValue,
+          target,
+          diferencia,
+          name: item.indicatorName || (item.indicator && item.indicator.name) || item.name || `Indicador ${item.id}`,
+          sede: item.headquarterName || (item.headquarters && item.headquarters.name) || item.sede || 'Sin sede',
+          displayName: `${item.indicatorCode || (item.indicator && item.indicator.code) || item.code || 'IND'} - ${item.headquarterName || (item.headquarters && item.headquarters.name) || 'Sin sede'}`
         };
       })
-      .filter(item => !isNaN(item.diferencia)) // 🔧 Filtrar valores inválidos
-      .sort((a, b) => a.diferencia - b.diferencia)
+  .filter(item => typeof item.diferencia === 'number' && !isNaN(item.diferencia))
+  .sort((a, b) => a.diferencia - b.diferencia)
       .slice(0, top);
   }, [data, top]);
-
-  console.log('📈 Datos procesados para gráfico:', ranked);
 
   if (ranked.length === 0) {
     return (
@@ -102,7 +93,7 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
               return [numValue.toFixed(2), name];
             }}
             labelFormatter={(label) => `Indicador: ${label}`}
-            content={({ active, payload, label }) => {
+            content={({ active, payload }) => {
               if (active && payload && payload.length > 0) {
                 const data = payload[0].payload;
                 return (

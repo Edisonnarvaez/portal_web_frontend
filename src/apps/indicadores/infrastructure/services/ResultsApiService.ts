@@ -7,95 +7,88 @@ export class ResultsApiService {
   // Results endpoints
   async getResults(): Promise<Result[]> {
     try {
-      const response = await axiosInstance.get(`${this.baseUrl}/results/`);
-      console.log('📥 Results obtained:', response.data);
-      
-      // 🔧 CORREGIR: Validar estructura de respuesta
-      if (Array.isArray(response.data)) {
-        return response.data;
-      } else if (response.data && Array.isArray(response.data.results)) {
-        return response.data.results;
-      } else {
-        console.warn('⚠️ La respuesta no es un array:', response.data);
-        return [];
-      }
+      // Prefer the paginated endpoint and return only the array for backward compatibility
+      const paginated = await this.getPaginatedResults();
+      return paginated.results || [];
     } catch (error) {
-      console.error('❌ Error fetching results:', error);
+      console.error('❌ Error fetching results (normalized):', error);
       throw new Error('Error loading results');
+    }
+  }
+
+  /**
+   * Returns paginated results object as described in OpenAPI. Normalizes array or paginated responses.
+   */
+  async getPaginatedResults(params?: { page?: number; page_size?: number; indicator?: number; headquarters?: number; period_start?: string; period_end?: string }): Promise<{ count: number; next: string | null; previous: string | null; results: Result[] }> {
+    try {
+      const response = await axiosInstance.get(`${this.baseUrl}/results/`, { params });
+      const data = response.data;
+
+      if (Array.isArray(data)) {
+        return { count: data.length, next: null, previous: null, results: data };
+      }
+
+      return {
+        count: typeof data.count === 'number' ? data.count : (Array.isArray(data.results) ? data.results.length : 0),
+        next: data.next || null,
+        previous: data.previous || null,
+        results: Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []),
+      };
+    } catch (error) {
+      console.error('❌ Error fetching paginated results:', error);
+      throw new Error('Error loading paginated results');
     }
   }
 
   async getResultsWithDetails(): Promise<DetailedResult[]> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/results/detailed/`);
-      console.log('📥 Detailed results obtained:', response.data);
-      
-      // 🔧 CORREGIR: Extraer el array results del objeto de respuesta
-      if (response.data && Array.isArray(response.data.results)) {
+      const data = response.data;
+
+      // Prefer the 'results' array when the backend returns the detailed wrapper
+      if (data && Array.isArray(data.results)) {
         // Transformar los datos para que coincidan con la interfaz DetailedResult
-        const transformedResults = response.data.results.map((item: any) => {
-          // 🔧 Debug: Verificar datos de entrada
-          console.log('🔍 Transformando item:', {
-            id: item.id,
-            calculatedValue: item.calculatedValue,
-            target: item.indicator?.target,
-            targetType: typeof item.indicator?.target,
-            indicatorName: item.indicator?.name,
-            headquarterName: item.headquarters?.name
-          });
-
-          // 🔧 Validar y convertir valores numéricos
-          const calculatedValue = parseFloat(item.calculatedValue) || 0;
-          const target = parseFloat(item.indicator?.target) || 0;
-          const numerator = parseFloat(item.numerator) || 0;
-          const denominator = parseFloat(item.denominator) || 0;
-
-          console.log('✅ Valores convertidos:', {
-            calculatedValue,
-            target,
-            numerator,
-            denominator
-          });
+        const transformedResults = data.results.map((item: any) => {
+          const calculatedValue = Number(item.calculatedValue) || 0;
+          const target = Number(item.indicator?.target) || 0;
+          const numerator = Number(item.numerator) || 0;
+          const denominator = Number(item.denominator) || 0;
 
           return {
-            // Datos básicos del resultado
             id: item.id,
-            numerator: numerator,
-            denominator: denominator,
-            calculatedValue: calculatedValue,
+            numerator,
+            denominator,
+            calculatedValue,
             creationDate: item.creationDate,
             updateDate: item.updateDate,
             year: item.year,
             month: item.month,
             quarter: item.quarter,
             semester: item.semester,
-            
-            // IDs de relaciones
-            headquarters: item.headquarters?.id || item.headquarters,
-            indicator: item.indicator?.id || item.indicator,
-            user: item.user?.id || item.user,
-            
-            // 🔧 CORREGIR: Datos detallados extraídos de objetos anidados
-            headquarterName: item.headquarters?.name || 'Sin sede',
-            indicatorName: item.indicator?.name || 'Sin nombre',
-            indicatorCode: item.indicator?.code || 'Sin código',
-            measurementUnit: item.indicator?.measurementUnit || '',
-            measurementFrequency: item.indicator?.measurementFrequency || '',
-            target: target, // 🔧 Ya convertido a número
-            calculationMethod: item.indicator?.calculationMethod || ''
+            // Relaciones: mantener objetos anidados si existen, o ids si vienen así
+            headquarters: item.headquarters ?? item.headquarters?.id ?? item.headquarters,
+            indicator: item.indicator ?? item.indicator?.id ?? item.indicator,
+            user: item.user ?? item.user?.id ?? item.user,
+            // Datos detallados extraídos de objetos anidados
+            headquarterName: item.headquarters?.name ?? item.headquarters?.nombre ?? 'Sin sede',
+            indicatorName: item.indicator?.name ?? item.indicator?.nombre ?? 'Sin nombre',
+            indicatorCode: item.indicator?.code ?? item.indicator?.codigo ?? 'Sin código',
+            measurementUnit: item.indicator?.measurementUnit ?? item.indicator?.measurement_unit ?? '',
+            measurementFrequency: item.indicator?.measurementFrequency ?? item.indicator?.measurement_frequency ?? '',
+            target: target,
+            calculationMethod: item.indicator?.calculationMethod ?? item.indicator?.calculation_method ?? ''
           };
         });
-        
-        console.log('✅ Datos transformados correctamente:', transformedResults.length, 'elementos');
-        console.log('📝 Primer elemento transformado:', transformedResults[0]);
-        
+
         return transformedResults;
       } else if (Array.isArray(response.data)) {
-        // Si la respuesta es directamente un array
+        // Si la respuesta es directamente un array (retro-compatibilidad)
         return response.data;
       } else {
-        console.warn('⚠️ Estructura de respuesta inesperada:', response.data);
-        return [];
+        console.warn('⚠️ Estructura de respuesta inesperada en detailed endpoint:', response.data);
+        // Si el backend cambió y devuelve { results, statistics }, devolver results si existe, o vacio
+        const maybeResults = response.data?.results;
+        return Array.isArray(maybeResults) ? maybeResults : [];
       }
     } catch (error) {
       console.error('❌ Error fetching detailed results:', error);
@@ -234,7 +227,11 @@ export class ResultsApiService {
         id: indicator.id,
         name: indicator.name,
         code: indicator.code,
-        measurementFrequency: indicator.measurementFrequency
+        measurementFrequency: indicator.measurementFrequency,
+        // New: include meta fields to help the frontend display target/unit without additional requests
+        target: indicator.target ?? indicator.meta_target ?? null,
+        measurementUnit: indicator.measurementUnit ?? indicator.measurement_unit ?? '',
+        trend: indicator.trend ?? indicator.trend_type ?? undefined,
       }));
     } catch (error) {
       console.error('❌ Error fetching indicators:', error);

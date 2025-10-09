@@ -4,14 +4,58 @@ import type { Tercero, CreateTerceroRequest, UpdateTerceroRequest, Pais, Departa
 export class TerceroRepository {
   private baseUrl = '/terceros';
 
+  /**
+   * Try to extract a meaningful error message from backend responses.
+   * The backend sometimes returns an HTML Django debug page when an exception
+   * occurs (for example a missing DB table). In that case axios throws but
+   * error.response.data may contain the HTML string. We attempt to detect
+   * common patterns (OperationalError, "no such table") and return a
+   * concise message to surface in the UI.
+   */
+  private extractBackendErrorMessage(error: any): string {
+    try {
+      const data = error?.response?.data;
+      if (!data) return error.message || 'Error desconocido del servidor';
+
+      // If backend returned JSON, build a concise message from fields
+      if (typeof data === 'object') {
+        const entries = Object.entries(data)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .join(' | ');
+        return entries || JSON.stringify(data);
+      }
+
+      // If it's a string, it may be HTML (Django debug) or plain text.
+      if (typeof data === 'string') {
+        // Check for common DB error phrase
+        const lowered = data.toLowerCase();
+        if (lowered.includes('operationalerror') || lowered.includes('no such table')) {
+          // Try to extract the precise phrase
+          const match = data.match(/no such table:\s*([\w_\.]+)/i);
+          if (match) return `Error de base de datos: tabla faltante ${match[1]}`;
+          return 'Error de base de datos en el servidor (tabla faltante o migraciones pendientes)';
+        }
+
+        // Fallback: strip HTML tags to get a shorter message
+        const stripped = data.replace(/<[^>]*>/g, '').trim();
+        return stripped.substring(0, 400) || 'Respuesta inesperada del servidor';
+      }
+      return error.message || 'Error desconocido del servidor';
+    } catch (e) {
+      return error.message || 'Error desconocido del servidor';
+    }
+  }
+
   async getAll(): Promise<Tercero[]> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/terceros/`);
-      console.log('📥 Terceros obtenidos:', response.data);
-      return response.data;
+      const data = response.data;
+      console.log('📥 Terceros obtenidos:', data);
+      // Some deployments return a paginated object { count, next, previous, results }
+      return Array.isArray(data) ? data : data.results || [];
     } catch (error: any) {
       console.error('❌ Error al obtener terceros:', error);
-      throw new Error('Error al cargar los terceros');
+      throw new Error(this.extractBackendErrorMessage(error) || 'Error al cargar los terceros');
     }
   }
 
@@ -22,7 +66,7 @@ export class TerceroRepository {
       return response.data;
     } catch (error: any) {
       console.error(`❌ Error al obtener tercero ${id}:`, error);
-      throw new Error(`Error al cargar el tercero con ID ${id}`);
+      throw new Error(this.extractBackendErrorMessage(error) || `Error al cargar el tercero con ID ${id}`);
     }
   }
 
@@ -34,18 +78,18 @@ export class TerceroRepository {
       return response.data;
     } catch (error: any) {
       console.error('❌ Error al crear tercero:', error);
-      
-      if (error.response?.data) {
+
+      // Prefer structured backend validation messages when present
+      if (error.response?.data && typeof error.response.data === 'object') {
         const backendErrors = error.response.data;
-        if (typeof backendErrors === 'object') {
-          const errorMessages = Object.entries(backendErrors)
-            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-            .join('\n');
-          throw new Error(`Errores de validación:\n${errorMessages}`);
-        }
+        const errorMessages = Object.entries(backendErrors)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        throw new Error(`Errores de validación:\n${errorMessages}`);
       }
-      
-      throw new Error(error.message || 'Error al crear el tercero');
+
+      // If backend returned HTML/debug, extract a friendly message
+      throw new Error(this.extractBackendErrorMessage(error) || error.message || 'Error al crear el tercero');
     }
   }
 
@@ -57,18 +101,16 @@ export class TerceroRepository {
       return response.data;
     } catch (error: any) {
       console.error('❌ Error al actualizar tercero:', error);
-      
-      if (error.response?.data) {
+
+      if (error.response?.data && typeof error.response.data === 'object') {
         const backendErrors = error.response.data;
-        if (typeof backendErrors === 'object') {
-          const errorMessages = Object.entries(backendErrors)
-            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-            .join('\n');
-          throw new Error(`Errores de validación:\n${errorMessages}`);
-        }
+        const errorMessages = Object.entries(backendErrors)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        throw new Error(`Errores de validación:\n${errorMessages}`);
       }
-      
-      throw new Error(error.message || 'Error al actualizar el tercero');
+
+      throw new Error(this.extractBackendErrorMessage(error) || error.message || 'Error al actualizar el tercero');
     }
   }
 
@@ -78,7 +120,7 @@ export class TerceroRepository {
       console.log(`✅ Tercero ${id} eliminado exitosamente`);
     } catch (error: any) {
       console.error(`❌ Error al eliminar tercero ${id}:`, error);
-      throw new Error(`Error al eliminar el tercero: ${error.response?.data?.detail || error.message}`);
+      throw new Error(this.extractBackendErrorMessage(error) || `Error al eliminar el tercero: ${error.response?.data?.detail || error.message}`);
     }
   }
 
@@ -86,11 +128,12 @@ export class TerceroRepository {
   async getPaises(): Promise<Pais[]> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/paises/`);
-      console.log('📥 Países obtenidos:', response.data);
-      return response.data;
+      const data = response.data;
+      console.log('📥 Países obtenidos:', data);
+      return Array.isArray(data) ? data : data.results || [];
     } catch (error: any) {
       console.error('❌ Error al obtener países:', error);
-      throw new Error('Error al cargar los países');
+      throw new Error(this.extractBackendErrorMessage(error) || 'Error al cargar los países');
     }
   }
 
@@ -100,11 +143,12 @@ export class TerceroRepository {
         ? `${this.baseUrl}/departamentos/?pais=${paisId}` 
         : `${this.baseUrl}/departamentos/`;
       const response = await axiosInstance.get(url);
-      console.log('📥 Departamentos obtenidos:', response.data);
-      return response.data;
+      const data = response.data;
+      console.log('📥 Departamentos obtenidos:', data);
+      return Array.isArray(data) ? data : data.results || [];
     } catch (error: any) {
       console.error('❌ Error al obtener departamentos:', error);
-      throw new Error('Error al cargar los departamentos');
+      throw new Error(this.extractBackendErrorMessage(error) || 'Error al cargar los departamentos');
     }
   }
 
@@ -114,22 +158,32 @@ export class TerceroRepository {
         ? `${this.baseUrl}/municipios/?departamento=${departamentoId}` 
         : `${this.baseUrl}/municipios/`;
       const response = await axiosInstance.get(url);
-      console.log('📥 Municipios obtenidos:', response.data);
-      return response.data;
+      const data = response.data;
+      console.log('📥 Municipios obtenidos:', data);
+      return Array.isArray(data) ? data : data.results || [];
     } catch (error: any) {
       console.error('❌ Error al obtener municipios:', error);
-      throw new Error('Error al cargar los municipios');
+      throw new Error(this.extractBackendErrorMessage(error) || 'Error al cargar los municipios');
     }
   }
 
   async getTiposTercero(): Promise<TipoTercero[]> {
-    try {
-      const response = await axiosInstance.get(`${this.baseUrl}/tipos-tercero/`);
-      console.log('📥 Tipos de tercero obtenidos:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('❌ Error al obtener tipos de tercero:', error);
-      throw new Error('Error al cargar los tipos de tercero');
+    // The backend may expose this resource under slightly different paths
+    const candidates = ['tipos-tercero/', 'tipos_tercero/', 'tipos/', 'tipo-tercero/'];
+    for (const p of candidates) {
+      try {
+        const response = await axiosInstance.get(`${this.baseUrl}/${p}`);
+        const data = response.data;
+        console.log('📥 Tipos de tercero obtenidos (%s):', p, data);
+        return Array.isArray(data) ? data : data.results || [];
+      } catch (err) {
+        // try next candidate
+        continue;
+      }
     }
+    console.error('❌ No se pudo obtener tipos de tercero en ninguna ruta candidata');
+    // Return empty list so UI can continue to function even if the backend
+    // doesn't expose tipos de tercero in this deployment.
+    return [];
   }
 }

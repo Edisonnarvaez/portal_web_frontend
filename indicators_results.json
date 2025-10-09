@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "numerator": 25.0,
+    "denominator": 50.0,
+    "calculatedValue": 50.0,
+    "creationDate": "2025-10-07",
+    "updateDate": "2025-10-07",
+    "year": 2024,
+    "month": null,
+    "quarter": 1,
+    "semester": null,
+    "headquarters": 1,
+    "indicator": 1,
+    "user": 1
+  }
+]

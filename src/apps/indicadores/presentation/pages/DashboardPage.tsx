@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useResultsData } from "../hooks/useResultsData";
 import FilterSelect from "../components/Shared/FilterSelect";
+import { formatIndicatorLabel } from '../utils/dataHelpers';
 import IndicatorBarChart from "../components/Dashboard/IndicatorBarChart";
 import TimeSeriesChart from "../components/Dashboard/TimeSeriesChart";
 import IndicatorTable from "../components/Dashboard/IndicatorTable";
@@ -29,22 +30,24 @@ export default function DashboardPage() {
     // 🔧 Extraer valores únicos para filtros
     const sedes = useMemo(() => {
         if (safeData.length === 0) return [];
-        return [...new Set(safeData.map((item) => item.headquarterName))].filter(Boolean);
+    return [...new Set(safeData.map((item) => (item as any).headquarterName || ((item as any).headquarters && (item as any).headquarters.name) || ''))].filter(Boolean);
     }, [safeData]);
 
     const indicadores = useMemo(() => {
         if (safeData.length === 0) return [];
-        return [...new Set(safeData.map((item) => item.indicatorName))].filter(Boolean);
+        // Mostrar código + nombre cuando exista el código
+        const fmt = (it: any) => formatIndicatorLabel(it);
+        return [...new Set(safeData.map((item) => fmt(item)))].filter(Boolean);
     }, [safeData]);
 
     const unidades = useMemo(() => {
         if (safeData.length === 0) return [];
-        return [...new Set(safeData.map((item) => item.measurementUnit))].filter(Boolean);
+    return [...new Set(safeData.map((item) => (item as any).measurementUnit || ((item as any).indicator && (item as any).indicator.measurementUnit) || (item as any).measurement_unit || ''))].filter(Boolean);
     }, [safeData]);
 
     const frecuencias = useMemo(() => {
         if (safeData.length === 0) return [];
-        return [...new Set(safeData.map((item) => item.measurementFrequency))].filter(Boolean);
+    return [...new Set(safeData.map((item) => (item as any).measurementFrequency || ((item as any).indicator && (item as any).indicator.measurementFrequency) || (item as any).measurement_frequency || ''))].filter(Boolean);
     }, [safeData]);
 
     const anios = useMemo(() => {
@@ -63,7 +66,14 @@ export default function DashboardPage() {
             if (!item) return false;
             
             const matchesSede = !selectedSede || (item.headquarterName && item.headquarterName === selectedSede);
-            const matchesIndicador = !selectedIndicador || (item.indicatorName && item.indicatorName === selectedIndicador);
+            // selectedIndicador is a display label like "CODE - Name" or just "Name"
+            const indicatorLabel = (() => {
+                const it: any = item;
+                const code = it.indicatorCode || it.indicator_code || '';
+                const name = it.indicatorName || it.indicator_name || (it.indicator && it.indicator.name) || '';
+                return code ? `${code} - ${name}` : name;
+            })();
+            const matchesIndicador = !selectedIndicador || (indicatorLabel === selectedIndicador);
             const matchesUnidad = !selectedUnidad || (item.measurementUnit && item.measurementUnit === selectedUnidad);
             const matchesFrecuencia = !selectedFrecuencia || (item.measurementFrequency && item.measurementFrequency === selectedFrecuencia);
             const matchesAnio = !selectedAnio || (item.year && String(item.year) === selectedAnio);
@@ -128,29 +138,7 @@ export default function DashboardPage() {
     return (
         <div className="p-6 space-y-6">
             {/* 🐛 DEBUG: Información temporal */}
-            {(import.meta.env.MODE === 'development') && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-200">🐛 Debug Info</h4>
-                    <div className="text-sm text-blue-800 dark:text-blue-300 mt-2 space-y-1">
-                        <p>Total datos: {safeData.length}</p>
-                        <p>Datos filtrados: {filteredData.length}</p>
-                        <p>Sedes disponibles: {sedes.length}</p>
-                        <p>Indicadores disponibles: {indicadores.length}</p>
-                        <p>Estado carga: {loading ? 'Cargando' : 'Completo'}</p>
-                        <p>Error: {error || 'Ninguno'}</p>
-                        {safeData.length > 0 && (
-                            <details className="mt-2">
-                                <summary className="cursor-pointer text-blue-700 dark:text-blue-300">
-                                    Ver estructura del primer elemento
-                                </summary>
-                                <pre className="bg-blue-100 dark:bg-blue-800 p-2 rounded text-xs mt-2 overflow-auto max-h-40">
-                                    {JSON.stringify(safeData[0], null, 2)}
-                                </pre>
-                            </details>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* development-only debug panel removed for cleanliness */}
 
             {/* Header */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">

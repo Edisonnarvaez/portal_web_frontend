@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "name": "Proporción de Satisfacción Global de los usuarios en la IPS",
+    "description": "Expresa la proporción de usuarios satisfechos con los servicios recibidos en la IPS",
+    "code": "P.3.14",
+    "version": "1.0",
+    "calculationMethod": "percentage",
+    "measurementUnit": "%",
+    "numerator": "Número de usuarios que respondieron “muy buena” o “buena” a la pregunta: ¿cómo calificaría su experiencia global respecto a los servicios de salud que ha recibido a través de su IPS?”",
+    "numeratorResponsible": "Gestor",
+    "numeratorSource": "Encuetas de satisfaccion",
+    "numeratorDescription": "na",
+    "denominator": "Número de usuarios que respondieron la pregunta",
+    "denominatorResponsible": "gestor",
+    "denominatorSource": "Encuetas de satisfaccion",
+    "denominatorDescription": "na",
+    "trend": "increasing",
+    "target": "95",
+    "author": "Ministerio de salud",
+    "measurementFrequency": "quarterly",
+    "status": true,
+    "creationDate": "2025-10-07",
+    "updateDate": "2025-10-07",
+    "process": 2,
+    "user": 1
+  }
+]

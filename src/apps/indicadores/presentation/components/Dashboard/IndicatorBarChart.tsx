@@ -1,6 +1,6 @@
 // src/apps/indicadores/presentation/components/Dashboard/IndicatorBarChart.tsx
-import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { getIndicatorField, getHeadquarterField, safeNumber } from '../../utils/dataHelpers';
 
 interface Props {
     data: any[];
@@ -11,36 +11,19 @@ export default function IndicatorBarChart({ data, loading }: Props) {
     if (loading) return <p className="text-center">Cargando datos...</p>;
     if (data.length === 0) return <p className="text-center">No hay datos para mostrar con los filtros seleccionados.</p>;
 
-    // 🔧 Función segura para obtener valores
-    const safeGetValue = (item: any, field: string, defaultValue: any = 'Sin datos') => {
-        if (item[field] !== undefined && item[field] !== null) {
-            return item[field];
-        }
-        
-        if (item.indicator && typeof item.indicator === 'object' && item.indicator[field] !== undefined) {
-            return item.indicator[field];
-        }
-        
-        if (item.headquarters && typeof item.headquarters === 'object' && item.headquarters[field] !== undefined) {
-            return item.headquarters[field];
-        }
-        
-        return defaultValue;
-    };
+    // use shared helpers
 
-    const safeGetNumber = (value: any, defaultValue: number = 0): number => {
-        const num = parseFloat(value);
-        return isNaN(num) ? defaultValue : num;
-    };
 
-    const chartData = data.map((item, index) => {
-        const sede = safeGetValue(item, 'name', 'Sin sede') || safeGetValue(item, 'headquarterName', 'Sin sede');
-        const indicador = safeGetValue(item, 'name', 'Sin nombre') || safeGetValue(item, 'indicatorName', 'Sin nombre');
-        
+
+    const chartData = data.map((item) => {
+        const sede = getHeadquarterField(item, 'name', getHeadquarterField(item, 'headquarterName', 'Sin sede'));
+        const indicador = getIndicatorField(item, 'name', getIndicatorField(item, 'indicatorName', 'Sin nombre'));
+        const target = getIndicatorField(item, 'target', (item as any).target ?? 0);
+
         return {
             sede: `${sede} - ${indicador}`,
-            resultado: safeGetNumber(item.calculatedValue),
-            meta: safeGetNumber(safeGetValue(item, 'target', 0)),
+            resultado: safeNumber((item as any).calculatedValue),
+            meta: safeNumber(target),
         };
     });
 

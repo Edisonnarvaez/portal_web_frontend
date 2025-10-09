@@ -49,4 +49,16 @@ export class ResultService {
   async getHeadquarters(): Promise<Array<{id: number, name: string}>> {
     return await this.repository.getHeadquarters();
   }
+
+  // New: expose paginated access
+  async getPaginatedResults(params?: { page?: number; page_size?: number; indicator?: number; headquarters?: number; period_start?: string; period_end?: string }): Promise<{ count: number; next: string | null; previous: string | null; results: Result[] }> {
+    // @ts-ignore - repository may optionally implement getPaginated
+    if (typeof (this.repository as any).getPaginated === 'function') {
+      // @ts-ignore
+      return await (this.repository as any).getPaginated(params);
+    }
+    // Fallback: fetch all and wrap
+    const all = await this.getAllResults();
+    return { count: all.length, next: null, previous: null, results: all };
+  }
 }

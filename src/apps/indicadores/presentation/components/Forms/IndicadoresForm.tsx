@@ -42,7 +42,7 @@ const IndicatorForm: React.FC<IndicatorFormProps> = ({
         denominatorSource: indicator?.denominatorSource || '',
         denominatorDescription: indicator?.denominatorDescription || '',
         trend: indicator?.trend || 'increasing',
-        target: indicator?.target || '',
+        target: indicator?.target || 0,
         author: indicator?.author || '',
         process: indicator?.process || 0,
         measurementFrequency: indicator?.measurementFrequency || 'quarterly',
@@ -84,7 +84,11 @@ const IndicatorForm: React.FC<IndicatorFormProps> = ({
         if (!form.measurementUnit?.trim()) newErrors.measurementUnit = 'La unidad de medida es obligatoria';
         if (!form.numerator?.trim()) newErrors.numerator = 'El numerador es obligatorio';
         if (!form.denominator?.trim()) newErrors.denominator = 'El denominador es obligatorio';
-        if (!form.target?.trim()) newErrors.target = 'La meta es obligatoria';
+        if (
+            form.target === undefined ||
+            form.target === null ||
+            (typeof form.target === 'number' && isNaN(form.target))
+        ) newErrors.target = 'La meta es obligatoria';
         if (!form.author?.trim()) newErrors.author = 'El autor es obligatorio';
         if (!form.process || form.process === 0) newErrors.process = 'Debe seleccionar un proceso';
 
@@ -411,11 +415,11 @@ const IndicatorForm: React.FC<IndicatorFormProps> = ({
                         Meta *
                     </label>
                     <input
-                        type="text"
+                        type="number"
                         name="target"
                         value={form.target || ''}
                         onChange={handleChange}
-                        placeholder="95%, 100 casos, etc."
+                        placeholder="valor numérico (0.95, 100, etc.)"
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.target ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                             } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
                     />

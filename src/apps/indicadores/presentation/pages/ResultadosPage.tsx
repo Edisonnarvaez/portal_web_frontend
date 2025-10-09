@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   HiTableCells,
   HiPlus,
@@ -169,7 +169,7 @@ const FilterPanel = ({
   </div>
 );
 
-const ResultsTable = ({ data, onEdit, onDelete, onView }: any) => (
+const ResultsTable = ({ data, onEdit, onDelete, onView, indicators }: any) => (
   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -215,7 +215,16 @@ const ResultsTable = ({ data, onEdit, onDelete, onView }: any) => (
                 {result.calculatedValue?.toFixed(2) || '0.00'} {result.measurementUnit}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {result.target} {result.measurementUnit}
+                {(() => {
+                  const targFromResult = typeof result.target === 'number' ? result.target : Number(result.target ?? NaN);
+                  const indicatorObj = result.indicator && typeof result.indicator === 'object' ? (result.indicator as any) : undefined;
+                  // Try indicators list as fallback (indicators prop passed from parent)
+                  const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? result.indicator)) : undefined;
+                  const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
+                  const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
+                  const unit = result.measurementUnit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || indicatorFromList?.measurementUnit || indicatorFromList?.measurement_unit || '';
+                  return (isNaN(targ) ? '—' : targ.toFixed(2)) + (unit ? ` ${unit}` : '');
+                })()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                 {result.year}
@@ -313,6 +322,8 @@ const ResultadosPage: React.FC = () => {
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedHeadquarters, setSelectedHeadquarters] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   // Estados de modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -330,21 +341,44 @@ const ResultadosPage: React.FC = () => {
     indicators,
     headquarters,
     loading,
+    pagination,
+    fetchPaginatedResults,
     createResult,
     updateResult,
     deleteResult
   } = useResults();
 
+  // When pagination params change, fetch from server if supported
+  React.useEffect(() => {
+    // Only call server-side pagination if the hook exposes fetchPaginatedResults
+    if (typeof fetchPaginatedResults === 'function') {
+      fetchPaginatedResults({ page, page_size: pageSize }).catch(err => {
+        // Already handled/logged in hook; swallow here
+        console.error('Error fetching paginated results (UI):', err);
+      });
+    }
+  }, [page, pageSize]);
+
   // Filtros aplicados
   const filteredResults = detailedResults.filter((result: DetailedResult) => {
-    const matchesSearch = 
-      result.indicatorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      result.indicatorCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      result.headquarterName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesIndicator = selectedIndicator === '' || result.indicator.toString() === selectedIndicator;
-    const matchesHeadquarters = selectedHeadquarters === '' || result.headquarters.toString() === selectedHeadquarters;
-    const matchesYear = selectedYear === '' || result.year.toString() === selectedYear;
+    const term = (searchTerm || '').trim().toLowerCase();
+
+    const indicatorName = result.indicatorName ?? '';
+    const indicatorCode = result.indicatorCode ?? '';
+    const headquarterName = result.headquarterName ?? '';
+
+    const matchesSearch =
+      term === '' ||
+      [indicatorName, indicatorCode, headquarterName].some((field) =>
+        String(field).toLowerCase().includes(term)
+      );
+
+  const resultIndicatorId = (result.indicator && typeof result.indicator === 'object') ? String((result.indicator as any).id) : String(result.indicator ?? '');
+  const resultHeadquarterId = (result.headquarters && typeof result.headquarters === 'object') ? String((result.headquarters as any).id) : String(result.headquarters ?? '');
+
+  const matchesIndicator = selectedIndicator === '' || resultIndicatorId === String(selectedIndicator);
+  const matchesHeadquarters = selectedHeadquarters === '' || resultHeadquarterId === String(selectedHeadquarters);
+    const matchesYear = selectedYear === '' || String(result.year) === selectedYear;
 
     return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear;
   });
@@ -354,17 +388,17 @@ const ResultadosPage: React.FC = () => {
     totalResults: detailedResults.length,
     avgCompliance: detailedResults.length > 0 
       ? detailedResults.reduce((acc, curr) => {
-          const targetValue = parseFloat(curr.target);
-          if (isNaN(targetValue) || targetValue === 0) return acc;
+          const targetValue = typeof curr.target === 'number' ? curr.target : Number(curr.target);
+          if (!targetValue || isNaN(targetValue) || targetValue === 0) return acc;
           return acc + ((curr.calculatedValue || 0) / targetValue) * 100;
         }, 0) / detailedResults.length 
       : 0,
     highPerformance: detailedResults.filter(r => {
-      const targetValue = parseFloat(r.target);
-      if (isNaN(targetValue) || targetValue === 0) return false;
+      const targetValue = typeof r.target === 'number' ? r.target : Number(r.target);
+      if (!targetValue || isNaN(targetValue) || targetValue === 0) return false;
       return ((r.calculatedValue || 0) / targetValue) * 100 >= 95;
     }).length,
-    uniqueIndicators: new Set(detailedResults.map(r => r.indicator)).size
+  uniqueIndicators: new Set(detailedResults.map(r => (r.indicator && typeof r.indicator === 'object') ? (r.indicator as any).id : r.indicator)).size
   };
 
   // Años únicos para el filtro
@@ -458,26 +492,20 @@ const ResultadosPage: React.FC = () => {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <motion.div
+        key={loading ? 'loading' : 'content'}
+        initial={{ opacity: 0, y: loading ? 0 : 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.25 }}
+        className="space-y-6"
+      >
         {loading ? (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex justify-center items-center h-64"
-          >
+          <div className="flex justify-center items-center h-64">
             <LoadingSpinner />
-          </motion.div>
+          </div>
         ) : (
-          <motion.div
-            key="content"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
+          <>
             {/* Métricas del dashboard */}
             <DashboardMetrics data={dashboardData} />
 
@@ -513,10 +541,44 @@ const ResultadosPage: React.FC = () => {
               onEdit={handleEditResult}
               onDelete={handleDeleteResult}
               onView={handleViewResult}
+              indicators={indicators}
             />
-          </motion.div>
+
+            {/* Simple pagination controls (if backend provides pagination) */}
+            {pagination && (
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Mostrando {filteredResults.length} de {pagination.count}</div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600 dark:text-gray-400">Página</label>
+                    <div className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded">{page || 1}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600 dark:text-gray-400">Tamaño</label>
+                    <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="px-2 py-1 bg-white dark:bg-gray-800 border rounded">
+                      {[10,25,50,100].map(sz => (
+                        <option key={sz} value={sz}>{sz}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setPage(Math.max(1, (pagination.page || 1) - 1)); }}
+                      disabled={!pagination.previous}
+                      className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+                    >Anterior</button>
+                    <button
+                      onClick={() => { setPage((pagination.page || 1) + 1); }}
+                      disabled={!pagination.next}
+                      className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+                    >Siguiente</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </AnimatePresence>
+      </motion.div>
 
       {/* Modales */}
 
@@ -566,6 +628,49 @@ const ResultadosPage: React.FC = () => {
         loading={crudLoading}
         itemName={selectedResult?.indicatorName || ''}
       />
+
+      {/* Modal ver resultado */}
+      <CrudModal
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedResult(null);
+        }}
+        title="Ver Resultado"
+      >
+        {selectedResult ? (
+          <div className="space-y-3">
+            <div>
+              <strong>Indicador:</strong> {selectedResult.indicatorName} ({selectedResult.indicatorCode})
+            </div>
+            <div>
+              <strong>Sede:</strong> {selectedResult.headquarterName}
+            </div>
+            <div>
+              <strong>Resultado:</strong> {selectedResult.calculatedValue?.toFixed(2) || '0.00'} {selectedResult.measurementUnit}
+            </div>
+            <div>
+              <strong>Meta:</strong> {(() => {
+                const targFromResult = typeof selectedResult.target === 'number' ? selectedResult.target : Number(selectedResult.target ?? NaN);
+                const indicatorObj = selectedResult.indicator && typeof selectedResult.indicator === 'object' ? (selectedResult.indicator as any) : undefined;
+                const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? selectedResult.indicator)) : undefined;
+                const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
+                const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
+                const unit = selectedResult.measurementUnit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || indicatorFromList?.measurementUnit || indicatorFromList?.measurement_unit || '';
+                return (isNaN(targ) ? '—' : targ.toFixed(2)) + (unit ? ` ${unit}` : '');
+              })()}
+            </div>
+            <div>
+              <strong>Año:</strong> {selectedResult.year}
+            </div>
+            <div>
+              <strong>Observaciones:</strong> {('observations' in selectedResult && (selectedResult as any).observations) || '-'}
+            </div>
+          </div>
+        ) : (
+          <div>No hay resultado seleccionado</div>
+        )}
+      </CrudModal>
     </div>
   );
 };

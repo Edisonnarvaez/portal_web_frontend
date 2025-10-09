@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import type { Tercero, CreateTerceroRequest, UpdateTerceroRequest, Pais, Departamento, Municipio, TipoTercero } from '../../domain/entities/Tercero';
 import { TIPOS_DOCUMENTO } from '../../domain/entities/Tercero';
@@ -50,6 +50,7 @@ export default function TerceroForm({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   // Determinar si es persona natural o jurídica
   const esPersonaNatural = ['CC', 'TI', 'CE', 'PA', 'RC'].includes(form.tercero_tipo_documento || '');
@@ -75,6 +76,8 @@ export default function TerceroForm({
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    // Limpiar error general
+    if (generalError) setGeneralError(null);
 
     // Manejar cambios en cascada
     if (name === 'tercero_pais' && processedValue > 0) {
@@ -126,7 +129,7 @@ export default function TerceroForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setGeneralError(null);
     if (!validateForm()) return;
 
     try {
@@ -145,6 +148,25 @@ export default function TerceroForm({
       await onSubmit(data);
     } catch (error: any) {
       console.error('Error al enviar formulario:', error);
+      // If backend sent validation errors concatenated in the message, try to parse
+      const msg = error?.message || 'Error al enviar el formulario';
+      // Backend validation format: "Errores de validación:\nfield: msg1, msg2\nother: ..."
+      if (typeof msg === 'string' && msg.startsWith('Errores de validación:')) {
+        const lines = msg.split('\n').slice(1);
+        const fieldErrors: Record<string, string> = {};
+        lines.forEach(line => {
+          const parts = line.split(':');
+          if (parts.length >= 2) {
+            const field = parts[0].trim();
+            const text = parts.slice(1).join(':').trim();
+            fieldErrors[field] = text;
+          }
+        });
+        setErrors(prev => ({ ...prev, ...fieldErrors }));
+        setGeneralError('Por favor revisa los errores en el formulario y vuelve a intentar');
+      } else {
+        setGeneralError(msg);
+      }
     }
   };
 
@@ -165,6 +187,11 @@ export default function TerceroForm({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {generalError && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-sm text-red-700 dark:text-red-300">
+              {generalError}
+            </div>
+          )}
           {/* Información básica */}
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <div>
