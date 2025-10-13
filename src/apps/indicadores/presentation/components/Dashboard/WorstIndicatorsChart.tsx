@@ -23,13 +23,14 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
   const ranked = useMemo(() => {
     return data
       .map((item) => {
-        // 🔧 Validar y convertir valores a números
-  const calculatedValue = safeNumber(item.calculatedValue ?? item.calculated_value ?? 0);
-  const target = safeNumber(item.target ?? getIndicatorField(item, 'target', (item as any).target ?? 0));
-  const trend = String(item.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase();
+        const calculatedValue = safeNumber(item.calculatedValue ?? item.calculated_value ?? item.value ?? 0);
+        const target = safeNumber(item.target ?? getIndicatorField(item, 'target', (item as any).target ?? 0));
+        const trend = String(item.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase();
 
-        let diferencia = typeof item.diferencia === 'number' ? item.diferencia : (calculatedValue - target);
-        if (typeof item.diferencia !== 'number') {
+        let diferencia: number;
+        if (typeof item.diferencia === 'number' && !isNaN(item.diferencia)) {
+          diferencia = item.diferencia;
+        } else {
           const direction = trend === 'decreasing' ? -1 : 1;
           diferencia = (calculatedValue - target) * direction;
         }
@@ -44,8 +45,9 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
           displayName: `${item.indicatorCode || (item.indicator && item.indicator.code) || item.code || 'IND'} - ${item.headquarterName || (item.headquarters && item.headquarters.name) || 'Sin sede'}`
         };
       })
-  .filter(item => typeof item.diferencia === 'number' && !isNaN(item.diferencia))
-  .sort((a, b) => a.diferencia - b.diferencia)
+      .filter(item => typeof item.diferencia === 'number' && !isNaN(item.diferencia))
+      // sort ascending so worst (most negative after direction normalization) come first
+      .sort((a, b) => a.diferencia - b.diferencia)
       .slice(0, top);
   }, [data, top]);
 

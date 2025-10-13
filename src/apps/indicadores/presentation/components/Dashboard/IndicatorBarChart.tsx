@@ -18,12 +18,16 @@ export default function IndicatorBarChart({ data, loading }: Props) {
     const chartData = data.map((item) => {
         const sede = getHeadquarterField(item, 'name', getHeadquarterField(item, 'headquarterName', 'Sin sede'));
         const indicador = getIndicatorField(item, 'name', getIndicatorField(item, 'indicatorName', 'Sin nombre'));
-        const target = getIndicatorField(item, 'target', (item as any).target ?? 0);
+        const target = safeNumber(getIndicatorField(item, 'target', (item as any).target ?? 0));
+        const resultado = safeNumber((item as any).calculatedValue ?? item.calculated_value ?? item.value ?? 0);
 
         return {
             sede: `${sede} - ${indicador}`,
-            resultado: safeNumber((item as any).calculatedValue),
-            meta: safeNumber(target),
+            resultado,
+            meta: target,
+            // expose trend so tooltips/legends can use it if needed
+            trend: String(item.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase(),
+            compliant: typeof item.compliant === 'boolean' ? item.compliant : undefined
         };
     });
 

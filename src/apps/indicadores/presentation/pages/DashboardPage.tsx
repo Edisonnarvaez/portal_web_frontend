@@ -30,31 +30,34 @@ export default function DashboardPage() {
     // 🔧 Extraer valores únicos para filtros
     const sedes = useMemo(() => {
         if (safeData.length === 0) return [];
-    return [...new Set(safeData.map((item) => (item as any).headquarterName || ((item as any).headquarters && (item as any).headquarters.name) || ''))].filter(Boolean);
+        const values = [...new Set(safeData.map((item) => (item as any).headquarterName || ((item as any).headquarters && (item as any).headquarters.name) || ''))].filter(Boolean);
+        return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
     const indicadores = useMemo(() => {
         if (safeData.length === 0) return [];
         // Mostrar código + nombre cuando exista el código
         const fmt = (it: any) => formatIndicatorLabel(it);
-        return [...new Set(safeData.map((item) => fmt(item)))].filter(Boolean);
+        const values = [...new Set(safeData.map((item) => fmt(item)))].filter(Boolean);
+        return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
     const unidades = useMemo(() => {
         if (safeData.length === 0) return [];
-    return [...new Set(safeData.map((item) => (item as any).measurementUnit || ((item as any).indicator && (item as any).indicator.measurementUnit) || (item as any).measurement_unit || ''))].filter(Boolean);
+        const values = [...new Set(safeData.map((item) => (item as any).measurementUnit || ((item as any).indicator && (item as any).indicator.measurementUnit) || (item as any).measurement_unit || ''))].filter(Boolean);
+        return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
     const frecuencias = useMemo(() => {
         if (safeData.length === 0) return [];
-    return [...new Set(safeData.map((item) => (item as any).measurementFrequency || ((item as any).indicator && (item as any).indicator.measurementFrequency) || (item as any).measurement_frequency || ''))].filter(Boolean);
+        const values = [...new Set(safeData.map((item) => (item as any).measurementFrequency || ((item as any).indicator && (item as any).indicator.measurementFrequency) || (item as any).measurement_frequency || ''))].filter(Boolean);
+        return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
     const anios = useMemo(() => {
         if (safeData.length === 0) return [];
-        return [...new Set(safeData.map((item) => String(item.year)))]
-            .filter(Boolean)
-            .sort((a, b) => Number(b) - Number(a));
+        const values = [...new Set(safeData.map((item) => String(item.year)))].filter(Boolean).sort((a, b) => Number(b) - Number(a));
+        return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
     // Filtro de datos

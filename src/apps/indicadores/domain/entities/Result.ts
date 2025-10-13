@@ -25,8 +25,13 @@ export interface DetailedResult extends Result {
   measurementUnit: string;
   measurementFrequency: string;
   // Target should be numeric according to the backend contract
-  target: number;
+  target?: number;
   calculationMethod: string;
+  // Additional computed/enriched fields
+  trend?: string | null;
+  compliant?: boolean | undefined;
+  diferencia?: number | undefined;
+  calculatedValue?: number | undefined;
 }
 
 export interface CreateResultRequest {

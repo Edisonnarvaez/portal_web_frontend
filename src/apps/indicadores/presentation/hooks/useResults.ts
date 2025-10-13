@@ -269,6 +269,27 @@ export const useResults = () => {
         const measurementUnit = item.measurementUnit || item.measurement_unit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || '';
         const measurementFrequency = item.measurementFrequency || item.measurement_frequency || indicatorObj?.measurementFrequency || indicatorObj?.measurement_frequency || '';
 
+        // Trend resolution: possible fields from item or indicator object
+        const trendRaw = (indicatorObj && (indicatorObj.trend ?? indicatorObj.trend_type)) ?? item.trend ?? item.trend_direction ?? undefined;
+        const trend = typeof trendRaw === 'string' ? trendRaw.toLowerCase() : trendRaw;
+
+        // Calculated value can live under several keys
+        const rawCalc = item.calculatedValue ?? item.calculated_value ?? item.value ?? item.result ?? 0;
+        const calculatedValue = Number(String(rawCalc));
+
+        // Determine compliance and difference respecting trend direction
+        let compliant: boolean | undefined = undefined;
+        if (parsedTarget !== undefined && !isNaN(parsedTarget) && !isNaN(calculatedValue) && parsedTarget !== 0) {
+          if (String(trend).toLowerCase() === 'decreasing' || String(trend).toLowerCase() === 'desc' || String(trend).toLowerCase() === 'down') {
+            compliant = calculatedValue <= parsedTarget;
+          } else {
+            compliant = calculatedValue >= parsedTarget;
+          }
+        }
+
+        const direction = (String(trend).toLowerCase() === 'decreasing' || String(trend).toLowerCase() === 'desc' || String(trend).toLowerCase() === 'down') ? -1 : 1;
+        const diferencia = (Number(calculatedValue || 0) - Number(parsedTarget || 0)) * direction;
+
         return {
           ...item,
           indicatorName: resolvedIndicatorName,
@@ -277,7 +298,11 @@ export const useResults = () => {
           measurementUnit,
           measurementFrequency,
           target: parsedTarget,
-          calculationMethod: item.calculationMethod || item.calculation_method || ''
+          calculationMethod: item.calculationMethod || item.calculation_method || '',
+          trend,
+          calculatedValue,
+          compliant,
+          diferencia
         } as DetailedResult;
       });
 

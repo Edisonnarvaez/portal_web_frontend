@@ -16,9 +16,12 @@ export default function SummaryCards({ data }: Props) {
   
   // 🔧 Calcular cumplidos de forma segura
   const cumplidos = data.filter((d) => {
+    if (typeof d.compliant === 'boolean') return d.compliant;
     const calculatedValue = safeGetNumber(d.calculatedValue);
     const target = safeGetNumber(d.target || d.indicator?.target);
-    return calculatedValue >= target;
+    const trend = String(d.trend || (d.indicator && d.indicator.trend) || '').toLowerCase();
+    if (!target || isNaN(calculatedValue) || isNaN(target)) return false;
+    return trend === 'decreasing' ? (calculatedValue <= target) : (calculatedValue >= target);
   }).length;
   
   const noCumplidos = total - cumplidos;

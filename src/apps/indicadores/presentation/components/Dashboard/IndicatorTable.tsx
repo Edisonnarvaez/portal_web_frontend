@@ -84,7 +84,11 @@ export default function IndicatorTable({ data, loading }: Props) {
             
             // 📅 Fechas
             creationDate: item.creationDate,
-            updateDate: item.updateDate
+            updateDate: item.updateDate,
+            // computed fields
+            compliant: typeof item.compliant === 'boolean' ? item.compliant : undefined,
+            trend: item.trend || undefined,
+            diferencia: typeof item.diferencia === 'number' ? item.diferencia : undefined
         };
         
         return processedItem;

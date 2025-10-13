@@ -28,8 +28,8 @@ export default function TimeSeriesChart({ data, loading }: Props) {
   const chartData = data
     .map((item) => ({
       label: formatLabel(item),
-      resultado: item.calculatedValue,
-      meta: item.target,
+      resultado: Number(item.calculatedValue ?? item.calculated_value ?? item.value ?? 0),
+      meta: Number(item.target ?? 0),
     }))
     .sort((a, b) => a.label.localeCompare(b.label)); // ordenar por fecha/etiqueta
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   HiTableCells,
@@ -12,6 +12,7 @@ import {
 } from 'react-icons/hi2';
 
 import { useResults } from '../hooks/useResults'; // 👈 Solo usar este hook
+import FilterSelect from '../components/Shared/FilterSelect';
 import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
 
@@ -91,9 +92,10 @@ const FilterPanel = ({
   selectedYear, 
   onYearChange, 
   onClearFilters,
-  indicators,
-  headquarters,
-  years 
+  indicatorOptions,
+  headquarterOptions,
+  yearOptions
+  , selectedTrend, onTrendChange, trendOptions
 }: any) => (
   <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
     <div className="flex items-center gap-2 mb-4">
@@ -116,47 +118,33 @@ const FilterPanel = ({
         />
       </div>
 
-      {/* Indicador */}
-      <select
+      <FilterSelect
+        label="Indicador"
+        options={indicatorOptions}
         value={selectedIndicator}
-        onChange={(e) => onIndicatorChange(e.target.value)}
-        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-      >
-        <option value="">Todos los indicadores</option>
-        {indicators.map((indicator: any) => (
-          <option key={indicator.id} value={indicator.id}>
-            {indicator.name}
-          </option>
-        ))}
-      </select>
+        onChange={onIndicatorChange}
+      />
 
-      {/* Sede */}
-      <select
+      <FilterSelect
+        label="Sede"
+        options={headquarterOptions}
         value={selectedHeadquarters}
-        onChange={(e) => onHeadquartersChange(e.target.value)}
-        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-      >
-        <option value="">Todas las sedes</option>
-        {headquarters.map((hq: any) => (
-          <option key={hq.id} value={hq.id}>
-            {hq.name}
-          </option>
-        ))}
-      </select>
+        onChange={onHeadquartersChange}
+      />
 
-      {/* Año */}
-      <select
+      <FilterSelect
+        label="Año"
+        options={yearOptions}
         value={selectedYear}
-        onChange={(e) => onYearChange(e.target.value)}
-        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-      >
-        <option value="">Todos los años</option>
-        {years.map((year: any) => (
-          <option key={year.value} value={year.value}>
-            {year.label}
-          </option>
-        ))}
-      </select>
+        onChange={onYearChange}
+      />
+
+      <FilterSelect
+        label="Tendencia"
+        options={trendOptions}
+        value={selectedTrend}
+        onChange={onTrendChange}
+      />
 
       {/* Limpiar filtros */}
       <button
@@ -321,6 +309,7 @@ const ResultadosPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedHeadquarters, setSelectedHeadquarters] = useState('');
+  const [selectedTrend, setSelectedTrend] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -347,6 +336,16 @@ const ResultadosPage: React.FC = () => {
     updateResult,
     deleteResult
   } = useResults();
+
+  // Opciones para filtros (label/value)
+  const headquarterOptions = useMemo(() => (headquarters || []).map((hq: any) => ({ label: hq.name, value: String(hq.id) })), [headquarters]);
+  const indicatorOptions = useMemo(() => (indicators || []).map((ind: any) => ({ label: `${ind.code ? ind.code + ' - ' : ''}${ind.name}`, value: String(ind.id) })), [indicators]);
+  const yearOptions = useMemo(() => Array.from(new Set(detailedResults.map(r => r.year))).sort((a,b)=>b-a).map(y=>({label:String(y), value:String(y)})), [detailedResults]);
+  // Trend options extracted from indicators list (unique), normalized to lowercase labels
+  const trendOptions = useMemo(() => {
+    const all = (indicators || []).map((ind:any) => ind.trend || ind.trend_type).filter(Boolean).map((t:any) => String(t).toLowerCase());
+    return Array.from(new Set(all)).map(t => ({ label: String(t), value: String(t) }));
+  }, [indicators]);
 
   // When pagination params change, fetch from server if supported
   React.useEffect(() => {
@@ -379,32 +378,38 @@ const ResultadosPage: React.FC = () => {
   const matchesIndicator = selectedIndicator === '' || resultIndicatorId === String(selectedIndicator);
   const matchesHeadquarters = selectedHeadquarters === '' || resultHeadquarterId === String(selectedHeadquarters);
     const matchesYear = selectedYear === '' || String(result.year) === selectedYear;
+    const resultTrend = (result.trend && typeof result.trend === 'string') ? String(result.trend).toLowerCase() : '';
+    const matchesTrend = selectedTrend === '' || resultTrend === String(selectedTrend).toLowerCase();
 
-    return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear;
+    return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear && matchesTrend;
   });
 
   // Métricas del dashboard
   const dashboardData = {
     totalResults: detailedResults.length,
-    avgCompliance: detailedResults.length > 0 
-      ? detailedResults.reduce((acc, curr) => {
+    avgCompliance: detailedResults.length > 0
+      ? (detailedResults.reduce((acc, curr) => {
           const targetValue = typeof curr.target === 'number' ? curr.target : Number(curr.target);
-          if (!targetValue || isNaN(targetValue) || targetValue === 0) return acc;
-          return acc + ((curr.calculatedValue || 0) / targetValue) * 100;
-        }, 0) / detailedResults.length 
+          const calc = Number(curr.calculatedValue ?? 0);
+          if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return acc;
+          const isDecreasing = String(curr.trend || '').toLowerCase() === 'decreasing' || String(curr.trend || '').toLowerCase() === 'desc' || String(curr.trend || '').toLowerCase() === 'down';
+          const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
+          // ratio * 100 gives percentage of goal achieved depending on trend
+          return acc + (ratio * 100);
+        }, 0) / detailedResults.length)
       : 0,
     highPerformance: detailedResults.filter(r => {
       const targetValue = typeof r.target === 'number' ? r.target : Number(r.target);
-      if (!targetValue || isNaN(targetValue) || targetValue === 0) return false;
-      return ((r.calculatedValue || 0) / targetValue) * 100 >= 95;
+      const calc = Number(r.calculatedValue ?? 0);
+      if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return false;
+      const isDecreasing = String(r.trend || '').toLowerCase() === 'decreasing' || String(r.trend || '').toLowerCase() === 'desc' || String(r.trend || '').toLowerCase() === 'down';
+      const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
+      return (ratio * 100) >= 95;
     }).length,
   uniqueIndicators: new Set(detailedResults.map(r => (r.indicator && typeof r.indicator === 'object') ? (r.indicator as any).id : r.indicator)).size
   };
 
-  // Años únicos para el filtro
-  const years = Array.from(new Set(detailedResults.map(r => r.year)))
-    .sort((a, b) => b - a)
-    .map(year => ({ value: year, label: year.toString() }));
+  // NOTE: yearOptions is computed above and used for the year filter
 
   // Handlers
   const handleCreateResult = () => {
@@ -519,10 +524,13 @@ const ResultadosPage: React.FC = () => {
               onHeadquartersChange={setSelectedHeadquarters}
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
+              selectedTrend={selectedTrend}
+              onTrendChange={setSelectedTrend}
+              trendOptions={trendOptions}
               onClearFilters={handleClearFilters}
-              indicators={indicators}
-              headquarters={headquarters}
-              years={years}
+              indicatorOptions={indicatorOptions}
+              headquarterOptions={headquarterOptions}
+              yearOptions={yearOptions}
             />
 
             {/* Estadísticas */}
