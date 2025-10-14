@@ -15,6 +15,7 @@ import { useResults } from '../hooks/useResults'; // 👈 Solo usar este hook
 import FilterSelect from '../components/Shared/FilterSelect';
 import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
+import { FaSearch, FaTimes } from 'react-icons/fa';
 
 // Componentes auxiliares reutilizables
 const LoadingSpinner = () => (
@@ -82,77 +83,97 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, loading, itemName }: a
   );
 };
 
-const FilterPanel = ({ 
-  searchTerm, 
-  onSearchChange, 
-  selectedIndicator, 
-  onIndicatorChange, 
-  selectedHeadquarters, 
-  onHeadquartersChange, 
-  selectedYear, 
-  onYearChange, 
+const FilterPanel = ({
+  searchTerm,
+  onSearchChange,
+  selectedIndicator,
+  onIndicatorChange,
+  selectedHeadquarters,
+  onHeadquartersChange,
+  selectedYear,
+  onYearChange,
   onClearFilters,
   indicatorOptions,
   headquarterOptions,
-  yearOptions
-  , selectedTrend, onTrendChange, trendOptions
+  yearOptions,
+  selectedTrend,
+  onTrendChange,
+  trendOptions
 }: any) => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-    <div className="flex items-center gap-2 mb-4">
-      <HiAdjustmentsHorizontal className="w-5 h-5 text-green-600" />
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-        Filtros
-      </h3>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-      {/* Búsqueda */}
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-6`}>
       <div className="relative">
-        <HiMagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           placeholder="Buscar resultados..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
         />
       </div>
 
-      <FilterSelect
-        label="Indicador"
-        options={indicatorOptions}
-        value={selectedIndicator}
-        onChange={onIndicatorChange}
-      />
+      <div>
+        <select
+          value={selectedIndicator}
+          onChange={(e) => onIndicatorChange(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+        >
+          <option value="">Todos los indicadores</option>
+          {(indicatorOptions || []).map((opt: any) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
 
-      <FilterSelect
-        label="Sede"
-        options={headquarterOptions}
-        value={selectedHeadquarters}
-        onChange={onHeadquartersChange}
-      />
+      <div>
+        <select
+          value={selectedHeadquarters}
+          onChange={(e) => onHeadquartersChange(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+        >
+          <option value="">Todas las sedes</option>
+          {(headquarterOptions || []).map((opt: any) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
 
-      <FilterSelect
-        label="Año"
-        options={yearOptions}
-        value={selectedYear}
-        onChange={onYearChange}
-      />
+      <div>
+        <select
+          value={selectedYear}
+          onChange={(e) => onYearChange(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+        >
+          <option value="">Todos los años</option>
+          {(yearOptions || []).map((opt: any) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
 
-      <FilterSelect
-        label="Tendencia"
-        options={trendOptions}
-        value={selectedTrend}
-        onChange={onTrendChange}
-      />
+      <div>
+        <select
+          value={selectedTrend}
+          onChange={(e) => onTrendChange(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+        >
+          <option value="">Todas las tendencias</option>
+          {(trendOptions || []).map((opt: any) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
 
-      {/* Limpiar filtros */}
-      <button
-        onClick={onClearFilters}
-        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200"
-      >
-        Limpiar filtros
-      </button>
+      <div className="flex items-center">
+        <button
+          onClick={onClearFilters}
+          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 justify-center w-full"
+        >
+          <FaTimes size={14} />
+          Limpiar
+        </button>
+      </div>
     </div>
   </div>
 );

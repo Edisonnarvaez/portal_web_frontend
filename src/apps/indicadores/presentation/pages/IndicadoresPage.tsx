@@ -178,6 +178,8 @@ const IndicadoresPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedFrequency, setSelectedFrequency] = useState('');
+  const [selectedProcessFilter, setSelectedProcessFilter] = useState('');
+  const [selectedTrendFilter, setSelectedTrendFilter] = useState('');
 
   // Estados de modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -198,14 +200,21 @@ const IndicadoresPage: React.FC = () => {
     deleteIndicator
   } = useIndicators();
 
+  // process options for the filter (from processes list)
+  const processOptions = (processes || []).map((p: any) => ({ label: p.name, value: String(p.id) }));
+  // trend options based on indicators data
+  const trendOptions = Array.from(new Set((indicators || []).map((i:any) => (i.trend || '').toString().toLowerCase()).filter(Boolean))).map(t => ({ label: t, value: t }));
+
   // Filtros aplicados
   const filteredIndicators = indicators.filter((indicator: Indicator) => {
     const matchesSearch = indicator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          indicator.code?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesStatus = selectedStatus === '' || indicator.status?.toString() === selectedStatus;
     const matchesFrequency = selectedFrequency === '' || indicator.measurementFrequency === selectedFrequency;
+    const matchesProcess = selectedProcessFilter === '' || String(indicator.process ?? '') === selectedProcessFilter;
+    const matchesTrend = selectedTrendFilter === '' || String((indicator.trend || '').toLowerCase()) === selectedTrendFilter;
 
-    return matchesSearch && matchesStatus && matchesFrequency;
+    return matchesSearch && matchesStatus && matchesFrequency && matchesProcess && matchesTrend;
   });
 
   // Handlers
@@ -322,6 +331,12 @@ const IndicadoresPage: React.FC = () => {
               selectedFrequency={selectedFrequency}
               onFrequencyChange={setSelectedFrequency}
               onClearFilters={handleClearFilters}
+              processOptions={processOptions}
+              selectedProcess={selectedProcessFilter}
+              onProcessChange={setSelectedProcessFilter}
+              trendOptions={trendOptions}
+              selectedTrend={selectedTrendFilter}
+              onTrendChange={setSelectedTrendFilter}
             />
 
             {/* Estadísticas */}

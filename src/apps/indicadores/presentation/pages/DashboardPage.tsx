@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useResultsData } from "../hooks/useResultsData";
-import FilterSelect from "../components/Shared/FilterSelect";
+// using native selects for dashboard filters
 import { formatIndicatorLabel } from '../utils/dataHelpers';
 import IndicatorBarChart from "../components/Dashboard/IndicatorBarChart";
 import TimeSeriesChart from "../components/Dashboard/TimeSeriesChart";
@@ -54,11 +54,7 @@ export default function DashboardPage() {
         return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
-    const anios = useMemo(() => {
-        if (safeData.length === 0) return [];
-        const values = [...new Set(safeData.map((item) => String(item.year)))].filter(Boolean).sort((a, b) => Number(b) - Number(a));
-        return values.map((v: string) => ({ label: v, value: v }));
-    }, [safeData]);
+    // años are not needed as a separate dropdown in this layout; keep code if later required
 
     // Filtro de datos
     const filteredData = useMemo(() => {
@@ -154,50 +150,73 @@ export default function DashboardPage() {
             </div>
 
             {/* Filtros */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        Filtros
-                    </h3>
-                    <button
-                        onClick={clearFilters}
-                        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                    >
-                        Limpiar filtros
-                    </button>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                    <FilterSelect 
-                        label="Sede" 
-                        options={sedes} 
-                        value={selectedSede} 
-                        onChange={setSelectedSede} 
-                    />
-                    <FilterSelect 
-                        label="Indicador" 
-                        options={indicadores} 
-                        value={selectedIndicador} 
-                        onChange={setSelectedIndicador} 
-                    />
-                    <FilterSelect 
-                        label="Unidad de Medida" 
-                        options={unidades} 
-                        value={selectedUnidad} 
-                        onChange={setSelectedUnidad} 
-                    />
-                    <FilterSelect 
-                        label="Frecuencia" 
-                        options={frecuencias} 
-                        value={selectedFrecuencia} 
-                        onChange={setSelectedFrecuencia} 
-                    />
-                    <FilterSelect 
-                        label="Año" 
-                        options={anios} 
-                        value={selectedAnio} 
-                        onChange={setSelectedAnio} 
-                    />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-6`}>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Buscar en dashboard..."
+                            value={""}
+                            onChange={() => {}}
+                            className="pl-4 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+                        />
+                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                            {/* optionally an icon could go here */}
+                        </div>
+                    </div>
+
+                    <div>
+                        <select
+                            value={selectedSede}
+                            onChange={(e) => setSelectedSede(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+                        >
+                            <option value="">Todas las sedes</option>
+                            {sedes.map((s:any)=> <option key={s.value} value={s.value}>{s.label}</option>)}
+                        </select>
+                    </div>
+
+                    <div>
+                        <select
+                            value={selectedIndicador}
+                            onChange={(e) => setSelectedIndicador(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+                        >
+                            <option value="">Todos los indicadores</option>
+                            {indicadores.map((i:any)=> <option key={i.value} value={i.value}>{i.label}</option>)}
+                        </select>
+                    </div>
+
+                    <div>
+                        <select
+                            value={selectedUnidad}
+                            onChange={(e) => setSelectedUnidad(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+                        >
+                            <option value="">Todas las unidades</option>
+                            {unidades.map((u:any)=> <option key={u.value} value={u.value}>{u.label}</option>)}
+                        </select>
+                    </div>
+
+                    <div>
+                        <select
+                            value={selectedFrecuencia}
+                            onChange={(e) => setSelectedFrecuencia(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
+                        >
+                            <option value="">Todas las frecuencias</option>
+                            {frecuencias.map((f:any)=> <option key={f.value} value={f.value}>{f.label}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center">
+                        <button
+                            onClick={clearFilters}
+                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 justify-center w-full"
+                        >
+                            Clear
+                        </button>
+                    </div>
                 </div>
             </div>
 
