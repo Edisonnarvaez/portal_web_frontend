@@ -205,7 +205,11 @@ export default function DashboardPage() {
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
                         >
                             <option value="">Todas las frecuencias</option>
-                            {frecuencias.map((f:any)=> <option key={f.value} value={f.value}>{f.label}</option>)}
+                            <option value="monthly">Mensual</option>
+                            <option value="quarterly">Trimestral</option>
+                            <option value="semiannual">Semestral</option>
+                            <option value="annual">Anual</option>
+                            {/*{frecuencias.map((f:any)=> <option key={f.value} value={f.value}>{f.label}</option>)}*/}
                         </select>
                     </div>
 

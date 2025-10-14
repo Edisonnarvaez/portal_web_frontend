@@ -208,7 +208,7 @@ const IndicadoresPage: React.FC = () => {
   // Filtros aplicados
   const filteredIndicators = indicators.filter((indicator: Indicator) => {
     const matchesSearch = indicator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         indicator.code?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+                          indicator.code?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesStatus = selectedStatus === '' || indicator.status?.toString() === selectedStatus;
     const matchesFrequency = selectedFrequency === '' || indicator.measurementFrequency === selectedFrequency;
     const matchesProcess = selectedProcessFilter === '' || String(indicator.process ?? '') === selectedProcessFilter;

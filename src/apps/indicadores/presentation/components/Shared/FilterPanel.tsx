@@ -93,9 +93,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
             >
               <option value="">Todas las tendencias</option>
-              {trendOptions.map((t: { label: string; value: string }) => (
+              <option value="increasing">Creciente</option>
+              <option value="decreasing">Decreciente</option>
+              {/*{trendOptions.map((t: { label: string; value: string }) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
+              ))}*/}
             </select>
           </div>
         )}
