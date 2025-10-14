@@ -494,6 +494,49 @@ const ResultadosPage: React.FC = () => {
     setSelectedYear('');
   };
 
+  // Bulk CSV preview and upload state
+  const [bulkPreviewOpen, setBulkPreviewOpen] = useState(false);
+  const [bulkRows, setBulkRows] = useState<any[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      const rows = e.detail?.rows || [];
+      setBulkRows(rows);
+      setBulkPreviewOpen(true);
+    };
+    window.addEventListener('bulkCsvPreview', handler as EventListener);
+    return () => window.removeEventListener('bulkCsvPreview', handler as EventListener);
+  }, []);
+
+  const handleSubmitBulk = async () => {
+    if (!bulkRows || bulkRows.length === 0) return;
+    setBulkUploading(true);
+    const { mapRowToCreatePayload } = await import('../utils/csvUtils');
+    const results: { ok: boolean; errors?: string[] }[] = [];
+    for (const r of bulkRows) {
+      if (!r.valid) {
+        results.push({ ok: false, errors: r.errors });
+        continue;
+      }
+      try {
+        const payload = mapRowToCreatePayload(r.row);
+        const ok = await createResult(payload as any);
+        results.push({ ok });
+      } catch (err: any) {
+        results.push({ ok: false, errors: [err?.message || String(err)] });
+      }
+    }
+    setBulkUploading(false);
+    // Refresh results after bulk upload
+    if (typeof fetchPaginatedResults === 'function') await fetchPaginatedResults({ page: 1, page_size: pageSize });
+    setBulkPreviewOpen(false);
+    // Show brief summary
+    const successCount = results.filter(r => r.ok).length;
+    const failCount = results.length - successCount;
+    alert(`Bulk upload finished: ${successCount} success, ${failCount} failed`);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -515,6 +558,55 @@ const ResultadosPage: React.FC = () => {
             <HiPlus className="w-5 h-5" />
             <span>Nuevo Resultado</span>
           </button>
+                  {/* Bulk upload controls */}
+                  <div className="ml-4 flex items-center gap-3">
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Download template CSV
+                        const headers = ['headquarters','indicator','numerator','denominator','year','month','quarter','semester','user'];
+                        const sample = [headers.join(',') , '1,2,10,100,2025,1,1,1,1'];
+                        const blob = new Blob([sample.join('\n')], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'resultados_template.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      Descargar plantilla CSV
+                    </a>
+
+                    <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer">
+                      Cargar CSV
+                      <input type="file" accept=".csv" className="hidden" id="csvUploadInput"
+                        onChange={async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (!file) return;
+                          const text = await file.text();
+                          try {
+                            const { parseCSV, validateRowForCreate, mapRowToCreatePayload } = await import('../utils/csvUtils');
+                            const rows = parseCSV(text);
+                            // Validate each row
+                            const validated = rows.map((r,i) => ({ row: r, ...validateRowForCreate(r), __index: i+2 }));
+                            // Store preview in state (use a custom event to open preview modal)
+                            const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
+                            window.dispatchEvent(evt);
+                          } catch (err) {
+                            console.error('Error parsing CSV', err);
+                            alert('Error al parsear el CSV. Revisa el archivo.');
+                          }
+                          // reset input
+                          (e.target as HTMLInputElement).value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
         </div>
       </div>
 
@@ -700,6 +792,39 @@ const ResultadosPage: React.FC = () => {
           <div>No hay resultado seleccionado</div>
         )}
       </CrudModal>
+
+        {/* Bulk CSV preview modal */}
+        <CrudModal isOpen={bulkPreviewOpen} onClose={() => setBulkPreviewOpen(false)} title="Vista previa de carga masiva">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Revise las filas detectadas y los errores de validación antes de confirmar la carga.</p>
+            <div className="max-h-64 overflow-auto border rounded">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
+                  <tr>
+                    <th className="px-2 py-1 text-left">Fila</th>
+                    <th className="px-2 py-1 text-left">Valida</th>
+                    <th className="px-2 py-1 text-left">Errores</th>
+                    <th className="px-2 py-1 text-left">Datos (preview)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bulkRows.map((r: any, idx: number) => (
+                    <tr key={idx} className={`${r.valid ? '' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                      <td className="px-2 py-1 align-top">{r.__index}</td>
+                      <td className="px-2 py-1 align-top">{r.valid ? 'Sí' : 'No'}</td>
+                      <td className="px-2 py-1 align-top text-xs text-red-700 dark:text-red-300">{(r.errors || []).join('; ')}</td>
+                      <td className="px-2 py-1 align-top font-mono text-xs">{JSON.stringify(r.row)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setBulkPreviewOpen(false)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Cancelar</button>
+              <button onClick={handleSubmitBulk} disabled={bulkUploading} className="px-4 py-2 bg-blue-600 text-white rounded">{bulkUploading ? 'Cargando...' : 'Confirmar carga'}</button>
+            </div>
+          </div>
+        </CrudModal>
     </div>
   );
 };
