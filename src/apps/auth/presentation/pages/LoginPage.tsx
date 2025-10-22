@@ -33,7 +33,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Panel izquierdo - Ajustado para mejor visualización en móviles */}
-      <div className="w-full lg:w-7/12 min-h-[40vh] lg:min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-12 bg-gradient-to-br from-slate-700 via-blue-800 to-blue-900 relative">
+      <div className="w-full lg:w-7/12 min-h-[40vh] lg:min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-12 bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 relative">
         <div className="absolute inset-0 opacity-10 bg-pattern"></div>
         
         <div className="relative z-10 w-full max-w-xl mx-auto">
@@ -45,7 +45,7 @@ export default function LoginPage() {
                 className="h-12 sm:h-14 w-auto"
               />
               <h1 className="text-xl sm:text-2xl font-medium text-white">
-                Portal de Gestión Institucional PILOT
+                Portal de Gestión Institucional
               </h1>
             </div>
             

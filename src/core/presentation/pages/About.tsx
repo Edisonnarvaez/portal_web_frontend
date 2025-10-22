@@ -88,7 +88,7 @@ const About: React.FC = () => {
         variants={sectionVariants}
         className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300 mb-10 text-center"
       >
-        Portal Institucional{" "}
+        Portal de Gestión Institucional{" "}
         <span className="text-blue-500 dark:text-blue-400">
           PILOT
         </span>
@@ -103,7 +103,7 @@ const About: React.FC = () => {
           <FaLightbulb className="mr-2" /> ¿Qué es el Portal Gestión Institucional PILOT?
         </div>
         <p className="text-base sm:text-lg leading-relaxed text-justify text-gray-800 dark:text-gray-200">
-          El <strong>Portal Gestión Institucional PILOT</strong> es una
+          El <strong>Portal de Gestión Institucional PILOT</strong> es una
           plataforma moderna diseñada para centralizar y facilitar el acceso a
           todas las tecnologías y recursos utilizados en la gestión diaria de la
           empresa. Su objetivo es ofrecer un espacio único donde los
@@ -124,7 +124,7 @@ const About: React.FC = () => {
         variants={shouldReduceMotion ? {} : containerVariants}
         className="mb-12"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
           {[
             {
               icon: (
@@ -147,13 +147,7 @@ const About: React.FC = () => {
               title: "Indicadores y Resultados",
               text: "Visualización y seguimiento de indicadores clave para la toma de decisiones.",
             },
-            {
-              icon: (
-                <FaUniversity className="text-blue-500 text-4xl mb-3 mx-auto" />
-              ),
-              title: "Desarrollo Académico",
-              text: "Proyecto realizado en colaboración con pasantes SENA y bajo la dirección de un ingeniero de software.",
-            },
+            
           ].map((item, index) => (
             <motion.div
               key={index}
@@ -263,8 +257,8 @@ const About: React.FC = () => {
         <div className="flex items-center mb-4 text-blue-700 dark:text-blue-300 text-xl font-semibold">
           <FaUniversity className="mr-2" /> Créditos
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Equipo de desarrollo */}
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+          {/* Desarrollado por */}
           <motion.div
             variants={shouldReduceMotion ? {} : cardVariants}
             whileHover={
@@ -278,16 +272,14 @@ const About: React.FC = () => {
             <div className="flex items-center mb-4">
               <FaUniversity className="text-blue-500 dark:text-blue-300 text-2xl mr-2" />
               <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300">
-                Equipo de desarrollo
+                Desarrollado por
               </h3>
             </div>
             <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200"><a href="https://portafolio-tau-flax.vercel.app/"target="_blank" rel="noopener noreferrer">
               <strong>Edison Stiven Narvaez </strong>
               <br />
-              Ingeniero de Software
-              <br />
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                Lider del proyecto
+                Ingeniero de Software
               </span>
               <br />
               
@@ -297,29 +289,6 @@ const About: React.FC = () => {
             </p>
           </motion.div>
 
-          {/* Agradecimientos */}
-          <motion.div
-            variants={shouldReduceMotion ? {} : cardVariants}
-            whileHover={
-              shouldReduceMotion
-                ? {}
-                : { y: -5, boxShadow: "0 8px 16px rgba(37, 99, 235, 0.2)" }
-            }
-            transition={{ type: "spring", stiffness: 300 }}
-            className="bg-gradient-to-br from-white dark:from-gray-900 to-blue-50 dark:to-gray-800 shadow rounded-lg p-6"
-          >
-            <div className="flex items-center mb-4">
-              <FaHandsHelping className="text-blue-500 dark:text-blue-300 text-2xl mr-2" />
-              <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300">
-                Agradecimientos
-              </h3>
-            </div>
-            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
-              Agradecimientos especiales al ingeniero{" "}
-              <strong>Orlando Garcia</strong> por su invaluable apoyo durante el
-              desarrollo del proyecto.
-            </p>
-          </motion.div>
         </div>
       </motion.section>
     </motion.div>
