@@ -90,7 +90,7 @@ const About: React.FC = () => {
       >
         Portal Institucional{" "}
         <span className="text-blue-500 dark:text-blue-400">
-          Red Medicron IPS
+          PILOT
         </span>
       </motion.h1>
 
@@ -100,10 +100,10 @@ const About: React.FC = () => {
         className="mb-12"
       >
         <div className="flex items-center mb-4 text-blue-700 dark:text-blue-300 text-xl font-semibold">
-          <FaLightbulb className="mr-2" /> ¿Qué es el Portal Institucional?
+          <FaLightbulb className="mr-2" /> ¿Qué es el Portal Gestión Institucional PILOT?
         </div>
         <p className="text-base sm:text-lg leading-relaxed text-justify text-gray-800 dark:text-gray-200">
-          El <strong>Portal Institucional de Red Medicron IPS</strong> es una
+          El <strong>Portal Gestión Institucional PILOT</strong> es una
           plataforma moderna diseñada para centralizar y facilitar el acceso a
           todas las tecnologías y recursos utilizados en la gestión diaria de la
           empresa. Su objetivo es ofrecer un espacio único donde los
@@ -113,9 +113,9 @@ const About: React.FC = () => {
         <p className="mt-4 text-base sm:text-lg leading-relaxed text-justify text-gray-800 dark:text-gray-200">
           Este desarrollo responde a la necesidad de integrar la información
           institucional en un solo lugar, permitiendo una gestión eficiente,
-          segura y colaborativa. El portal está pensado para adaptarse a los
+          segura y colaborativa. PILOT está pensado para adaptarse a los
           retos actuales del sector salud, promoviendo la digitalización, la
-          transparencia y la mejora continua en Red Medicron IPS.
+          transparencia y la mejora continua.
         </p>
       </motion.section>
 

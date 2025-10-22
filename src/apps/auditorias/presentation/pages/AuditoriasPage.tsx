@@ -13,7 +13,7 @@ export default function AuditoriasPage() {
             Estamos trabajando para traerte esta funcionalidad muy pronto.<br />
             ¡Gracias por tu paciencia!
           </p>
-          <span className="text-xs text-gray-400 dark:text-gray-500">Red Medicron IPS</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">PILOT</span>
           <style>
             {`
               .animate-spin-slow {

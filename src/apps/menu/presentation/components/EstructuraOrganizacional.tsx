@@ -6,7 +6,7 @@ const organigramaData = [
   {
     id: 'general',
     name: 'Estructura General',
-    description: 'Organigrama institucional completo Red Medicron IPS',
+    description: 'Organigrama institucional completo de la institución',
     image: '/institucion/Organigrama.png',
     area: 'Institucional'
   },
@@ -382,7 +382,7 @@ export default function EstructuraOrganizacional() {
                 </h4>
                 <p className={`text-xs ${areaStyles.footerSubtext} leading-relaxed`}>
                   {currentOrganigrama.description}. Esta estructura muestra la organización específica 
-                  del área {currentOrganigrama.area} dentro de Red Medicron IPS, 
+                  del área {currentOrganigrama.area} dentro de la institucion, 
                   detallando las líneas de reporte y responsabilidades correspondientes.
                 </p>
               </div>

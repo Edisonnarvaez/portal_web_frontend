@@ -37,11 +37,11 @@ export default function ForgotPassword() {
             <div className="flex items-center gap-3 mb-8 lg:mb-16">
               <img
                 src="/logo.png"
-                alt="Red Medicron IPS"
+                alt="PILOT"
                 className="h-12 sm:h-14 w-auto"
               />
               <h1 className="text-xl sm:text-2xl font-medium text-white">
-                Portal Institucional
+                Portal de Gestión Institucional PILOT
               </h1>
             </div>
 
@@ -55,7 +55,7 @@ export default function ForgotPassword() {
           </div>
 
           <div className="hidden lg:block text-sm text-blue-200">
-            © {currentYear} Red Medicron IPS. <br />
+            © {currentYear} PILOT. <br />
             Todos los derechos reservados.
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function ForgotPassword() {
                 <Input
                   type="email"
                   label="Correo electrónico"
-                  placeholder="ejemplo@redmedicronips.com.co"
+                  placeholder="ejemplo@pilot.com.co"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -144,7 +144,7 @@ export default function ForgotPassword() {
 
           {/* Copyright móvil */}
           <div className="lg:hidden text-center text-[11px] text-gray-500 pt-4">
-            © {currentYear} Red Medicron IPS. Todos los derechos reservados.
+            © {currentYear} PILOT. Todos los derechos reservados.
           </div>
         </div>
       </div>

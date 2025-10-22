@@ -25,7 +25,7 @@ export default function Topbar() {
         <div className="flex items-center">
           {/* Botón de menú móvil aquí si lo necesitas */}
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Portal Institucional
+            Portal de Gestión Institucional PILOT
           </h1>
         </div>
 

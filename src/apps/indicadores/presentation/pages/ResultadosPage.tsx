@@ -12,6 +12,7 @@ import {
 } from 'react-icons/hi2';
 
 import { useResults } from '../hooks/useResults'; // 👈 Solo usar este hook
+import { notify } from '../../../../shared/utils/notifications';
 import FilterSelect from '../components/Shared/FilterSelect';
 import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
@@ -534,7 +535,11 @@ const ResultadosPage: React.FC = () => {
     // Show brief summary
     const successCount = results.filter(r => r.ok).length;
     const failCount = results.length - successCount;
-    alert(`Bulk upload finished: ${successCount} success, ${failCount} failed`);
+    if (failCount > 0) {
+      notify.warning(`Carga masiva finalizada: ${successCount} exitosos, ${failCount} fallidos`);
+    } else {
+      notify.success(`Carga masiva finalizada: ${successCount} registros cargados exitosamente`);
+    }
   };
 
   return (
@@ -562,20 +567,24 @@ const ResultadosPage: React.FC = () => {
                   <div className="ml-4 flex items-center gap-3">
                     <a
                       href="#"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.preventDefault();
-                        // Download template CSV
-                        const headers = ['headquarters','indicator','numerator','denominator','year','month','quarter','semester','user'];
-                        const sample = [headers.join(',') , '1,2,10,100,2025,1,1,1,1'];
-                        const blob = new Blob([sample.join('\n')], { type: 'text/csv' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'resultados_template.csv';
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        URL.revokeObjectURL(url);
+                        try {
+                          const { generateTemplateCSV } = await import('../utils/csvUtils');
+                          const blob = generateTemplateCSV(indicators || [], headquarters || []);
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'resultados_template.csv';
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          URL.revokeObjectURL(url);
+                        } catch (err: any) {
+                          // Show a user-friendly toast and keep a console trace for debugging
+                          console.error('Error generating template CSV', err);
+                          notify.error(`No se pudo generar la plantilla CSV: ${err?.message ?? 'error desconocido'}`);
+                        }
                       }}
                       className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
@@ -590,16 +599,22 @@ const ResultadosPage: React.FC = () => {
                           if (!file) return;
                           const text = await file.text();
                           try {
-                            const { parseCSV, validateRowForCreate, mapRowToCreatePayload } = await import('../utils/csvUtils');
+                            const { parseCSV, validateRowForCreate } = await import('../utils/csvUtils');
                             const rows = parseCSV(text);
                             // Validate each row
                             const validated = rows.map((r,i) => ({ row: r, ...validateRowForCreate(r), __index: i+2 }));
                             // Store preview in state (use a custom event to open preview modal)
                             const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
                             window.dispatchEvent(evt);
-                          } catch (err) {
+                          } catch (err: any) {
                             console.error('Error parsing CSV', err);
-                            alert('Error al parsear el CSV. Revisa el archivo.');
+                            // If the parser detected a binary/XLSX file, show a more specific message
+                            const msg = err?.message || String(err);
+                            if (/xlsx|binario|binary|PK/i.test(msg)) {
+                              notify.error('El archivo parece ser un archivo binario (.xlsx). Exporta a CSV (UTF-8) y vuelve a intentar.');
+                            } else {
+                              notify.error(`Error al parsear el CSV: ${msg}`);
+                            }
                           }
                           // reset input
                           (e.target as HTMLInputElement).value = '';

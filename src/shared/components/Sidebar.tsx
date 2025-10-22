@@ -135,24 +135,6 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
           },
         ]
       : []),
-    // Proveedores: cualquier rol en "proveedores"
-    ...(hasAppAccess(roles, "proveedores")
-      ? [
-          {
-            to: "/proveedores",
-            label: "Proveedores",
-            icon: <HiBuildingOffice2 className="w-5 h-5" />,
-            hasSubmenu: true,
-            submenu: [
-              {
-                to: "/facturas",
-                label: "Facturas",
-                icon: <HiDocument className="w-4 h-4" />,
-              },
-            ],
-          },
-        ]
-      : []),
     {
       to: "/profile",
       label: "Mi perfil",
@@ -224,7 +206,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <img
             src="/logo.png"
-            alt="Red Medicron IPS"
+            alt="PILOT"
             className="h-10 sm:h-12 w-auto"
           />
           <button

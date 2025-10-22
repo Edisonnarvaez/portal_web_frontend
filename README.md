@@ -425,7 +425,7 @@ notify.info("Información");
 
 ## 📄 Licencia
 
-Este proyecto es propiedad de **Central Red Medicron IPS** y está protegido bajo licencia propietaria. El uso, distribución o modificación sin autorización expresa está prohibido.
+Este proyecto es propiedad de **Edison Stiven Narvaez Paz** y está protegido bajo licencia propietaria. El uso, distribución o modificación sin autorización expresa está prohibido.
 
 ## 👥 Equipo de Desarrollo
 
