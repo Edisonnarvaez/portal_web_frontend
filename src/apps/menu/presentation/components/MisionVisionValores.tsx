@@ -1,28 +1,54 @@
 import React, { useState } from "react";
-import { HiLightBulb, HiEye } from "react-icons/hi2";
 import { HiHeart, HiCheckCircle } from "react-icons/hi";
+import {
+  
+  HiEye,
+  HiLightBulb,      // Innovación
+  HiShieldCheck,    // Transparencia / Seguridad
+  HiUsers,          // Colaboración
+  HiStar,           // Excelencia
+  HiLockClosed,     // Seguridad (alternativo)
+} from "react-icons/hi2";
 // O si prefieres handshake real:
 import { FaHandshake } from "react-icons/fa";
 
-const MISION = "Somos una institución nariñense que presta servicios de salud primarios y complementarios, articulados en una red integrada de prestadores, con un modelo de atención integral con enfoque de riesgo centrado en el usuario y su familia. Contamos con un equipo humano competente y en constante aprendizaje, comprometido con la calidad, seguridad y humanización de la atención; con procesos, tecnología y sistemas de información basados en las mejores prácticas del mercado y acorde a las necesidades de sus grupos de interés. Promovemos el cuidado del medio ambiente, contribuimos al mantenimiento de la salud de nuestros usuarios y al equilibrio financiero institucional y del sistema.";
-const VISION = "Para el año 2027, Red Medicron IPS será reconocida como una red de servicios de salud líder en Nariño, destacándose por su atención integral centrada en el usuario y su familia, comprometida con la sostenibilidad ambiental y financiera, la gestión del riesgo y un servicio humanizado que transforme la experiencia de salud en la región.";
+const MISION = "Ser una plataforma digital que optimiza y centraliza la gestión institucional, impulsando la eficiencia, la innovación y la toma de decisiones estratégicas a través de soluciones tecnológicas confiables, accesibles y seguras.";
+const VISION = "Convertirse en el referente nacional en transformación digital institucional, ofreciendo herramientas inteligentes que fortalezcan los procesos administrativos, la calidad organizacional y la innovación tecnológica al servicio de la excelencia.";
 const VALORES = [
   {
-    nombre: "HUMANIDAD",
-    descripcion: "Servimos con amabilidad, dignidad, seguridad y empatía, respondiendo a las necesidades de las personas.",
-    icono: <HiHeart className="w-8 h-8 text-pink-500" />,
+    nombre: "Innovación",
+    descripcion: "Buscamos constantemente nuevas formas de mejorar la gestión institucional mediante la tecnología.",
+    icono: <HiLightBulb className="w-8 h-8 text-yellow-500" />,
     color: "from-pink-100 to-pink-50 dark:from-pink-900 dark:to-pink-800"
   },
   {
-    nombre: "RESPONSABILIDAD",
-    descripcion: "Cumplimos nuestros compromisos.",
+    nombre: "Compromiso",
+    descripcion: "Trabajamos con responsabilidad y dedicación para aportar valor a las instituciones y sus equipos.",
     icono: <HiCheckCircle className="w-8 h-8 text-green-500" />,
     color: "from-green-100 to-green-50 dark:from-green-900 dark:to-green-800"
   },
   {
-    nombre: "INTEGRIDAD",
-    descripcion: "Actuamos y servimos de una manera respetuosa y honesta, generando relaciones de confianza con todos los grupos de interés.",
-    icono: <FaHandshake className="w-8 h-8 text-blue-500" />, // O HiOutlineHandRaised
+    nombre: "Transparencia",
+    descripcion: "Promovemos la claridad, la ética y la confianza en cada proceso y desarrollo.",
+    icono: <HiShieldCheck className="w-8 h-8 text-cyan-500" />, // O HiOutlineHandRaised
+    color: "from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800"
+  },
+  {
+    nombre: "Colaboración",
+    descripcion: "Fomentamos el trabajo conjunto y la comunicación efectiva para alcanzar metas comunes.",
+    icono: <HiUsers className="w-8 h-8 text-blue-300" />, // O HiOutlineHandRaised
+    color: "from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800"
+  },
+  {
+    nombre: "Excelencia",
+    descripcion: "Nos esforzamos por ofrecer soluciones de alta calidad que impulsen la mejora continua.",
+    icono: <HiStar className="w-8 h-8 text-green-400" />, // O HiOutlineHandRaised
+    color: "from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800"
+  },
+  {
+    nombre: "Seguridad",
+    descripcion: "Protegemos la información institucional garantizando integridad y confidencialidad.",
+    icono: <HiLockClosed className="w-8 h-8 text-blue-700" />, // O HiOutlineHandRaised
     color: "from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800"
   },
 ];

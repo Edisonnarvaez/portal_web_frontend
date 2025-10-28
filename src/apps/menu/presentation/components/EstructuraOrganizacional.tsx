@@ -11,53 +11,18 @@ const organigramaData = [
     area: 'Institucional'
   },
   {
-    id: 'direccion-ejecutiva',
-    name: 'Dirección Ejecutiva',
-    description: 'Estructura organizacional de la Dirección Ejecutiva',
-    image: '/institucion/DireccionEjectiva.jpeg',
-    area: 'Dirección'
+    id: 'sistemas',
+    name: 'Estructura de Sistemas',
+    description: 'Organigrama de la Coordinación de Sistemas',
+    image: '/institucion/coordinacionsistemas.png',
+    area: 'Sistemas'
   },
   {
-    id: 'coordinacion-calidad',
-    name: 'Coordinación de Calidad',
-    description: 'Estructura de Coordinación de Calidad y Servicios de Apoyo',
-    image: '/institucion/CoordinacionCalidadServiciosApoto.jpeg',
-    area: 'Calidad'
-  },
-  {
-    id: 'coordinacion-asistencial',
-    name: 'Coordinación Asistencial',
-    description: 'Estructura de Coordinación de Servicios Asistenciales',
-    image: '/institucion/CoordinacionServiciosAsistenciales.jpeg',
-    area: 'Asistencial'
-  },
-  {
-    id: 'jefatura-financiera',
-    name: 'Jefatura Financiera',
-    description: 'Estructura de Jefatura Financiera y Administrativa',
-    image: '/institucion/JefaturaFinancieraAdministrativa.png',
-    area: 'Financiera'
-  },
-  {
-    id: 'jefatura-calidad',
-    name: 'Jefatura de Calidad',
-    description: 'Estructura de Jefatura de Gestión de Calidad',
-    image: '/institucion/JefaturaGestionCalidad.png',
-    area: 'Calidad'
-  },
-  {
-    id: 'jefatura-talento',
-    name: 'Jefatura Talento Humano',
-    description: 'Estructura de Jefatura de Gestión del Talento Humano',
-    image: '/institucion/jefaturaGestionTalentoHumano.png',
-    area: 'Talento Humano'
-  },
-  {
-    id: 'jefatura-servicios',
-    name: 'Jefatura Servicios de Salud',
-    description: 'Estructura de Jefatura de Servicios de Salud',
-    image: '/institucion/JefaturaServiciosSalud.png',
-    area: 'Servicios de Salud'
+    id: 'administrativa',
+    name: 'Estructura Administrativa',
+    description: 'Organigrama de la Coordinación Administrativa',
+    image: '/institucion/administrativa.png',
+    area: 'Administrativa'
   }
 ];
 
@@ -119,7 +84,7 @@ export default function EstructuraOrganizacional() {
         footerSubtext: 'text-blue-700 dark:text-blue-300',
         retryButton: 'bg-blue-600 hover:bg-blue-700'
       },
-      'Dirección': {
+      'Sistemas': {
         headerBg: 'bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900',
         iconBg: 'bg-purple-100 dark:bg-purple-800',
         iconColor: 'text-purple-600 dark:text-purple-300',
@@ -143,7 +108,7 @@ export default function EstructuraOrganizacional() {
         footerSubtext: 'text-emerald-700 dark:text-emerald-300',
         retryButton: 'bg-emerald-600 hover:bg-emerald-700'
       },
-      'Asistencial': {
+      'Administrativa': {
         headerBg: 'bg-gradient-to-r from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900',
         iconBg: 'bg-rose-100 dark:bg-rose-800',
         iconColor: 'text-rose-600 dark:text-rose-300',
