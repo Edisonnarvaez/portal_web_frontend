@@ -79,7 +79,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="text-white font-semibold">Experiencia Comprobada</h3>
-                <p className="text-blue-100 text-sm">Más de 10 años brindando servicios de calidad</p>
+                <p className="text-blue-100 text-sm">Diseñamos con pasión y dedicación para tu institución</p>
               </div>
             </div>
           </div>
