@@ -13,7 +13,6 @@ Esta solución es un portal web para empresas que requieren un control detallado
 
 - **Gestión Documental**: Sistema completo para la administración de documentos y procesos organizacionales
 - **Indicadores de Gestión**: Seguimiento y análisis de KPIs institucionales con dashboards interactivos
-- **Proveedores y Terceros**: Administración integral de facturas, proveedores y terceros
 - **Control de Acceso**: Autenticación robusta con 2FA y sistema de permisos granular
 - **Auditorías**: Seguimiento de auditorías internas y externas
 - **Portal Interno**: Comunicaciones internas, eventos, reconocimientos y estructura organizacional
@@ -29,7 +28,6 @@ src/
 │   ├── menu/               # Portal interno y comunicaciones
 │   ├── indicadores/        # Gestión de indicadores y KPIs
 │   ├── procesos/           # Gestión documental y procesos
-│   ├── proveedores/        # Administración de terceros y facturación
 │   ├── auditorias/         # Seguimiento de auditorías
 │   └── administracion/     # Configuración del sistema
 ├── core/                   # Funcionalidades transversales
