@@ -111,7 +111,7 @@ apps/[modulo]/
 1. **Clonar el repositorio**
 ```bash
 git clone https://github.com/Edisonnarvaez/portal_web_frontend.git
-cd central-red-medicron-ips
+cd portal_web_frontend
 ```
 
 2. **Instalar dependencias**
@@ -443,7 +443,7 @@ Detalles de responsabilidades, flujos y entregables están en `agents.md`.
 
 Para soporte técnico o consultas sobre el proyecto:
 
-- **Email**: soporte@medicronips.com
+- **Email**: edisonnarvaez.esn@gmail.com
 - **Teléfono**: +57 (xxx) xxx-xxxx
 - **Dirección**: [Dirección de la IPS]
 

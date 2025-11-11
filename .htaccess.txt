@@ -26,7 +26,7 @@ RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
 # CORS (permitir frontend sin www y con http/https)
 # =======================================
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "http://red.redmedicronips.com.co https://red.redmedicronips.com.co"
+    Header set Access-Control-Allow-Origin "http://pilot.com.co https://pilot.com.co"
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header set Access-Control-Allow-Headers "Content-Type, Authorization"
     Header set Access-Control-Allow-Credentials "true"
@@ -35,7 +35,7 @@ RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
 # Manejo de preflight OPTIONS
 <IfModule mod_headers.c>
   <If "%{REQUEST_METHOD} == 'OPTIONS'">
-    Header always set Access-Control-Allow-Origin "http://red.redmedicronips.com.co https://red.redmedicronips.com.co"
+    Header always set Access-Control-Allow-Origin "http://pilot.com.co https://pilot.com.co"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
     Header always set Access-Control-Allow-Credentials "true"

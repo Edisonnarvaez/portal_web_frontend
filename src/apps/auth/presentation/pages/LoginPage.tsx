@@ -203,7 +203,7 @@ export default function LoginPage() {
                   Horario de soporte: Lun-Vie 7:00 AM - 3:30 PM
                 </p>
                 <p className="text-[11px] sm:text-xs text-gray-500">
-                  Contacto: tics@redmedicronips.com.co <br className="sm:hidden"/>
+                  Contacto: edisonnarvaez.esn@gmail.com <br className="sm:hidden"/>
                 </p>
               </div>
             </div>
