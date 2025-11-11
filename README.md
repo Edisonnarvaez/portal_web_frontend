@@ -1,4 +1,4 @@
-# portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas
+# portal web para empresas que requieren un control detallado de sus procesos de habilitacion y documentacion asi como el monitoreo de sus indicadores de gestion
 
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue.svg)](https://www.typescriptlang.org/)
@@ -7,7 +7,7 @@
 
 ## 📋 Descripción del Proyecto
 
-Esta solución es un portal web para empresas que requieren un control detallado de sus operaciones comerciales y administrativas. Es una plataforma modular y escalable, pensada para organizaciones que necesitan trazabilidad, gobernanza y control sobre procesos, documentos, indicadores y proveedores. Está diseñada para facilitar la adopción en empresas de distintos sectores que buscan centralizar la gestión operativa y administrativa.
+Esta solución es un portal web para empresas que requieren un control detallado de sus procesos de habilitacion y documentacion asi como el monitoreo de sus indicadores de gestion. Es una plataforma modular y escalable, pensada para organizaciones que necesitan trazabilidad, gobernanza y control sobre procesos, documentos e indicadores. Está diseñada para facilitar la adopción en empresas de distintos sectores que buscan centralizar la gestión de calidad y administrativa.
 
 ### 🎯 Objetivos Principales
 
