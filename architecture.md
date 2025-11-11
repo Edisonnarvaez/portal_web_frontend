@@ -19,7 +19,7 @@ El portal web comercial está diseñado con **Clean Architecture** y **Domain-Dr
 
 ## 📚 Documentación de la API
 
-La API del backend está documentada utilizando OpenAPI/Swagger. Para la especificación completa (endpoints, esquemas y ejemplos) consulta `openapi_documentation.md` en la raíz del repositorio. Esta documentación cubre autenticación, usuarios, empresas, indicadores, gestión de proveedores, facturación y otros recursos clave.
+La API del backend está documentada utilizando OpenAPI/Swagger. Para la especificación completa (endpoints, esquemas y ejemplos) consulta `openapi_documentation.md` en la raíz del repositorio. Esta documentación cubre autenticación, usuarios, empresas, indicadores, facturación y otros recursos clave.
 
 ### Principios Arquitectónicos
 - **Separation of Concerns**: Cada capa tiene responsabilidades específicas
@@ -51,7 +51,6 @@ graph TB
         J[Auth Service] --> K[JWT/2FA]
         L[Indicadores Service] --> M[KPI Engine]
         N[Procesos Service] --> O[Document Engine]
-        P[Proveedores Service] --> Q[Billing Engine]
         R[Auditorias Service] --> S[Audit Engine]
     end
     
@@ -172,11 +171,6 @@ graph LR
         D3 --> D4[Version Control]
     end
     
-    subgraph "Proveedores Module"
-        E1[Supplier Management] --> E2[Invoice Processing]
-        E2 --> E3[Payment Tracking]
-        E3 --> E4[Financial Reports]
-    end
     
     A4 --> B1
     A4 --> C1
@@ -199,7 +193,6 @@ graph TB
         A --> C[UI Slice]
         A --> D[Indicadores Slice]
         A --> E[Procesos Slice]
-        A --> F[Proveedores Slice]
         
         B --> B1[user: User | null]
         B --> B2[token: string | null]
@@ -293,12 +286,7 @@ graph TB
         C2 --> C3[File Processor]
         C3 --> C4[Search Engine]
     end
-    
-    subgraph "Proveedores Service"
-        D1[Supplier Registry] --> D2[Invoice Processor]
-        D2 --> D3[Payment Tracker]
-        D3 --> D4[DIAN Integration]
-    end
+
     
     subgraph "Auditorias Service"
         E1[Audit Scheduler] --> E2[Finding Tracker]
