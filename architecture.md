@@ -305,7 +305,6 @@ graph TB
     A4 --> E1
     
     B4 --> F1
-    D4 --> F2
     E4 --> F4
     
     style A1 fill:#ffebee
