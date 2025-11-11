@@ -444,8 +444,7 @@ Detalles de responsabilidades, flujos y entregables están en `agents.md`.
 Para soporte técnico o consultas sobre el proyecto:
 
 - **Email**: edisonnarvaez.esn@gmail.com
-- **Teléfono**: +57 (xxx) xxx-xxxx
-- **Dirección**: [Dirección de la IPS]
+- **Teléfono**: +57 3174980971
 
 ---
 
