@@ -4,31 +4,31 @@ import { FiExternalLink } from "react-icons/fi";
 const ACCESOS = [
 	{
 		nombre: "Página Web Institucional",
-		url: "https://redmedicronips.com.co",
+		url: "https://portafolio-tau-flax.vercel.app/",
 		icono: <HiGlobeAlt className="w-10 h-10 text-blue-600 group-hover:scale-110 transition-transform" />,
 		color: "bg-gradient-to-br from-blue-100/80 to-blue-200/60 dark:from-blue-900/60 dark:to-blue-800/40",
 	},
 	{
 		nombre: "Facebook",
-		url: "https://facebook.com/redmedicronips",
+		url: "https://web.facebook.com/edisonstiven.narvaezpaz",
 		icono: <HiUserGroup className="w-10 h-10 text-blue-700 group-hover:scale-110 transition-transform" />,
 		color: "bg-gradient-to-br from-blue-200/80 to-blue-100/60 dark:from-blue-800/60 dark:to-blue-700/40",
 	},
 	{
-		nombre: "Salud IPS (Historia Clínica)",
-		url: "http://186.115.218.10/SaludIPS/",
+		nombre: "Historia Clínica",
+		url: "http://localhost/HC/",
 		icono: <HiDocumentText className="w-10 h-10 text-green-600 group-hover:scale-110 transition-transform" />,
 		color: "bg-gradient-to-br from-green-100/80 to-green-200/60 dark:from-green-900/60 dark:to-green-800/40",
 	},
 	{
 		nombre: "Nómina Web",
-		url: "https://nomina.redmedicronips.com.co",
+		url: "https://nomina.pilot.com.co",
 		icono: <HiBriefcase className="w-10 h-10 text-yellow-600 group-hover:scale-110 transition-transform" />,
 		color: "bg-gradient-to-br from-yellow-100/80 to-yellow-200/60 dark:from-yellow-900/60 dark:to-yellow-800/40",
 	},
 	{
 		nombre: "Gestión Humana",
-		url: "http://192.168.59.207:8080/gestionhumana2/",
+		url: "http://localhost/gestionhumana/",
 		icono: <HiUserGroup className="w-10 h-10 text-pink-600 group-hover:scale-110 transition-transform" />,
 		color: "bg-gradient-to-br from-pink-100/80 to-pink-200/60 dark:from-pink-900/60 dark:to-pink-800/40",
 	},

@@ -6,7 +6,7 @@ const DOCUMENTOS = [
   {
     id: 1,
     nombre: "Reglamento Interno de Trabajo",
-    url: "https://drive.google.com/file/d/1cQNXCgqIVhfINusXTFOAlRnSSEZPwY23/view?usp=sharing",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "reglamento",
     descripcion: "Normas y políticas internas de la institución para el correcto funcionamiento laboral.",
     actualizado: "2025-05-29",
@@ -17,7 +17,7 @@ const DOCUMENTOS = [
   {
     id: 2,
     nombre: "FR-DIR-002",
-    url: "https://docs.google.com/document/d/1kJRzSf_MpBlPYoc4qiRA3eAPPilQuKvB/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
     descripcion: "Acta de reunión",
     actualizado: "2025-01-30",
@@ -28,7 +28,7 @@ const DOCUMENTOS = [
   {
     id: 3,
     nombre: "FR-GDC-003",
-    url: "https://docs.google.com/spreadsheets/d/14fHbHb1sEFDzg4yCZkGl0V8CfMf35Pdo/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
     descripcion: "Acciones  de mejoramiento",
     actualizado: "2025-02-06",
@@ -39,7 +39,7 @@ const DOCUMENTOS = [
   {
     id: 4,
     nombre: "FR-GFR-001",
-    url: "https://docs.google.com/spreadsheets/d/17MliM0wD4LsxKM-pgq3hRKnIXe_VezmS/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
     descripcion: "Solicitud de viáticos individuales  y/o gastos aprobados a contratistas",
     actualizado: "2025-03-05",
@@ -50,7 +50,7 @@ const DOCUMENTOS = [
   {
     id: 5,
     nombre: "FR-GFR-002",
-    url: "https://docs.google.com/spreadsheets/d/1bNQxt3kIv9ZlEOCrdbMpknr-jNLznp0Y/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
     descripcion: "Legalización de viáticos y/o gastos aprobados a contratistas",
     actualizado: "2025-03-06",
@@ -61,7 +61,7 @@ const DOCUMENTOS = [
   {
     id: 6,
     nombre: "FR-GTH-002",
-    url: "https://docs.google.com/document/d/1gjGvnGs31KB7DLoA6mcf6f6hDn-rIXUl/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
     descripcion: "Lista de asistencia",
     actualizado: "2025-01-30",
@@ -72,7 +72,7 @@ const DOCUMENTOS = [
   {
     id: 7,
     nombre: "Pié de página por proceso",
-    url: "https://docs.google.com/document/d/1D0OsBAhLiDTkTY6uLZl01mzY3kPFnN7Z/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "plantilla",
     descripcion: "Pié de página por cada proceso",
     actualizado: "2025-04-29",
@@ -83,7 +83,7 @@ const DOCUMENTOS = [
   {
     id: 8,
     nombre: "Plantilla presentación",
-    url: "https://docs.google.com/presentation/d/1304BmzHLidi5mLEoYtw_x0zlTga6L2nL/edit?usp=sharing&ouid=118103443850975241050&rtpof=true&sd=true",
+    url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "plantilla",
     descripcion: "Plantilla presentación edición editable",
     actualizado: "2025-04-29",
