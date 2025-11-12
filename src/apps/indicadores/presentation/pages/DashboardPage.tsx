@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useResultsData } from "../hooks/useResultsData";
 // using native selects for dashboard filters
 import { formatIndicatorLabel } from '../utils/dataHelpers';
@@ -15,13 +15,21 @@ export default function DashboardPage() {
     const [selectedSede, setSelectedSede] = useState("");
     const [selectedIndicador, setSelectedIndicador] = useState("");
     const [selectedAnio, setSelectedAnio] = useState("");
-    const [selectedFrecuencia, setSelectedFrecuencia] = useState("");
 
     // 🔧 CORREGIR: Verificar que data sea un array válido
     const safeData = useMemo(() => {
         if (!data || !Array.isArray(data)) {
             console.warn('⚠️ Data no es un array válido:', data);
             return [];
+        }
+        console.log('✅ Data cargada correctamente:', data.length, 'items');
+        if (data.length > 0) {
+            console.log('📌 Primer item:', data[0]);
+            console.log('📌 Proceso en primer item:', {
+                'item.process': (data[0] as any).process,
+                'item.indicator.process': (data[0] as any).indicator?.process,
+                'indicador completo': (data[0] as any).indicator
+            });
         }
         return data;
     }, [data]);
@@ -41,18 +49,6 @@ export default function DashboardPage() {
         return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
-    const unidades = useMemo(() => {
-        if (safeData.length === 0) return [];
-        const values = [...new Set(safeData.map((item) => (item as any).measurementUnit || ((item as any).indicator && (item as any).indicator.measurementUnit) || (item as any).measurement_unit || ''))].filter(Boolean);
-        return values.map((v: string) => ({ label: v, value: v }));
-    }, [safeData]);
-
-    const frecuencias = useMemo(() => {
-        if (safeData.length === 0) return [];
-        const values = [...new Set(safeData.map((item) => (item as any).measurementFrequency || ((item as any).indicator && (item as any).indicator.measurementFrequency) || (item as any).measurement_frequency || ''))].filter(Boolean);
-        return values.map((v: string) => ({ label: v, value: v }));
-    }, [safeData]);
-
     // Extraer años únicos de los datos
     const anos = useMemo(() => {
         if (safeData.length === 0) return [];
@@ -62,6 +58,25 @@ export default function DashboardPage() {
         }))].filter(Boolean).sort().reverse(); // Ordena descendente para mostrar años recientes primero
         return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
+
+    // Establecer valores por defecto cuando los datos se cargan
+    useEffect(() => {
+        if (sedes.length > 0 && !selectedSede) {
+            setSelectedSede(sedes[0].value);
+        }
+    }, [sedes, selectedSede]);
+
+    useEffect(() => {
+        if (indicadores.length > 0 && !selectedIndicador) {
+            setSelectedIndicador(indicadores[0].value);
+        }
+    }, [indicadores, selectedIndicador]);
+
+    useEffect(() => {
+        if (anos.length > 0 && !selectedAnio) {
+            setSelectedAnio(anos[0].value);
+        }
+    }, [anos, selectedAnio]);
 
     // Filtro de datos
     const filteredData = useMemo(() => {
@@ -80,18 +95,17 @@ export default function DashboardPage() {
                 return code ? `${code} - ${name}` : name;
             })();
             const matchesIndicador = !selectedIndicador || (indicatorLabel === selectedIndicador);
-            const matchesFrecuencia = !selectedFrecuencia || (item.measurementFrequency && item.measurementFrequency === selectedFrecuencia);
             const matchesAnio = !selectedAnio || (String((item as any).year || (item as any).periodo || (item as any).period || '') === selectedAnio);
 
-            return matchesSede && matchesIndicador && matchesFrecuencia && matchesAnio;
+            return matchesSede && matchesIndicador && matchesAnio;
         });
-    }, [safeData, selectedSede, selectedIndicador, selectedFrecuencia, selectedAnio]);
+    }, [safeData, selectedSede, selectedIndicador, selectedAnio]);
 
     const clearFilters = () => {
-        setSelectedSede("");
-        setSelectedIndicador("");
-        setSelectedAnio("");
-        setSelectedFrecuencia("");
+        // Resetear a valores por defecto en lugar de vaciar
+        if (sedes.length > 0) setSelectedSede(sedes[0].value);
+        if (indicadores.length > 0) setSelectedIndicador(indicadores[0].value);
+        if (anos.length > 0) setSelectedAnio(anos[0].value);
     };
 
     // 🔧 CORREGIR: Mostrar estado de error
@@ -142,7 +156,7 @@ export default function DashboardPage() {
     return (
         <div className="p-6 space-y-6">
             {/* 🐛 DEBUG: Panel de filtros activos */}
-            {(selectedSede || selectedIndicador || selectedAnio || selectedFrecuencia) && (
+            {(selectedSede || selectedIndicador || selectedAnio) && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                     <p className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
                         🔍 Filtros Activos: {safeData.length} registros originales → {filteredData.length} registros filtrados
@@ -163,11 +177,6 @@ export default function DashboardPage() {
                                 Año: {selectedAnio}
                             </span>
                         )}
-                        {selectedFrecuencia && (
-                            <span className="bg-orange-200 dark:bg-orange-700 text-orange-900 dark:text-orange-100 px-2 py-1 rounded">
-                                Frecuencia: {selectedFrecuencia}
-                            </span>
-                        )}
                     </div>
                 </div>
             )}
@@ -184,20 +193,7 @@ export default function DashboardPage() {
 
             {/* Filtros */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
-                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-6`}>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Buscar en dashboard..."
-                            value={""}
-                            onChange={() => {}}
-                            className="pl-4 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
-                        />
-                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500">
-                            {/* optionally an icon could go here */}
-                        </div>
-                    </div>
-
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-5`}>
                     <div>
                         <select
                             value={selectedSede}
@@ -228,21 +224,6 @@ export default function DashboardPage() {
                         >
                             <option value="">Todos los años</option>
                             {anos.map((a:any)=> <option key={a.value} value={a.value}>{a.label}</option>)}
-                        </select>
-                    </div>
-
-                    <div>
-                        <select
-                            value={selectedFrecuencia}
-                            onChange={(e) => setSelectedFrecuencia(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
-                        >
-                            <option value="">Todas las frecuencias</option>
-                            <option value="monthly">Mensual</option>
-                            <option value="quarterly">Trimestral</option>
-                            <option value="semiannual">Semestral</option>
-                            <option value="annual">Anual</option>
-                            {/*{frecuencias.map((f:any)=> <option key={f.value} value={f.value}>{f.label}</option>)}*/}
                         </select>
                     </div>
 

@@ -122,7 +122,8 @@ export const useResultsData = () => {
           code: indicatorCode,
           target: parsedTarget,
           measurementUnit,
-          measurementFrequency
+          measurementFrequency,
+          process: indicatorObj?.process ?? item.process ?? undefined
         } : undefined);
 
         const synthesizedHQ = hqObj ?? (headquarterId !== undefined ? { id: headquarterId, name: headquarterName } : undefined);

@@ -94,7 +94,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
         ]
       : []),
     // Indicadores: cualquier rol en "auditorias" o "indicadores"
-    ...(hasAppAccess(roles, "auditorias")
+    ...(hasAppAccess(roles, "indicadores")
       ? [
     {
       to: "/dashboard",
