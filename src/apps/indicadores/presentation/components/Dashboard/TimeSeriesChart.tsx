@@ -19,7 +19,7 @@ const transformMonthToSpanish = (month: string | number): string => {
     };
     
     const normalized = String(month).toLowerCase().trim();
-    return monthMap[normalized] || month;
+    return monthMap[normalized] || String(month);
 };
 
 const transformPeriodToSpanish = (period: string): string => {
@@ -280,17 +280,17 @@ export default function TimeSeriesChart({ data, loading }: Props) {
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend 
-            wrapperStyle={{ paddingTop: '20px' }}
+            wrapperStyle={{
+              paddingTop: '20px',
+              backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+              padding: '8px 12px',
+              borderRadius: '6px'
+            }}
             formatter={(value) => {
               if (value === 'resultado') {
                 return <span style={{ color: '#3b82f6' }}>📊 Resultado</span>;
               }
               return <span style={{ color: '#10b981' }}>🎯 Meta</span>;
-            }}
-            contentStyle={{
-              backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-              padding: '8px 12px',
-              borderRadius: '6px'
             }}
           />
           <Line 

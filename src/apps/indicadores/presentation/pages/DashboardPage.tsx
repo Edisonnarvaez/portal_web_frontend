@@ -81,7 +81,7 @@ export default function DashboardPage() {
             })();
             const matchesIndicador = !selectedIndicador || (indicatorLabel === selectedIndicador);
             const matchesFrecuencia = !selectedFrecuencia || (item.measurementFrequency && item.measurementFrequency === selectedFrecuencia);
-            const matchesAnio = !selectedAnio || (String(item.year || item.periodo || item.period || '') === selectedAnio);
+            const matchesAnio = !selectedAnio || (String((item as any).year || (item as any).periodo || (item as any).period || '') === selectedAnio);
 
             return matchesSede && matchesIndicador && matchesFrecuencia && matchesAnio;
         });

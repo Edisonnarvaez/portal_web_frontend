@@ -6,7 +6,7 @@ import { getIndicatorField, getHeadquarterField, safeNumber } from '../../utils/
 // 🆕 Funciones de transformación para mostrar valores en español
 const transformMonthToSpanish = (month: string | number): string => {
     const monthMap: { [key: string]: string } = {
-        'january': 'Enero', 'january': 'Enero', '1': 'Enero', 'january': 'Enero',
+        'january': 'Enero', 'jan': 'Enero', '1': 'Enero',
         'february': 'Febrero', 'feb': 'Febrero', '2': 'Febrero',
         'march': 'Marzo', 'mar': 'Marzo', '3': 'Marzo',
         'april': 'Abril', 'apr': 'Abril', '4': 'Abril',
@@ -21,7 +21,7 @@ const transformMonthToSpanish = (month: string | number): string => {
     };
     
     const normalized = String(month).toLowerCase().trim();
-    return monthMap[normalized] || month;
+    return monthMap[normalized] || String(month);
 };
 
 const transformPeriodToSpanish = (period: string): string => {
@@ -75,20 +75,18 @@ const transformTrendToSpanish = (trend: string): string => {
 
 const transformFrequencyToSpanish = (frequency: string): string => {
     const frequencyMap: { [key: string]: string } = {
-        'monthly': 'Mensual',
-        'monthly': 'Mensual',
-        'mensual': 'Mensual',
-        'quarterly': 'Trimestral',
-        'quarterly': 'Trimestral',
-        'trimestral': 'Trimestral',
-        'annual': 'Anual',
-        'yearly': 'Anual',
-        'anual': 'Anual',
-        'weekly': 'Semanal',
-        'semanal': 'Semanal',
-        'daily': 'Diario',
-        'diario': 'Diario',
-        'semestral': 'Semestral',
+        monthly: 'Mensual',
+        mensual: 'Mensual',
+        weekly: 'Semanal',
+        semanal: 'Semanal',
+        daily: 'Diario',
+        diario: 'Diario',
+        quarterly: 'Trimestral',
+        trimestral: 'Trimestral',
+        annual: 'Anual',
+        yearly: 'Anual',
+        anual: 'Anual',
+        semestral: 'Semestral',
         'half-yearly': 'Semestral',
     };
     
@@ -155,6 +153,9 @@ export default function IndicatorBarChart({ data, loading }: Props) {
 
     const allChartData = useMemo(() => {
         return data.map((item, idx) => {
+            // Evitar acceder a propiedades si el item es null/undefined
+            if (item == null) return null;
+
             // Sede: intenta obtener del objeto headquarters, luego del campo directo
             const sede = getHeadquarterField(item, 'name', item.headquarterName || 'Sin sede');
             
@@ -214,57 +215,60 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                 indicadorDisplay: indicadorLabel,
                 resultado,
                 meta,
-                trend: String(item.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase(),
-                compliant: typeof item.compliant === 'boolean' ? item.compliant : undefined,
+                trend: String(item?.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase(),
+                compliant: typeof item?.compliant === 'boolean' ? item?.compliant : undefined,
                 // Información adicional para el tooltip
                 mes: mes,
                 periodo: periodo,
                 año: año,
                 headquarters: sede,
                 indicator: indicatorName || indicadorLabel,
-                unit: item.measurementUnit || item.measurement_unit || 'N/A',
-                frequency: item.measurementFrequency || item.measurement_frequency || 'N/A',
+                unit: item?.measurementUnit || item?.measurement_unit || 'N/A',
+                frequency: item?.measurementFrequency || item?.measurement_frequency || 'N/A',
                 // 🆕 Cumplimiento basado en tendencia
                 cumplimiento: complianceStatus,
                 cumple: cumple,
                 // Tendencia explícita para debugging
-                tendencia: trend || 'No especificada',
+                tendencia: (String(item?.trend ?? getIndicatorField(item, 'trend', '') ?? '') || trend) || 'No especificada',
                 // 🔑 Campos para ordenamiento cronológico
                 sortYear: año,
-                sortMonth: item.month || item.mes || 1,
-                sortQuarter: item.quarter || 1,
-                sortSemester: item.semester || 1,
+                sortMonth: Number(item?.month ?? item?.mes ?? 1),
+                sortQuarter: Number(item?.quarter ?? 1),
+                sortSemester: Number(item?.semester ?? 1),
             };
         }).filter(Boolean) // Eliminar nulos del mapeo
         .sort((a, b) => {
+            // Protección: el compilador puede seguir pensando que a o b son null, así que validamos
+            if (!a || !b) return 0;
+
             // 🆕 ORDENAMIENTO CRONOLÓGICO: Primero por año (antiguo a reciente), luego por mes/trimestre/semestre
             
-            // Comparar años
-            if (a.sortYear !== b.sortYear) {
-                return a.sortYear - b.sortYear; // De antiguo a reciente
+            // Comparar años (usar 0 como fallback si faltan)
+            if ((a.sortYear ?? 0) !== (b.sortYear ?? 0)) {
+                return (a.sortYear ?? 0) - (b.sortYear ?? 0); // De antiguo a reciente
             }
             
-            // Si el año es el mismo, ordenar por frecuencia
-            const frequencyA = a.frequency.toLowerCase();
-            const frequencyB = b.frequency.toLowerCase();
+            // Si el año es el mismo, ordenar por frecuencia (usar '' como fallback)
+            const frequencyA = (a.frequency || '').toString().toLowerCase();
+            const frequencyB = (b.frequency || '').toString().toLowerCase();
             
-            // Si es mensual, ordenar por mes
+            // Si es mensual, ordenar por mes (usar 0 como fallback)
             if (frequencyA.includes('mensual') && frequencyB.includes('mensual')) {
-                return a.sortMonth - b.sortMonth;
+                return (a.sortMonth ?? 0) - (b.sortMonth ?? 0);
             }
             
             // Si es trimestral, ordenar por trimestre
             if (frequencyA.includes('trimestral') && frequencyB.includes('trimestral')) {
-                return a.sortQuarter - b.sortQuarter;
+                return (a.sortQuarter ?? 0) - (b.sortQuarter ?? 0);
             }
             
             // Si es semestral, ordenar por semestre
             if (frequencyA.includes('semestral') && frequencyB.includes('semestral')) {
-                return a.sortSemester - b.sortSemester;
+                return (a.sortSemester ?? 0) - (b.sortSemester ?? 0);
             }
             
-            // Por último ordenar por sede si es el mismo período
-            return a.sedeDisplay.localeCompare(b.sedeDisplay);
+            // Por último ordenar por sede si es el mismo período (usar '' como fallback)
+            return (a.sedeDisplay || '').localeCompare(b.sedeDisplay || '');
         });
     }, [data]);
 
@@ -279,12 +283,12 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             }))
         });
         console.log('📊 AllChartData Procesado (primeros 5) - CON CUMPLIMIENTO BASADO EN TENDENCIA:', allChartData.slice(0, 5).map(d => ({
-            resultado: d.resultado,
-            meta: d.meta,
-            cumplimiento: d.cumplimiento,
-            cumple: d.cumple,
-            tendencia: d.tendencia,
-            regla: d.tendencia === 'creciente' ? 'resultado >= meta' : d.tendencia === 'decreciente' ? 'resultado <= meta' : 'no especificada'
+            resultado: d?.resultado ?? null,
+            meta: d?.meta ?? null,
+            cumplimiento: d?.cumplimiento ?? '❌ No especificado',
+            cumple: d?.cumple ?? false,
+            tendencia: d?.tendencia ?? 'No especificada',
+            regla: (d?.tendencia === 'creciente') ? 'resultado >= meta' : (d?.tendencia === 'decreciente') ? 'resultado <= meta' : 'no especificada'
         })));
     }
     // ✅ Usar directamente allChartData sin paginación
@@ -302,11 +306,11 @@ export default function IndicatorBarChart({ data, loading }: Props) {
     // 🆕 DEBUG: Mostrar los PRIMEROS 10 items para ver si hay duplicados o agrupaciones
     console.log('📊 PRIMEROS 10 ITEMS DE CHARTDATA:', chartData.slice(0, 10).map((item, idx) => ({
         idx,
-        sede: item.sede,
-        resultado: item.resultado,
-        meta: item.meta,
-        mes: item.mes,
-        periodo: item.periodo
+        sede: item?.sede ?? 'N/A',
+        resultado: item?.resultado ?? null,
+        meta: item?.meta ?? null,
+        mes: item?.mes ?? 'N/A',
+        periodo: item?.periodo ?? 'N/A'
     })));
 
     // Calcular altura dinámica del gráfico según cantidad de barras
@@ -478,18 +482,18 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                         cursor={{ fill: chartColors.cursorFill }}
                     />
                     <Legend 
-                        wrapperStyle={{ paddingTop: '20px' }}
+                        wrapperStyle={{
+                            paddingTop: '20px',
+                            backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                            padding: '8px 12px',
+                            borderRadius: '6px'
+                        }}
                         iconType="square"
                         formatter={(value) => {
                             if (value === 'resultado') {
                                 return <span style={{ color: '#3b82f6' }}>📊 Resultado</span>;
                             }
                             return <span style={{ color: '#10b981' }}>🎯 Meta</span>;
-                        }}
-                        contentStyle={{
-                            backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-                            padding: '8px 12px',
-                            borderRadius: '6px'
                         }}
                     />
                     <Bar 
