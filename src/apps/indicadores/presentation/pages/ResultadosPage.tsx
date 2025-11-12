@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   HiTableCells,
   HiPlus,
   HiSparkles,
-  HiMagnifyingGlass,
-  HiAdjustmentsHorizontal,
   HiPencil,
   HiTrash,
   HiEye
@@ -13,7 +11,6 @@ import {
 
 import { useResults } from '../hooks/useResults'; // 👈 Solo usar este hook
 import { notify } from '../../../../shared/utils/notifications';
-import FilterSelect from '../components/Shared/FilterSelect';
 import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
 import { FaSearch, FaTimes } from 'react-icons/fa';
@@ -96,13 +93,10 @@ const FilterPanel = ({
   onClearFilters,
   indicatorOptions,
   headquarterOptions,
-  yearOptions,
-  selectedTrend,
-  onTrendChange,
-  trendOptions
+  yearOptions
 }: any) => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
-    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-6`}>
+    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-5`}>
       <div className="relative">
         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input
@@ -148,19 +142,6 @@ const FilterPanel = ({
         >
           <option value="">Todos los años</option>
           {(yearOptions || []).map((opt: any) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <select
-          value={selectedTrend}
-          onChange={(e) => onTrendChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
-        >
-          <option value="">Todas las tendencias</option>
-          {(trendOptions || []).map((opt: any) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
@@ -331,7 +312,6 @@ const ResultadosPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedHeadquarters, setSelectedHeadquarters] = useState('');
-  const [selectedTrend, setSelectedTrend] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -359,79 +339,110 @@ const ResultadosPage: React.FC = () => {
     deleteResult
   } = useResults();
 
+  // DEBUG: Log datos del hook
+  useEffect(() => {
+    console.log('📋 [ResultadosPage] Hook useResults retornó:', {
+      detailedResults: detailedResults.length,
+      indicators: indicators.length,
+      headquarters: headquarters.length,
+      loading,
+      pagination
+    });
+  }, [detailedResults, indicators, headquarters, loading, pagination]);
+
   // Opciones para filtros (label/value)
   const headquarterOptions = useMemo(() => (headquarters || []).map((hq: any) => ({ label: hq.name, value: String(hq.id) })), [headquarters]);
   const indicatorOptions = useMemo(() => (indicators || []).map((ind: any) => ({ label: `${ind.code ? ind.code + ' - ' : ''}${ind.name}`, value: String(ind.id) })), [indicators]);
   const yearOptions = useMemo(() => Array.from(new Set(detailedResults.map(r => r.year))).sort((a,b)=>b-a).map(y=>({label:String(y), value:String(y)})), [detailedResults]);
-  // Trend options extracted from indicators list (unique), normalized to lowercase labels
-  const trendOptions = useMemo(() => {
-    const all = (indicators || []).map((ind:any) => ind.trend || ind.trend_type).filter(Boolean).map((t:any) => String(t).toLowerCase());
-    return Array.from(new Set(all)).map(t => ({ label: String(t), value: String(t) }));
-  }, [indicators]);
 
-  // When pagination params change, fetch from server if supported
-  React.useEffect(() => {
-    // Only call server-side pagination if the hook exposes fetchPaginatedResults
+  // DEBUG: Log opciones de filtros
+  useEffect(() => {
+    console.log('🎯 [ResultadosPage] Opciones de filtros:', {
+      headquarterOptions: headquarterOptions.length,
+      indicatorOptions: indicatorOptions.length,
+      yearOptions: yearOptions.length,
+      firstHeadquarter: headquarterOptions[0],
+      firstIndicator: indicatorOptions[0],
+      firstYear: yearOptions[0]
+    });
+  }, [headquarterOptions, indicatorOptions, yearOptions]);
+
+  // Fetch paginated results when pagination params change
+  useEffect(() => {
+    console.log('📄 [ResultadosPage] Paginación triggerizada:', { page, pageSize });
     if (typeof fetchPaginatedResults === 'function') {
       fetchPaginatedResults({ page, page_size: pageSize }).catch(err => {
-        // Already handled/logged in hook; swallow here
-        console.error('Error fetching paginated results (UI):', err);
+        console.error('❌ Error fetching paginated results:', err);
       });
     }
-  }, [page, pageSize]);
+  }, [page, pageSize, fetchPaginatedResults]);
 
   // Filtros aplicados
-  const filteredResults = detailedResults.filter((result: DetailedResult) => {
-    const term = (searchTerm || '').trim().toLowerCase();
+  const filteredResults = useMemo(() => {
+    const filtered = detailedResults.filter((result: DetailedResult) => {
+      const term = (searchTerm || '').trim().toLowerCase();
 
-    const indicatorName = result.indicatorName ?? '';
-    const indicatorCode = result.indicatorCode ?? '';
-    const headquarterName = result.headquarterName ?? '';
+      const indicatorName = result.indicatorName ?? '';
+      const indicatorCode = result.indicatorCode ?? '';
+      const headquarterName = result.headquarterName ?? '';
 
-    const matchesSearch =
-      term === '' ||
-      [indicatorName, indicatorCode, headquarterName].some((field) =>
-        String(field).toLowerCase().includes(term)
-      );
+      const matchesSearch =
+        term === '' ||
+        [indicatorName, indicatorCode, headquarterName].some((field) =>
+          String(field).toLowerCase().includes(term)
+        );
 
-  const resultIndicatorId = (result.indicator && typeof result.indicator === 'object') ? String((result.indicator as any).id) : String(result.indicator ?? '');
-  const resultHeadquarterId = (result.headquarters && typeof result.headquarters === 'object') ? String((result.headquarters as any).id) : String(result.headquarters ?? '');
+      const resultIndicatorId = (result.indicator && typeof result.indicator === 'object') ? String((result.indicator as any).id) : String(result.indicator ?? '');
+      const resultHeadquarterId = (result.headquarters && typeof result.headquarters === 'object') ? String((result.headquarters as any).id) : String(result.headquarters ?? '');
 
-  const matchesIndicator = selectedIndicator === '' || resultIndicatorId === String(selectedIndicator);
-  const matchesHeadquarters = selectedHeadquarters === '' || resultHeadquarterId === String(selectedHeadquarters);
-    const matchesYear = selectedYear === '' || String(result.year) === selectedYear;
-    const resultTrend = (result.trend && typeof result.trend === 'string') ? String(result.trend).toLowerCase() : '';
-    const matchesTrend = selectedTrend === '' || resultTrend === String(selectedTrend).toLowerCase();
+      const matchesIndicator = selectedIndicator === '' || resultIndicatorId === String(selectedIndicator);
+      const matchesHeadquarters = selectedHeadquarters === '' || resultHeadquarterId === String(selectedHeadquarters);
+      const matchesYear = selectedYear === '' || String(result.year) === selectedYear;
 
-    return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear && matchesTrend;
-  });
+      return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear;
+    });
+    
+    console.log('🔍 [ResultadosPage] Filtrado:', {
+      detailedResultsCount: detailedResults.length,
+      filteredCount: filtered.length,
+      filters: { searchTerm, selectedIndicator, selectedHeadquarters, selectedYear }
+    });
+    
+    return filtered;
+  }, [detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
 
-  // Métricas del dashboard
-  const dashboardData = {
-    totalResults: detailedResults.length,
-    avgCompliance: detailedResults.length > 0
-      ? (detailedResults.reduce((acc, curr) => {
-          const targetValue = typeof curr.target === 'number' ? curr.target : Number(curr.target);
-          const calc = Number(curr.calculatedValue ?? 0);
-          if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return acc;
-          const isDecreasing = String(curr.trend || '').toLowerCase() === 'decreasing' || String(curr.trend || '').toLowerCase() === 'desc' || String(curr.trend || '').toLowerCase() === 'down';
-          const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
-          // ratio * 100 gives percentage of goal achieved depending on trend
-          return acc + (ratio * 100);
-        }, 0) / detailedResults.length)
-      : 0,
-    highPerformance: detailedResults.filter(r => {
-      const targetValue = typeof r.target === 'number' ? r.target : Number(r.target);
-      const calc = Number(r.calculatedValue ?? 0);
-      if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return false;
-      const isDecreasing = String(r.trend || '').toLowerCase() === 'decreasing' || String(r.trend || '').toLowerCase() === 'desc' || String(r.trend || '').toLowerCase() === 'down';
-      const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
-      return (ratio * 100) >= 95;
-    }).length,
-  uniqueIndicators: new Set(detailedResults.map(r => (r.indicator && typeof r.indicator === 'object') ? (r.indicator as any).id : r.indicator)).size
-  };
-
-  // NOTE: yearOptions is computed above and used for the year filter
+  // Métricas del dashboard - usar filteredResults si hay filtros aplicados, sino detailedResults
+  const dashboardData = useMemo(() => {
+    const hasFilters = searchTerm || selectedIndicator || selectedHeadquarters || selectedYear;
+    const metricsData = hasFilters ? filteredResults : detailedResults;
+    
+    const result = {
+      totalResults: metricsData.length,
+      avgCompliance: metricsData.length > 0
+        ? (metricsData.reduce((acc, curr) => {
+            const targetValue = typeof curr.target === 'number' ? curr.target : Number(curr.target);
+            const calc = Number(curr.calculatedValue ?? 0);
+            if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return acc;
+            const isDecreasing = String(curr.trend || '').toLowerCase() === 'decreasing' || String(curr.trend || '').toLowerCase() === 'desc' || String(curr.trend || '').toLowerCase() === 'down';
+            const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
+            return acc + (ratio * 100);
+          }, 0) / metricsData.length)
+        : 0,
+      highPerformance: metricsData.filter(r => {
+        const targetValue = typeof r.target === 'number' ? r.target : Number(r.target);
+        const calc = Number(r.calculatedValue ?? 0);
+        if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return false;
+        const isDecreasing = String(r.trend || '').toLowerCase() === 'decreasing' || String(r.trend || '').toLowerCase() === 'desc' || String(r.trend || '').toLowerCase() === 'down';
+        const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
+        return (ratio * 100) >= 95;
+      }).length,
+      uniqueIndicators: new Set(metricsData.map(r => (r.indicator && typeof r.indicator === 'object') ? (r.indicator as any).id : r.indicator)).size
+    };
+    
+    console.log('📊 [ResultadosPage] Dashboard Metrics:', result);
+    
+    return result;
+  }, [filteredResults, detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
 
   // Handlers
   const handleCreateResult = () => {
@@ -493,6 +504,7 @@ const ResultadosPage: React.FC = () => {
     setSelectedIndicator('');
     setSelectedHeadquarters('');
     setSelectedYear('');
+    setPage(1);
   };
 
   // Bulk CSV preview and upload state
@@ -652,9 +664,6 @@ const ResultadosPage: React.FC = () => {
               onHeadquartersChange={setSelectedHeadquarters}
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
-              selectedTrend={selectedTrend}
-              onTrendChange={setSelectedTrend}
-              trendOptions={trendOptions}
               onClearFilters={handleClearFilters}
               indicatorOptions={indicatorOptions}
               headquarterOptions={headquarterOptions}

@@ -422,7 +422,7 @@ const IndicadoresPage: React.FC = () => {
       />
 
       {/* 🐛 TEMPORAL: Componente de debug */}
-      {import.meta.env.MODE === 'development' && <IndicatorDebug />}
+      {/* {import.meta.env.MODE === 'development' && <IndicatorDebug />}*/}
     </div>
   );
 };
