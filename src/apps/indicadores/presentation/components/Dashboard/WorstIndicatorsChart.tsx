@@ -107,9 +107,7 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
     cursorFill: isDarkMode ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
   };
 
-  if (loading) return <p className="text-center">Cargando ranking...</p>;
-  if (!data || data.length === 0) return <p className="text-center">No hay datos para mostrar.</p>;
-
+  // IMPORTANTE: Los hooks deben estar ANTES de cualquier early return
   const ranked = useMemo(() => {
     return data
       .map((item) => {
@@ -140,6 +138,10 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
       .sort((a, b) => a.diferencia - b.diferencia)
       .slice(0, top);
   }, [data, top]);
+
+  // AHORA sí, hacer early returns si es necesario
+  if (loading) return <p className="text-center">Cargando ranking...</p>;
+  if (!data || data.length === 0) return <p className="text-center">No hay datos para mostrar.</p>;
 
   if (ranked.length === 0) {
     return (

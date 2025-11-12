@@ -234,19 +234,31 @@ export default function IndicatorTable({ data, loading }: Props) {
                     </button>
                     
                     <div className="flex items-center gap-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`px-3 py-2 rounded-md transition-colors ${
-                                    page === currentPage
-                                        ? 'bg-blue-600 text-white'
-                                        : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
+                        {(() => {
+                            const maxButtons = 5; // Máximo 5 botones de página
+                            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                            
+                            if (endPage - startPage + 1 < maxButtons) {
+                                startPage = Math.max(1, endPage - maxButtons + 1);
+                            }
+                            
+                            const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+                            
+                            return pages.map((page) => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-3 py-2 rounded-md transition-colors ${
+                                        page === currentPage
+                                            ? 'bg-blue-600 text-white'
+                                            : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ));
+                        })()}
                     </div>
                     
                     <button

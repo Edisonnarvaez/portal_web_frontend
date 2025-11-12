@@ -313,8 +313,8 @@ const ResultadosPage: React.FC = () => {
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedHeadquarters, setSelectedHeadquarters] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
 
   // Estados de modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -332,7 +332,6 @@ const ResultadosPage: React.FC = () => {
     indicators,
     headquarters,
     loading,
-    pagination,
     fetchPaginatedResults,
     createResult,
     updateResult,
@@ -345,10 +344,9 @@ const ResultadosPage: React.FC = () => {
       detailedResults: detailedResults.length,
       indicators: indicators.length,
       headquarters: headquarters.length,
-      loading,
-      pagination
+      loading
     });
-  }, [detailedResults, indicators, headquarters, loading, pagination]);
+  }, [detailedResults, indicators, headquarters, loading]);
 
   // Opciones para filtros (label/value)
   const headquarterOptions = useMemo(() => (headquarters || []).map((hq: any) => ({ label: hq.name, value: String(hq.id) })), [headquarters]);
@@ -366,16 +364,6 @@ const ResultadosPage: React.FC = () => {
       firstYear: yearOptions[0]
     });
   }, [headquarterOptions, indicatorOptions, yearOptions]);
-
-  // Fetch paginated results when pagination params change
-  // NOTE: We don't use pagination for detailedResults display because it would
-  // replace the full dataset with just a page. Instead, we load ALL data once
-  // and filter/paginate on the client side for accurate metrics calculation.
-  // This useEffect is kept for reference but disabled.
-  useEffect(() => {
-    // Paginación deshabilitada: usamos todos los datos cargados por fetchResults()
-    // console.log('📄 [ResultadosPage] Paginación triggerizada:', { page, pageSize });
-  }, [page, pageSize]);
 
   // Filtros aplicados
   const filteredResults = useMemo(() => {
@@ -460,6 +448,34 @@ const ResultadosPage: React.FC = () => {
     return result;
   }, [filteredResults, detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
 
+  // 🔧 Paginación local de filteredResults
+  const paginatedResults = useMemo(() => {
+    const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    // Resetear a página 1 si currentPage es mayor que totalPages
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+      return filteredResults.slice(0, itemsPerPage);
+    }
+    
+    return {
+      data: filteredResults.slice(startIndex, endIndex),
+      totalPages,
+      currentPage,
+      totalItems: filteredResults.length,
+      startIndex: startIndex + 1,
+      endIndex: Math.min(endIndex, filteredResults.length)
+    };
+  }, [filteredResults, currentPage, itemsPerPage]);
+
+  // Handler para cambiar items por página
+  const handleItemsPerPageChange = (newItems: number) => {
+    setItemsPerPage(newItems);
+    setCurrentPage(1); // Resetear a primera página
+  };
+
   // Handlers
   const handleCreateResult = () => {
     setSelectedResult(null);
@@ -520,7 +536,7 @@ const ResultadosPage: React.FC = () => {
     setSelectedIndicator('');
     setSelectedHeadquarters('');
     setSelectedYear('');
-    setPage(1);
+    setCurrentPage(1);
   };
 
   // Bulk CSV preview and upload state
@@ -685,7 +701,6 @@ const ResultadosPage: React.FC = () => {
               headquarterOptions={headquarterOptions}
               yearOptions={yearOptions}
             />
-
             {/* Estadísticas */}
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
@@ -696,47 +711,89 @@ const ResultadosPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Controles de paginación - Arriba */}
+            <div className="flex justify-between items-center mb-4">
+              <div></div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Registros por página:
+                </label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
             {/* Tabla de resultados */}
             <ResultsTable
-              data={filteredResults}
+              data={(paginatedResults as any).data}
               onEdit={handleEditResult}
               onDelete={handleDeleteResult}
               onView={handleViewResult}
               indicators={indicators}
             />
 
-            {/* Simple pagination controls (if backend provides pagination) */}
-            {pagination && (
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-gray-600 dark:text-gray-400">Mostrando {filteredResults.length} de {pagination.count}</div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Página</label>
-                    <div className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded">{page || 1}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Tamaño</label>
-                    <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="px-2 py-1 bg-white dark:bg-gray-800 border rounded">
-                      {[10,25,50,100].map(sz => (
-                        <option key={sz} value={sz}>{sz}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { setPage(Math.max(1, (pagination.page || 1) - 1)); }}
-                      disabled={!pagination.previous}
-                      className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
-                    >Anterior</button>
-                    <button
-                      onClick={() => { setPage((pagination.page || 1) + 1); }}
-                      disabled={!pagination.next}
-                      className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
-                    >Siguiente</button>
-                  </div>
-                </div>
+            {/* Controles de paginación - Abajo */}
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Mostrando {(paginatedResults as any).startIndex} - {(paginatedResults as any).endIndex} de {(paginatedResults as any).totalItems} registros
               </div>
-            )}
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  ← Anterior
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const totalPages = (paginatedResults as any).totalPages;
+                    const current = currentPage;
+                    const maxButtons = 5; // Máximo 5 botones de página
+                    let startPage = Math.max(1, current - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    
+                    if (endPage - startPage + 1 < maxButtons) {
+                      startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+                    
+                    const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+                    
+                    return pages.map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 rounded-lg transition-colors font-medium ${
+                          page === currentPage
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ));
+                  })()}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(Math.min((paginatedResults as any).totalPages, currentPage + 1))}
+                  disabled={currentPage === (paginatedResults as any).totalPages}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
           </>
         )}
       </motion.div>
