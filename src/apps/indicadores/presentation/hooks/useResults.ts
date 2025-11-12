@@ -21,12 +21,25 @@ export const useResults = () => {
       
       console.log('🔄 Iniciando carga de resultados...');
       
-      const [resultsData, detailedResultsData, indicatorsData, headquartersData] = await Promise.all([
+      // Use Promise.allSettled() to allow individual failures without blocking others
+      const results = await Promise.allSettled([
         resultService.getAllResults(),
         resultService.getAllResultsWithDetails(),
         resultService.getIndicators(),
         resultService.getHeadquarters()
       ]);
+      
+      // Extract data with fallbacks
+      const resultsData = results[0].status === 'fulfilled' ? results[0].value : [];
+      const detailedResultsData = results[1].status === 'fulfilled' ? results[1].value : [];
+      const indicatorsData = results[2].status === 'fulfilled' ? results[2].value : [];
+      const headquartersData = results[3].status === 'fulfilled' ? results[3].value : [];
+      
+      // Log any rejections
+      if (results[0].status === 'rejected') console.error('❌ getAllResults failed:', results[0].reason);
+      if (results[1].status === 'rejected') console.error('❌ getAllResultsWithDetails failed:', results[1].reason);
+      if (results[2].status === 'rejected') console.error('❌ getIndicators failed:', results[2].reason);
+      if (results[3].status === 'rejected') console.error('❌ getHeadquarters failed:', results[3].reason);
       
       console.log('📊 Datos cargados:', {
         results: resultsData.length,
