@@ -1,103 +1,405 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog } from "@headlessui/react";
-import { X } from "lucide-react";
+import { X, TrendingUp, TrendingDown, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   indicator: any | null;
-  results: any[]; // <- nuevo
+  results: any[];
 }
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer,
-    Legend,
-  } from "recharts";
 
 export default function IndicatorDetailModal({ isOpen, onClose, indicator, results }: Props) {
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
+
+  React.useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
+
   if (!indicator) return null;
 
-const resultsForThisIndicator = results.filter(
-  (r) => r.indicator === indicator.id
-);
+  // Obtener el objeto indicador del nested object
+  const indicatorData = indicator.indicator || indicator;
+  
+  // Mejor filtrado: usar todos los datos disponibles del indicador
+  const resultsForThisIndicator = results.filter((r) => {
+    // Si tenemos ID del indicador, comparar por ID
+    if (indicatorData?.id && r.indicator?.id) {
+      return r.indicator.id === indicatorData.id;
+    }
+    // Si no, comparar por nombre del indicador
+    if (indicator.indicatorName && r.indicatorName) {
+      return r.indicatorName === indicator.indicatorName;
+    }
+    // Fallback: si el resultado tiene el mismo indicador object
+    if (r.indicator && indicatorData) {
+      return r.indicator === indicatorData || r.indicator?.name === indicatorData?.name;
+    }
+    return false;
+  });  const chartData = resultsForThisIndicator
+    .map((item) => ({
+      resultado: item.calculatedValue || 0,
+      meta: parseFloat(indicator.target || indicatorData?.target || '0'),
+      periodo: (() => {
+        switch (item.measurementFrequency) {
+          case "monthly":
+            return `${item.year}-${String(item.month).padStart(2, "0")}`;
+          case "quarterly":
+            return `Q${item.quarter} ${item.year}`;
+          case "semiannual":
+            return `S${item.semester} ${item.year}`;
+          case "annual":
+            return `${item.year}`;
+          default:
+            return `${item.year}`;
+        }
+      })(),
+      year: item.year,
+      month: item.month || 1,
+      quarter: item.quarter || 1,
+      semester: item.semester || 1,
+    }))
+    .sort((a, b) => {
+      // Ordenar por año primero (descendente - más reciente primero)
+      if (a.year !== b.year) return b.year - a.year;
+      // Luego por mes
+      if (a.month !== b.month) return b.month - a.month;
+      // Luego por trimestre
+      if (a.quarter !== b.quarter) return b.quarter - a.quarter;
+      // Luego por semestre
+      return b.semester - a.semester;
+    });
 
-const chartData = resultsForThisIndicator
-  .map((item) => ({
-    resultado: item.calculatedValue,
-    meta: parseFloat(indicator.target),
-    periodo: (() => {
-      switch (item.measurementFrequency) {
-        case "monthly":
-          return `${item.year}-${String(item.month).padStart(2, "0")}`;
-        case "quarterly":
-          return `Q${item.quarter} ${item.year}`;
-        case "semesterly":
-          return `S${item.semester} ${item.year}`;
-        case "annually":
-          return `${item.year}`;
-        default:
-          return `${item.year}`;
-      }
-    })(),
-  }))
-  .sort((a, b) => a.periodo.localeCompare(b.periodo));
+  // Calcular estadísticas - USAR EL RESULTADO MÁS RECIENTE (primero en array ordenado)
+  const currentResult = chartData[0] ? resultsForThisIndicator
+    .filter(r => {
+      const periodo = (() => {
+        switch (r.measurementFrequency) {
+          case "monthly":
+            return `${r.year}-${String(r.month).padStart(2, "0")}`;
+          case "quarterly":
+            return `Q${r.quarter} ${r.year}`;
+          case "semiannual":
+            return `S${r.semester} ${r.year}`;
+          case "annual":
+            return `${r.year}`;
+          default:
+            return `${r.year}`;
+        }
+      })();
+      return periodo === chartData[0]?.periodo;
+    })
+    .sort((a, b) => {
+      // Si hay múltiples resultados para el mismo período, tomar el más reciente por fecha de actualización
+      const dateA = new Date(a.updateDate || a.creationDate || 0).getTime();
+      const dateB = new Date(b.updateDate || b.creationDate || 0).getTime();
+      return dateB - dateA; // Descendente - más reciente primero
+    })[0] : (resultsForThisIndicator[0] || indicator);
+  
+  const previousResult = chartData[1] ? resultsForThisIndicator
+    .filter(r => {
+      const periodo = (() => {
+        switch (r.measurementFrequency) {
+          case "monthly":
+            return `${r.year}-${String(r.month).padStart(2, "0")}`;
+          case "quarterly":
+            return `Q${r.quarter} ${r.year}`;
+          case "semiannual":
+            return `S${r.semester} ${r.year}`;
+          case "annual":
+            return `${r.year}`;
+          default:
+            return `${r.year}`;
+        }
+      })();
+      return periodo === chartData[1]?.periodo;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.updateDate || a.creationDate || 0).getTime();
+      const dateB = new Date(b.updateDate || b.creationDate || 0).getTime();
+      return dateB - dateA;
+    })[0] : null;
+  
+  // Mejor manejo de target - usar !== undefined
+  // IMPORTANTE: Usar !== undefined en lugar de solo truthy check, porque 0 es falsy
+  const target = currentResult && currentResult.target !== undefined && currentResult.target !== null
+    ? parseFloat(currentResult.target)
+    : parseFloat(indicator.target || indicatorData?.target || '0');
+  
+  // Mejor manejo de currentValue - usar múltiples fallbacks
+  // IMPORTANTE: Usar !== undefined en lugar de solo truthy check, porque 0 es falsy
+  const currentValue = currentResult && currentResult.calculatedValue !== undefined && currentResult.calculatedValue !== null
+    ? parseFloat(currentResult.calculatedValue)
+    : parseFloat(indicator.calculatedValue || indicator.result || '0');
+  
+  const trend = currentValue >= (previousResult?.calculatedValue || currentValue) ? 'up' : 'down';
+  const cumplimiento = target > 0 ? ((currentValue / target) * 100).toFixed(1) : '0';
+  const cumple = currentValue >= target;
+
+  console.log('🔍 Debugging Modal - Final Data:', {
+    totalResults: results.length,
+    filteredResults: resultsForThisIndicator.length,
+    chartDataLength: chartData.length,
+    mostRecentPeriodo: chartData[0]?.periodo,
+    currentResult: {
+      id: currentResult?.id,
+      calculatedValue: currentResult?.calculatedValue,
+      target: currentResult?.target,
+      year: currentResult?.year,
+      month: currentResult?.month,
+      creationDate: currentResult?.creationDate,
+      updateDate: currentResult?.updateDate,
+    },
+    computedValues: {
+      currentValue,
+      target,
+      cumplimiento: `${cumplimiento}%`,
+      cumple,
+      trend,
+    },
+  });
+
+  const CustomTooltip = (props: any) => {
+    const { active, payload } = props;
+    if (active && payload && payload.length > 0) {
+      return (
+        <div
+          style={{
+            backgroundColor: isDarkMode ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            borderColor: isDarkMode ? '#4b5563' : '#ddd',
+            color: isDarkMode ? '#e5e7eb' : '#1f2937',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: '1px solid',
+          }}
+        >
+          <p className="font-semibold">{payload[0]?.payload?.periodo}</p>
+          <p className="text-blue-400">📊 Resultado: {payload[0]?.value?.toFixed(2)}</p>
+          <p className="text-green-400">🎯 Meta: {payload[1]?.value?.toFixed(2)}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-xl rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg">
-        {resultsForThisIndicator.length > 0 && (
-  <div className="mt-6">
-    <h3 className="text-md font-semibold mb-2">Evolución temporal</h3>
-    <ResponsiveContainer width="100%" height={250}>
-      <LineChart data={chartData}>
-        <XAxis dataKey="periodo" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="resultado"
-          stroke="#3b82f6"
-          strokeWidth={2}
-        />
-        <Line
-          type="monotone"
-          dataKey="meta"
-          stroke="#10b981"
-          strokeDasharray="5 5"
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-)}
-          <div className="flex justify-between items-center mb-4">
-            <Dialog.Title className="text-xl font-bold text-gray-800 dark:text-white">
-              Detalle del Indicador
-            </Dialog.Title>
-            <button onClick={onClose}>
-              <X className="w-6 h-6 text-gray-500 hover:text-gray-700 dark:text-white" />
+      <div className="fixed inset-0 overflow-y-auto flex items-center justify-center p-4">
+        <Dialog.Panel className="w-full max-w-3xl rounded-xl bg-white dark:bg-gray-800 shadow-2xl">
+          {/* Encabezado */}
+          <div className="flex justify-between items-start p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex-1">
+              <Dialog.Title className="text-2xl font-bold text-gray-900 dark:text-white">
+                {indicator.indicatorName || indicatorData?.name || 'Indicador'}
+              </Dialog.Title>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Código: <span className="font-mono font-semibold">{indicator.indicatorCode || indicatorData?.code || '-'}</span>
+              </p>
+            </div>
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
-          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-            <p><strong>Nombre:</strong> {indicator.name}</p>
-            <p><strong>Código:</strong> {indicator.code}</p>
-            <p><strong>Versión:</strong> {indicator.version}</p>
-            <p><strong>Descripción:</strong> {indicator.description}</p>
-            <hr />
-            <p><strong>Fórmula:</strong> {indicator.numerator} / {indicator.denominator}</p>
-            <p><strong>Unidad:</strong> {indicator.measurementUnit}</p>
-            <p><strong>Frecuencia:</strong> {indicator.measurementFrequency}</p>
-            <p><strong>Método de cálculo:</strong> {indicator.calculationMethod}</p>
-            <p><strong>Meta:</strong> {indicator.target}</p>
-            <hr />
-            <p><strong>Responsable Numerador:</strong> {indicator.numeratorResponsible}</p>
-            <p><strong>Responsable Denominador:</strong> {indicator.denominatorResponsible}</p>
+
+          <div className="p-6 space-y-6">
+            {/* Tarjetas de resumen */}
+            {currentResult && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`p-4 rounded-lg border-2 ${cumple ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'}`}>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Estado Actual</p>
+                  <div className="flex items-center mt-2">
+                    {cumple ? (
+                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 mr-2" />
+                    ) : (
+                      <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 mr-2" />
+                    )}
+                    <span className={`text-lg font-bold ${cumple ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                      {cumple ? 'Cumple ✓' : 'No Cumple ✗'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg border-2 bg-blue-50 dark:bg-blue-900/20 border-blue-500">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Resultado</p>
+                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-400 mt-2">
+                    {currentValue?.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {indicator.measurementUnit || indicatorData?.measurementUnit || ''}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg border-2 bg-green-50 dark:bg-green-900/20 border-green-500">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Cumplimiento</p>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400 mt-2">
+                    {cumplimiento}%
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Meta: {target?.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Gráfico de evolución */}
+            {resultsForThisIndicator.length > 0 && (
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">📈 Evolución Temporal</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke={isDarkMode ? '#4b5563' : '#ddd'}
+                    />
+                    <XAxis 
+                      dataKey="periodo"
+                      tick={{ fill: isDarkMode ? '#9ca3af' : '#666', fontSize: 12 }}
+                      stroke={isDarkMode ? '#4b5563' : '#ddd'}
+                    />
+                    <YAxis 
+                      tick={{ fill: isDarkMode ? '#9ca3af' : '#666', fontSize: 12 }}
+                      stroke={isDarkMode ? '#4b5563' : '#ddd'}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      formatter={(value) => {
+                        if (value === 'resultado') {
+                          return <span style={{ color: '#3b82f6' }}>📊 Resultado</span>;
+                        }
+                        return <span style={{ color: '#10b981' }}>🎯 Meta</span>;
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="resultado"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="meta"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={{ fill: '#10b981', r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Información detallada - 3 columnas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Información del indicador */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                  ℹ️ Información del Indicador
+                </h4>
+                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                  <p><strong>Versión:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.version ?? indicator?.version ?? currentResult?.version ?? '-'}</span></p>
+                  <p><strong>Descripción:</strong> <span className="text-gray-600 dark:text-gray-400 block text-xs">{indicatorData?.description ?? indicator?.description ?? currentResult?.description ?? '-'}</span></p>
+                  <p><strong>Unidad:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.measurementUnit ?? indicatorData?.measurementUnit ?? currentResult?.measurementUnit ?? '-'}</span></p>
+                  <p><strong>Frecuencia:</strong> <span className="text-gray-600 dark:text-gray-400 capitalize">{indicator.measurementFrequency ?? indicatorData?.measurementFrequency ?? currentResult?.measurementFrequency ?? '-'}</span></p>
+                  <p><strong>Método:</strong> <span className="text-gray-600 dark:text-gray-400 text-xs">{indicator.calculationMethod ?? indicatorData?.calculationMethod ?? currentResult?.calculationMethod ?? '-'}</span></p>
+                </div>
+              </div>
+
+              {/* Fórmula y Responsables */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                  🔧 Fórmula
+                </h4>
+                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                  <p>
+                    <strong>Numerador / Denominador:</strong>
+                    <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded font-mono text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                      <p><span className="text-blue-600 dark:text-blue-400">Numerador:</span> {indicatorData?.numerator ?? indicator?.numerator ?? currentResult?.numerator ?? '-'}</p>
+                      <p><span className="text-green-600 dark:text-green-400">Denominador:</span> {indicatorData?.denominator ?? indicator?.denominator ?? currentResult?.denominator ?? '-'}</p>
+                    </div>
+                  </p>
+                  <p><strong>Responsable Numerador:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.numeratorResponsible ?? indicator?.numeratorResponsible ?? currentResult?.numeratorResponsible ?? '-'}</span></p>
+                  <p><strong>Responsable Denominador:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.denominatorResponsible ?? indicator?.denominatorResponsible ?? currentResult?.denominatorResponsible ?? '-'}</span></p>
+                </div>
+              </div>
+
+              {/* Información de la Sede y Resultado */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                  🏢 Sede e Información del Resultado
+                </h4>
+                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                  <p><strong>Sede:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.headquarterName ?? currentResult?.headquarterName ?? '-'}</span></p>
+                  <p><strong>Resultado Valor:</strong> <span className="text-blue-600 dark:text-blue-400 font-semibold">{(currentResult?.calculatedValue ?? currentValue)?.toFixed(2) ?? '-'}</span></p>
+                  <p><strong>Meta Valor:</strong> <span className="text-green-600 dark:text-green-400 font-semibold">{(currentResult?.target ?? target)?.toFixed(2) ?? '-'}</span></p>
+                  <p><strong>Numerador:</strong> <span className="text-gray-600 dark:text-gray-400">{currentResult?.numerator ?? indicator?.numerator ?? '-'}</span></p>
+                  <p><strong>Denominador:</strong> <span className="text-gray-600 dark:text-gray-400">{currentResult?.denominator ?? indicator?.denominator ?? '-'}</span></p>
+                  {currentResult?.creationDate && (
+                    <p><strong>Fecha Creación:</strong> <span className="text-gray-600 dark:text-gray-400 text-xs">{new Date(currentResult.creationDate).toLocaleDateString('es-CO')}</span></p>
+                  )}
+                  {currentResult?.updateDate && (
+                    <p><strong>Última Actualización:</strong> <span className="text-gray-600 dark:text-gray-400 text-xs">{new Date(currentResult.updateDate).toLocaleDateString('es-CO')}</span></p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Resultado actual */}
+            {currentResult && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">📊 Último Resultado</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Valor</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{currentValue?.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Meta</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{target?.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Diferencia</p>
+                    <p className={`text-lg font-bold ${(currentValue - target) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {(currentValue - target).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Tendencia</p>
+                    <div className="flex items-center mt-1">
+                      {trend === 'up' ? (
+                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Dialog.Panel>
       </div>
