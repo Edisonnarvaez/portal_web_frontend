@@ -1,5 +1,5 @@
 // src/apps/indicadores/presentation/components/Dashboard/IndicatorBarChart.tsx
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { getIndicatorField, getHeadquarterField, safeNumber } from '../../utils/dataHelpers';
 
@@ -105,7 +105,31 @@ export default function IndicatorBarChart({ data, loading }: Props) {
     if (loading) return <p className="text-center text-gray-600 dark:text-gray-300">Cargando datos...</p>;
     if (data.length === 0) return <p className="text-center text-gray-600 dark:text-gray-300">No hay datos para mostrar con los filtros seleccionados.</p>;
 
-    // 🆕 Función para calcular cumplimiento basado en tendencia
+    // 🆕 Detectar dark mode para ajustar colores de ejes
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    
+    useEffect(() => {
+        // Detectar dark mode desde la clase 'dark' en el documento
+        const checkDarkMode = () => {
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
+        };
+        
+        checkDarkMode();
+        
+        // Escuchar cambios de dark mode
+        const observer = new MutationObserver(checkDarkMode);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        
+        return () => observer.disconnect();
+    }, []);
+
+    // 🆕 Colores adaptativos para dark mode
+    const chartColors = {
+        axisText: isDarkMode ? '#9ca3af' : '#666',
+        axisLine: isDarkMode ? '#4b5563' : '#ddd',
+        tooltipBg: isDarkMode ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        cursorFill: isDarkMode ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+    };
     const calculateCompliance = (resultado: number, meta: number, trend: string | null | undefined) => {
         // Normalizar la tendencia
         const normalizedTrend = (trend || '').toString().toLowerCase().trim();
@@ -204,9 +228,44 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                 cumplimiento: complianceStatus,
                 cumple: cumple,
                 // Tendencia explícita para debugging
-                tendencia: trend || 'No especificada'
+                tendencia: trend || 'No especificada',
+                // 🔑 Campos para ordenamiento cronológico
+                sortYear: año,
+                sortMonth: item.month || item.mes || 1,
+                sortQuarter: item.quarter || 1,
+                sortSemester: item.semester || 1,
             };
-        }).filter(Boolean); // Eliminar nulos del mapeo
+        }).filter(Boolean) // Eliminar nulos del mapeo
+        .sort((a, b) => {
+            // 🆕 ORDENAMIENTO CRONOLÓGICO: Primero por año (antiguo a reciente), luego por mes/trimestre/semestre
+            
+            // Comparar años
+            if (a.sortYear !== b.sortYear) {
+                return a.sortYear - b.sortYear; // De antiguo a reciente
+            }
+            
+            // Si el año es el mismo, ordenar por frecuencia
+            const frequencyA = a.frequency.toLowerCase();
+            const frequencyB = b.frequency.toLowerCase();
+            
+            // Si es mensual, ordenar por mes
+            if (frequencyA.includes('mensual') && frequencyB.includes('mensual')) {
+                return a.sortMonth - b.sortMonth;
+            }
+            
+            // Si es trimestral, ordenar por trimestre
+            if (frequencyA.includes('trimestral') && frequencyB.includes('trimestral')) {
+                return a.sortQuarter - b.sortQuarter;
+            }
+            
+            // Si es semestral, ordenar por semestre
+            if (frequencyA.includes('semestral') && frequencyB.includes('semestral')) {
+                return a.sortSemester - b.sortSemester;
+            }
+            
+            // Por último ordenar por sede si es el mismo período
+            return a.sedeDisplay.localeCompare(b.sedeDisplay);
+        });
     }, [data]);
 
     // DEBUG: Mostrar datos procesados con cumplimiento basado en tendencia
@@ -393,8 +452,8 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                     </defs>
                     <XAxis 
                         dataKey="sede" 
-                        tick={{ fontSize: 10, fill: '#666' }}
-                        axisLine={{ stroke: '#ddd' }}
+                        tick={{ fontSize: 10, fill: chartColors.axisText }}
+                        axisLine={{ stroke: chartColors.axisLine }}
                         angle={-45}
                         textAnchor="end"
                         height={100}
@@ -410,18 +469,28 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                         }}
                     />
                     <YAxis 
-                        tick={{ fontSize: 11, fill: '#666' }}
-                        axisLine={{ stroke: '#ddd' }}
+                        tick={{ fontSize: 11, fill: chartColors.axisText }}
+                        axisLine={{ stroke: chartColors.axisLine }}
                         label={{ value: 'Valor', angle: -90, position: 'insideLeft' }}
                     />
                     <Tooltip 
                         content={<CustomTooltip />}
-                        cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+                        cursor={{ fill: chartColors.cursorFill }}
                     />
                     <Legend 
                         wrapperStyle={{ paddingTop: '20px' }}
                         iconType="square"
-                        formatter={(value) => value === 'resultado' ? '📊 Resultado' : '🎯 Meta'}
+                        formatter={(value) => {
+                            if (value === 'resultado') {
+                                return <span style={{ color: '#3b82f6' }}>📊 Resultado</span>;
+                            }
+                            return <span style={{ color: '#10b981' }}>🎯 Meta</span>;
+                        }}
+                        contentStyle={{
+                            backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                            padding: '8px 12px',
+                            borderRadius: '6px'
+                        }}
                     />
                     <Bar 
                         dataKey="resultado" 
