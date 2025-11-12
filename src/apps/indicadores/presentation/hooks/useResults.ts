@@ -19,15 +19,18 @@ export const useResults = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Iniciando carga de resultados...');
+      console.log('🔄 [useResults.fetchResults] Iniciando carga de resultados...');
+      console.log('⏱️ [useResults] Timestamp:', new Date().toISOString());
       
       // Use Promise.allSettled() to allow individual failures without blocking others
+      const startTime = performance.now();
       const results = await Promise.allSettled([
         resultService.getAllResults(),
         resultService.getAllResultsWithDetails(),
         resultService.getIndicators(),
         resultService.getHeadquarters()
       ]);
+      const loadTime = performance.now() - startTime;
       
       // Extract data with fallbacks
       const resultsData = results[0].status === 'fulfilled' ? results[0].value : [];
@@ -35,13 +38,57 @@ export const useResults = () => {
       const indicatorsData = results[2].status === 'fulfilled' ? results[2].value : [];
       const headquartersData = results[3].status === 'fulfilled' ? results[3].value : [];
       
-      // Log any rejections
-      if (results[0].status === 'rejected') console.error('❌ getAllResults failed:', results[0].reason);
-      if (results[1].status === 'rejected') console.error('❌ getAllResultsWithDetails failed:', results[1].reason);
-      if (results[2].status === 'rejected') console.error('❌ getIndicators failed:', results[2].reason);
-      if (results[3].status === 'rejected') console.error('❌ getHeadquarters failed:', results[3].reason);
+      console.log('📈 [useResults] Promesas completadas en', loadTime.toFixed(2), 'ms');
+      console.log('✅ [useResults] Estados de promesas:', {
+        getAllResults: results[0].status,
+        getAllResultsWithDetails: results[1].status,
+        getIndicators: results[2].status,
+        getHeadquarters: results[3].status
+      });
       
-      console.log('📊 Datos cargados:', {
+      // Log any rejections with detailed error info
+      if (results[0].status === 'rejected') {
+        const reason = results[0].reason as any;
+        console.error('❌ [useResults] getAllResults failed:', {
+          statusCode: reason?.response?.status,
+          statusText: reason?.response?.statusText,
+          message: reason?.message,
+          data: reason?.response?.data,
+          url: reason?.config?.url
+        });
+      }
+      if (results[1].status === 'rejected') {
+        const reason = results[1].reason as any;
+        console.error('❌ [useResults] getAllResultsWithDetails failed:', {
+          statusCode: reason?.response?.status,
+          statusText: reason?.response?.statusText,
+          message: reason?.message,
+          data: reason?.response?.data,
+          url: reason?.config?.url
+        });
+      }
+      if (results[2].status === 'rejected') {
+        const reason = results[2].reason as any;
+        console.error('❌ [useResults] getIndicators failed:', {
+          statusCode: reason?.response?.status,
+          statusText: reason?.response?.statusText,
+          message: reason?.message,
+          data: reason?.response?.data,
+          url: reason?.config?.url
+        });
+      }
+      if (results[3].status === 'rejected') {
+        const reason = results[3].reason as any;
+        console.error('❌ [useResults] getHeadquarters failed:', {
+          statusCode: reason?.response?.status,
+          statusText: reason?.response?.statusText,
+          message: reason?.message,
+          data: reason?.response?.data,
+          url: reason?.config?.url
+        });
+      }
+      
+      console.log('📊 [useResults] Datos cargados:', {
         results: resultsData.length,
         detailedResults: detailedResultsData.length,
         indicators: indicatorsData.length,

@@ -7,11 +7,18 @@ export class ResultsApiService {
   // Results endpoints
   async getResults(): Promise<Result[]> {
     try {
+      console.log('📍 [ResultsApiService] Calling getResults...');
       // Prefer the paginated endpoint and return only the array for backward compatibility
       const paginated = await this.getPaginatedResults();
+      console.log('✅ [ResultsApiService] getResults returned:', paginated.results?.length ?? 0, 'items');
       return paginated.results || [];
-    } catch (error) {
-      console.error('❌ Error fetching results (normalized):', error);
+    } catch (error: any) {
+      console.error('❌ [ResultsApiService] Error fetching results (normalized):', {
+        message: error?.message,
+        status: error?.response?.status,
+        url: error?.config?.url,
+        data: error?.response?.data
+      });
       throw new Error('Error loading results');
     }
   }
@@ -21,21 +28,43 @@ export class ResultsApiService {
    */
   async getPaginatedResults(params?: { page?: number; page_size?: number; indicator?: number; headquarters?: number; period_start?: string; period_end?: string }): Promise<{ count: number; next: string | null; previous: string | null; results: Result[] }> {
     try {
-      const response = await axiosInstance.get(`${this.baseUrl}/results/`, { params });
+      const url = `${this.baseUrl}/results/`;
+      console.log('📍 [ResultsApiService.getPaginatedResults] Calling URL:', url, 'with params:', params);
+      const startTime = performance.now();
+      const response = await axiosInstance.get(url, { params });
+      const duration = performance.now() - startTime;
+      console.log(`✅ [ResultsApiService.getPaginatedResults] Success (${duration.toFixed(2)}ms) - Status: ${response.status}`);
+      
       const data = response.data;
 
       if (Array.isArray(data)) {
+        console.log('ℹ️ [ResultsApiService.getPaginatedResults] Response is an array, wrapping...');
         return { count: data.length, next: null, previous: null, results: data };
       }
 
-      return {
+      const normalized = {
         count: typeof data.count === 'number' ? data.count : (Array.isArray(data.results) ? data.results.length : 0),
         next: data.next || null,
         previous: data.previous || null,
         results: Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []),
       };
-    } catch (error) {
-      console.error('❌ Error fetching paginated results:', error);
+      
+      console.log('📦 [ResultsApiService.getPaginatedResults] Normalized response:', {
+        count: normalized.count,
+        hasNext: !!normalized.next,
+        hasPrevious: !!normalized.previous,
+        resultsCount: normalized.results.length
+      });
+      
+      return normalized;
+    } catch (error: any) {
+      console.error('❌ [ResultsApiService.getPaginatedResults] Error:', {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        url: error?.config?.url,
+        data: error?.response?.data
+      });
       throw new Error('Error loading paginated results');
     }
   }
@@ -216,12 +245,18 @@ export class ResultsApiService {
   // 🔧 ADD: Missing methods for dropdowns and filters
   async getIndicators(): Promise<Array<{id: number, name: string, code: string, measurementFrequency: string}>> {
     try {
-      const response = await axiosInstance.get(`${this.baseUrl}/indicators/`);
-      console.log('📥 Indicators obtained:', response.data);
+      const url = `${this.baseUrl}/indicators/`;
+      console.log('📍 [ResultsApiService.getIndicators] Calling URL:', url);
+      const startTime = performance.now();
+      const response = await axiosInstance.get(url);
+      const duration = performance.now() - startTime;
+      console.log(`✅ [ResultsApiService.getIndicators] Success (${duration.toFixed(2)}ms) - Status: ${response.status}`);
       
       const indicators = Array.isArray(response.data) 
         ? response.data 
         : (response.data?.results || []);
+      
+      console.log('📦 [ResultsApiService.getIndicators] Parsed:', indicators.length, 'indicators');
       
       return indicators.map((indicator: any) => ({
         id: indicator.id,
@@ -233,27 +268,45 @@ export class ResultsApiService {
         measurementUnit: indicator.measurementUnit ?? indicator.measurement_unit ?? '',
         trend: indicator.trend ?? indicator.trend_type ?? undefined,
       }));
-    } catch (error) {
-      console.error('❌ Error fetching indicators:', error);
+    } catch (error: any) {
+      console.error('❌ [ResultsApiService.getIndicators] Error:', {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        url: error?.config?.url,
+        data: error?.response?.data
+      });
       throw new Error('Error loading indicators');
     }
   }
 
   async getHeadquarters(): Promise<Array<{id: number, name: string}>> {
     try {
-      const response = await axiosInstance.get('/companies/headquarters/');
-      console.log('📥 Headquarters obtained:', response.data);
+      const url = '/companies/headquarters/';
+      console.log('📍 [ResultsApiService.getHeadquarters] Calling URL:', url);
+      const startTime = performance.now();
+      const response = await axiosInstance.get(url);
+      const duration = performance.now() - startTime;
+      console.log(`✅ [ResultsApiService.getHeadquarters] Success (${duration.toFixed(2)}ms) - Status: ${response.status}`);
       
       const headquarters = Array.isArray(response.data) 
         ? response.data 
         : (response.data?.results || []);
       
+      console.log('📦 [ResultsApiService.getHeadquarters] Parsed:', headquarters.length, 'headquarters');
+      
       return headquarters.map((hq: any) => ({
         id: hq.id,
         name: hq.name
       }));
-    } catch (error) {
-      console.error('❌ Error fetching headquarters:', error);
+    } catch (error: any) {
+      console.error('❌ [ResultsApiService.getHeadquarters] Error:', {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        url: error?.config?.url,
+        data: error?.response?.data
+      });
       throw new Error('Error loading headquarters');
     }
   }

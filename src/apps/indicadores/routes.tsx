@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import DashboardPage from "./presentation/pages/DashboardPage";
 import IndicadoresPage from "./presentation/pages/IndicadoresPage";
 import ResultadosPage from "./presentation/pages/ResultadosPage";
+import DiagnosticoAPI from "./presentation/pages/DiagnosticoAPI";
 import Layout from "./presentation/components/Layout";
 
 const IndicadoresRoutes = () => (
@@ -11,6 +12,7 @@ const IndicadoresRoutes = () => (
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/indicators" element={<IndicadoresPage />} />
       <Route path="/results" element={<ResultadosPage />} />
+      <Route path="/diagnostico" element={<DiagnosticoAPI />} />
     </Routes>
   </Layout>
 );

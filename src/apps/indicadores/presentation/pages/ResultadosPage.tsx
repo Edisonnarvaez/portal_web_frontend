@@ -368,14 +368,14 @@ const ResultadosPage: React.FC = () => {
   }, [headquarterOptions, indicatorOptions, yearOptions]);
 
   // Fetch paginated results when pagination params change
+  // NOTE: We don't use pagination for detailedResults display because it would
+  // replace the full dataset with just a page. Instead, we load ALL data once
+  // and filter/paginate on the client side for accurate metrics calculation.
+  // This useEffect is kept for reference but disabled.
   useEffect(() => {
-    console.log('📄 [ResultadosPage] Paginación triggerizada:', { page, pageSize });
-    if (typeof fetchPaginatedResults === 'function') {
-      fetchPaginatedResults({ page, page_size: pageSize }).catch(err => {
-        console.error('❌ Error fetching paginated results:', err);
-      });
-    }
-  }, [page, pageSize, fetchPaginatedResults]);
+    // Paginación deshabilitada: usamos todos los datos cargados por fetchResults()
+    // console.log('📄 [ResultadosPage] Paginación triggerizada:', { page, pageSize });
+  }, [page, pageSize]);
 
   // Filtros aplicados
   const filteredResults = useMemo(() => {
@@ -416,22 +416,37 @@ const ResultadosPage: React.FC = () => {
     const hasFilters = searchTerm || selectedIndicator || selectedHeadquarters || selectedYear;
     const metricsData = hasFilters ? filteredResults : detailedResults;
     
+    // Helper function para validar si un valor es numérico y válido
+    const isValidMetric = (targetValue: number, calc: number): boolean => {
+      return !isNaN(targetValue) && !isNaN(calc) && targetValue > 0 && calc > 0;
+    };
+    
+    // Calcular cumplimiento promedio - SOLO con valores válidos
+    let validCount = 0;
+    let complianceSum = 0;
+    
+    const validMetrics = metricsData.filter(r => {
+      const targetValue = typeof r.target === 'number' ? r.target : Number(r.target);
+      const calc = Number(r.calculatedValue ?? 0);
+      return isValidMetric(targetValue, calc);
+    });
+    
+    for (const curr of validMetrics) {
+      const targetValue = typeof curr.target === 'number' ? curr.target : Number(curr.target);
+      const calc = Number(curr.calculatedValue ?? 0);
+      const isDecreasing = String(curr.trend || '').toLowerCase() === 'decreasing' || String(curr.trend || '').toLowerCase() === 'desc' || String(curr.trend || '').toLowerCase() === 'down';
+      const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
+      const compliance = Math.min(ratio * 100, 100); // Máximo 100%
+      complianceSum += compliance;
+      validCount++;
+    }
+    
     const result = {
       totalResults: metricsData.length,
-      avgCompliance: metricsData.length > 0
-        ? (metricsData.reduce((acc, curr) => {
-            const targetValue = typeof curr.target === 'number' ? curr.target : Number(curr.target);
-            const calc = Number(curr.calculatedValue ?? 0);
-            if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return acc;
-            const isDecreasing = String(curr.trend || '').toLowerCase() === 'decreasing' || String(curr.trend || '').toLowerCase() === 'desc' || String(curr.trend || '').toLowerCase() === 'down';
-            const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
-            return acc + (ratio * 100);
-          }, 0) / metricsData.length)
-        : 0,
-      highPerformance: metricsData.filter(r => {
+      avgCompliance: validCount > 0 ? (complianceSum / validCount) : 0,
+      highPerformance: validMetrics.filter(r => {
         const targetValue = typeof r.target === 'number' ? r.target : Number(r.target);
         const calc = Number(r.calculatedValue ?? 0);
-        if (!targetValue || isNaN(targetValue) || isNaN(calc) || targetValue === 0) return false;
         const isDecreasing = String(r.trend || '').toLowerCase() === 'decreasing' || String(r.trend || '').toLowerCase() === 'desc' || String(r.trend || '').toLowerCase() === 'down';
         const ratio = isDecreasing ? (targetValue / calc) : (calc / targetValue);
         return (ratio * 100) >= 95;
@@ -440,6 +455,7 @@ const ResultadosPage: React.FC = () => {
     };
     
     console.log('📊 [ResultadosPage] Dashboard Metrics:', result);
+    console.log('📊 [ResultadosPage] Valid metrics for compliance:', validCount, '/', metricsData.length);
     
     return result;
   }, [filteredResults, detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
