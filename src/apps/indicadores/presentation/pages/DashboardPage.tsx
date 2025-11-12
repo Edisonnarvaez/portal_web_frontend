@@ -14,9 +14,8 @@ export default function DashboardPage() {
 
     const [selectedSede, setSelectedSede] = useState("");
     const [selectedIndicador, setSelectedIndicador] = useState("");
-    const [selectedUnidad, setSelectedUnidad] = useState("");
-    const [selectedFrecuencia, setSelectedFrecuencia] = useState("");
     const [selectedAnio, setSelectedAnio] = useState("");
+    const [selectedFrecuencia, setSelectedFrecuencia] = useState("");
 
     // 🔧 CORREGIR: Verificar que data sea un array válido
     const safeData = useMemo(() => {
@@ -54,7 +53,15 @@ export default function DashboardPage() {
         return values.map((v: string) => ({ label: v, value: v }));
     }, [safeData]);
 
-    // años are not needed as a separate dropdown in this layout; keep code if later required
+    // Extraer años únicos de los datos
+    const anos = useMemo(() => {
+        if (safeData.length === 0) return [];
+        const values = [...new Set(safeData.map((item) => {
+            const year = (item as any).year || (item as any).periodo || (item as any).period || new Date().getFullYear();
+            return String(year);
+        }))].filter(Boolean).sort().reverse(); // Ordena descendente para mostrar años recientes primero
+        return values.map((v: string) => ({ label: v, value: v }));
+    }, [safeData]);
 
     // Filtro de datos
     const filteredData = useMemo(() => {
@@ -73,20 +80,18 @@ export default function DashboardPage() {
                 return code ? `${code} - ${name}` : name;
             })();
             const matchesIndicador = !selectedIndicador || (indicatorLabel === selectedIndicador);
-            const matchesUnidad = !selectedUnidad || (item.measurementUnit && item.measurementUnit === selectedUnidad);
             const matchesFrecuencia = !selectedFrecuencia || (item.measurementFrequency && item.measurementFrequency === selectedFrecuencia);
-            const matchesAnio = !selectedAnio || (item.year && String(item.year) === selectedAnio);
+            const matchesAnio = !selectedAnio || (String(item.year || item.periodo || item.period || '') === selectedAnio);
 
-            return matchesSede && matchesIndicador && matchesUnidad && matchesFrecuencia && matchesAnio;
+            return matchesSede && matchesIndicador && matchesFrecuencia && matchesAnio;
         });
-    }, [safeData, selectedSede, selectedIndicador, selectedUnidad, selectedFrecuencia, selectedAnio]);
+    }, [safeData, selectedSede, selectedIndicador, selectedFrecuencia, selectedAnio]);
 
     const clearFilters = () => {
         setSelectedSede("");
         setSelectedIndicador("");
-        setSelectedUnidad("");
-        setSelectedFrecuencia("");
         setSelectedAnio("");
+        setSelectedFrecuencia("");
     };
 
     // 🔧 CORREGIR: Mostrar estado de error
@@ -136,8 +141,36 @@ export default function DashboardPage() {
 
     return (
         <div className="p-6 space-y-6">
-            {/* 🐛 DEBUG: Información temporal */}
-            {/* development-only debug panel removed for cleanliness */}
+            {/* 🐛 DEBUG: Panel de filtros activos */}
+            {(selectedSede || selectedIndicador || selectedAnio || selectedFrecuencia) && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                        🔍 Filtros Activos: {safeData.length} registros originales → {filteredData.length} registros filtrados
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                        {selectedSede && (
+                            <span className="bg-blue-200 dark:bg-blue-700 text-blue-900 dark:text-blue-100 px-2 py-1 rounded">
+                                Sede: {selectedSede}
+                            </span>
+                        )}
+                        {selectedIndicador && (
+                            <span className="bg-green-200 dark:bg-green-700 text-green-900 dark:text-green-100 px-2 py-1 rounded">
+                                Indicador: {selectedIndicador}
+                            </span>
+                        )}
+                        {selectedAnio && (
+                            <span className="bg-purple-200 dark:bg-purple-700 text-purple-900 dark:text-purple-100 px-2 py-1 rounded">
+                                Año: {selectedAnio}
+                            </span>
+                        )}
+                        {selectedFrecuencia && (
+                            <span className="bg-orange-200 dark:bg-orange-700 text-orange-900 dark:text-orange-100 px-2 py-1 rounded">
+                                Frecuencia: {selectedFrecuencia}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Header */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -189,12 +222,12 @@ export default function DashboardPage() {
 
                     <div>
                         <select
-                            value={selectedUnidad}
-                            onChange={(e) => setSelectedUnidad(e.target.value)}
+                            value={selectedAnio}
+                            onChange={(e) => setSelectedAnio(e.target.value)}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors w-full"
                         >
-                            <option value="">Todas las unidades</option>
-                            {unidades.map((u:any)=> <option key={u.value} value={u.value}>{u.label}</option>)}
+                            <option value="">Todos los años</option>
+                            {anos.map((a:any)=> <option key={a.value} value={a.value}>{a.label}</option>)}
                         </select>
                     </div>
 
