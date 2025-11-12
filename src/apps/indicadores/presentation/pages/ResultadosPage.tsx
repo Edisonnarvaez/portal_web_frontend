@@ -557,8 +557,8 @@ const ResultadosPage: React.FC = () => {
       }
     }
     setBulkUploading(false);
-    // Refresh results after bulk upload
-    if (typeof fetchPaginatedResults === 'function') await fetchPaginatedResults({ page: 1, page_size: pageSize });
+    // Refresh results after bulk upload (fetchPaginatedResults does not accept parameters)
+    if (typeof fetchPaginatedResults === 'function') await fetchPaginatedResults();
     setBulkPreviewOpen(false);
     // Show brief summary
     const successCount = results.filter(r => r.ok).length;

@@ -71,53 +71,132 @@ export class ResultsApiService {
 
   async getResultsWithDetails(): Promise<DetailedResult[]> {
     try {
-      const response = await axiosInstance.get(`${this.baseUrl}/results/detailed/`);
+      const url = `${this.baseUrl}/results/detailed/`;
+      console.log('🔍 [getResultsWithDetails] Fetching from URL:', url);
+      
+      const response = await axiosInstance.get(url);
       const data = response.data;
 
-      // Prefer the 'results' array when the backend returns the detailed wrapper
-      if (data && Array.isArray(data.results)) {
-        // Transformar los datos para que coincidan con la interfaz DetailedResult
-        const transformedResults = data.results.map((item: any) => {
-          const calculatedValue = Number(item.calculatedValue) || 0;
-          const target = Number(item.indicator?.target) || 0;
-          const numerator = Number(item.numerator) || 0;
-          const denominator = Number(item.denominator) || 0;
+      console.log('📥 [getResultsWithDetails] RAW Response data:', {
+        type: typeof data,
+        isArray: Array.isArray(data),
+        hasResults: !!data?.results,
+        resultsCount: data?.results?.length,
+        keysInData: Object.keys(data || {}).slice(0, 10),
+        sampleItem: Array.isArray(data) ? data[0] : (data?.results ? data.results[0] : null)
+      });
+      
+      console.log('📥 [getResultsWithDetails] Full raw data (first 500 chars):', JSON.stringify(data).slice(0, 500));
 
-          return {
-            id: item.id,
-            numerator,
-            denominator,
-            calculatedValue,
-            creationDate: item.creationDate,
-            updateDate: item.updateDate,
-            year: item.year,
-            month: item.month,
-            quarter: item.quarter,
-            semester: item.semester,
-            // Relaciones: mantener objetos anidados si existen, o ids si vienen así
-            headquarters: item.headquarters ?? item.headquarters?.id ?? item.headquarters,
-            indicator: item.indicator ?? item.indicator?.id ?? item.indicator,
-            user: item.user ?? item.user?.id ?? item.user,
-            // Datos detallados extraídos de objetos anidados
-            headquarterName: item.headquarters?.name ?? item.headquarters?.nombre ?? 'Sin sede',
-            indicatorName: item.indicator?.name ?? item.indicator?.nombre ?? 'Sin nombre',
-            indicatorCode: item.indicator?.code ?? item.indicator?.codigo ?? 'Sin código',
-            measurementUnit: item.indicator?.measurementUnit ?? item.indicator?.measurement_unit ?? '',
-            measurementFrequency: item.indicator?.measurementFrequency ?? item.indicator?.measurement_frequency ?? '',
-            target: target,
-            calculationMethod: item.indicator?.calculationMethod ?? item.indicator?.calculation_method ?? ''
-          };
-        });
-
-        return transformedResults;
-      } else if (Array.isArray(response.data)) {
-        // Si la respuesta es directamente un array (retro-compatibilidad)
-        return response.data;
+      // Extract the results array from whatever structure it comes in
+      let resultsArray: any[] = [];
+      if (Array.isArray(data)) {
+        resultsArray = data;
+      } else if (data?.results && Array.isArray(data.results)) {
+        resultsArray = data.results;
       } else {
-        console.warn('⚠️ Estructura de respuesta inesperada en detailed endpoint:', response.data);
-        // Si el backend cambió y devuelve { results, statistics }, devolver results si existe, o vacio
-        const maybeResults = response.data?.results;
-        return Array.isArray(maybeResults) ? maybeResults : [];
+        console.warn('⚠️ [getResultsWithDetails] Unexpected response structure');
+        return [];
+      }
+
+      console.log('✅ [getResultsWithDetails] Got', resultsArray.length, 'raw items from endpoint');
+
+      // Now, we need to check if items are already enriched or if they only have IDs
+      // If they're not enriched, we need to fetch indicators/headquarters to enrich them
+      const firstItem = resultsArray[0];
+      const needsEnrichment = firstItem && (
+        typeof firstItem.indicator === 'number' || 
+        (typeof firstItem.indicator === 'object' && !firstItem.indicatorName)
+      );
+
+      if (needsEnrichment) {
+        console.log('⚠️ [getResultsWithDetails] Items are NOT enriched, fetching indicators/headquarters for enrichment...');
+        
+        try {
+          // Fetch indicators and headquarters in parallel for enrichment
+          const [indicatorsResp, headquartersResp] = await Promise.all([
+            axiosInstance.get(`${this.baseUrl}/indicators/`),
+            axiosInstance.get('/companies/headquarters/')
+          ]);
+
+          const indicators = Array.isArray(indicatorsResp.data) ? indicatorsResp.data : (indicatorsResp.data?.results || []);
+          const headquarters = Array.isArray(headquartersResp.data) ? headquartersResp.data : (headquartersResp.data?.results || []);
+
+          console.log('✅ [getResultsWithDetails] Fetched', indicators.length, 'indicators and', headquarters.length, 'headquarters for enrichment');
+
+          // Build lookup maps
+          const indicatorMap = new Map();
+          indicators.forEach((ind: any) => {
+            indicatorMap.set(ind.id, ind);
+          });
+
+          const headquarterMap = new Map();
+          headquarters.forEach((hq: any) => {
+            headquarterMap.set(hq.id, hq);
+          });
+
+          // Transform with enrichment
+          const transformedResults = resultsArray.map((item: any) => {
+            const indicatorId = typeof item.indicator === 'number' ? item.indicator : item.indicator?.id;
+            const headquarterId = typeof item.headquarters === 'number' ? item.headquarters : item.headquarters?.id;
+
+            const indicatorObj = indicatorMap.get(indicatorId);
+            const headquarterObj = headquarterMap.get(headquarterId);
+
+            return {
+              id: item.id,
+              numerator: Number(item.numerator) || 0,
+              denominator: Number(item.denominator) || 0,
+              calculatedValue: Number(item.calculatedValue) || 0,
+              creationDate: item.creationDate,
+              updateDate: item.updateDate,
+              year: item.year,
+              month: item.month,
+              quarter: item.quarter,
+              semester: item.semester,
+              // Store both ID and object
+              headquarters: typeof item.headquarters === 'object' ? item.headquarters : headquarterObj,
+              indicator: typeof item.indicator === 'object' ? item.indicator : indicatorObj,
+              user: item.user,
+              // Enriched fields
+              headquarterName: headquarterObj?.name || headquarterObj?.nombre || 'Sin sede',
+              indicatorName: indicatorObj?.name || indicatorObj?.nombre || 'Sin nombre',
+              indicatorCode: indicatorObj?.code || indicatorObj?.codigo || 'Sin código',
+              measurementUnit: indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || '',
+              measurementFrequency: indicatorObj?.measurementFrequency || indicatorObj?.measurement_frequency || '',
+              target: Number(indicatorObj?.target) || 0,
+              calculationMethod: indicatorObj?.calculationMethod || indicatorObj?.calculation_method || '',
+              trend: item.trend || indicatorObj?.trend || ''
+            };
+          });
+
+          console.log('✅ [getResultsWithDetails] Enriched', transformedResults.length, 'items');
+          console.log('🔎 First enriched item:', transformedResults[0]);
+          return transformedResults;
+
+        } catch (enrichError) {
+          console.error('❌ [getResultsWithDetails] Error enriching items:', enrichError);
+          // Fallback: return items as-is without enrichment
+          return resultsArray;
+        }
+      } else {
+        // Items are already enriched, just ensure they have the right fields
+        console.log('✅ [getResultsWithDetails] Items are already enriched from endpoint');
+        
+        const transformedResults = resultsArray.map((item: any) => ({
+          ...item,
+          headquarterName: item.headquarterName || item.headquarters?.name || 'Sin sede',
+          indicatorName: item.indicatorName || item.indicator?.name || 'Sin nombre',
+          indicatorCode: item.indicatorCode || item.indicator?.code || 'Sin código',
+          measurementUnit: item.measurementUnit || item.indicator?.measurementUnit || '',
+          measurementFrequency: item.measurementFrequency || item.indicator?.measurementFrequency || '',
+          target: Number(item.target) || 0,
+          trend: item.trend || item.indicator?.trend || ''
+        }));
+
+        console.log('✅ [getResultsWithDetails] Normalized', transformedResults.length, 'already-enriched items');
+        console.log('🔎 First normalized item:', transformedResults[0]);
+        return transformedResults;
       }
     } catch (error) {
       console.error('❌ Error fetching detailed results:', error);
