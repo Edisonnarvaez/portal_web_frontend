@@ -149,9 +149,16 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
     ? parseFloat(currentResult.calculatedValue)
     : parseFloat(indicator.calculatedValue || indicator.result || '0');
   
-  const trend = currentValue >= (previousResult?.calculatedValue || currentValue) ? 'up' : 'down';
+  // 🔑 Obtener trend del indicador (meta: increasing/decreasing)
+  const indicatorTrend = (indicator?.trend || indicatorData?.trend || 'increasing').toLowerCase();
+  // También calcular trend visual basado en comparación histórica
+  const trendVisual = currentValue >= (previousResult?.calculatedValue || currentValue) ? 'up' : 'down';
+  
+  // ✅ Calcular cumplimiento basado en el trend del indicador
   const cumplimiento = target > 0 ? ((currentValue / target) * 100).toFixed(1) : '0';
-  const cumple = currentValue >= target;
+  const cumple = indicatorTrend === 'decreasing' || indicatorTrend === 'descendente' 
+    ? currentValue <= target 
+    : currentValue >= target;
 
   // console.log('🔍 Debugging Modal - Final Data:', {
   //   totalResults: results.length,
@@ -172,7 +179,8 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
   //     target,
   //     cumplimiento: `${cumplimiento}%`,
   //     cumple,
-  //     trend,
+  //     indicatorTrend,
+  //     trendVisual,
   //   },
   // });
 
@@ -341,13 +349,13 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                   🔧 Fórmula
                 </h4>
                 <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <p>
+                  <div>
                     <strong>Numerador / Denominador:</strong>
                     <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded font-mono text-xs text-gray-600 dark:text-gray-400 space-y-1">
                       <p><span className="text-blue-600 dark:text-blue-400">Numerador:</span> {indicatorData?.numerator ?? indicator?.numerator ?? currentResult?.numerator ?? '-'}</p>
                       <p><span className="text-green-600 dark:text-green-400">Denominador:</span> {indicatorData?.denominator ?? indicator?.denominator ?? currentResult?.denominator ?? '-'}</p>
                     </div>
-                  </p>
+                  </div>
                   <p><strong>Responsable Numerador:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.numeratorResponsible ?? indicator?.numeratorResponsible ?? currentResult?.numeratorResponsible ?? '-'}</span></p>
                   <p><strong>Responsable Denominador:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.denominatorResponsible ?? indicator?.denominatorResponsible ?? currentResult?.denominatorResponsible ?? '-'}</span></p>
                 </div>
@@ -396,7 +404,7 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                   <div>
                     <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Tendencia</p>
                     <div className="flex items-center mt-1">
-                      {trend === 'up' ? (
+                      {trendVisual === 'up' ? (
                         <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
                       ) : (
                         <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
