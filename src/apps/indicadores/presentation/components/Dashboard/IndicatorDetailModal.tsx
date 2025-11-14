@@ -38,9 +38,29 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
   // Obtener el objeto indicador del nested object
   const indicatorData = indicator.indicator || indicator;
   
-  // Mejor filtrado: usar todos los datos disponibles del indicador
+  // Función auxiliar para formatear período (reutilizable)
+  const formatPeriodo = (item: any): string => {
+    switch (item.measurementFrequency) {
+      case "monthly":
+        return `${item.year}-${String(item.month).padStart(2, "0")}`;
+      case "quarterly":
+        return `Q${item.quarter} ${item.year}`;
+      case "semiannual":
+        return `S${item.semester} ${item.year}`;
+      case "annual":
+        return `${item.year}`;
+      default:
+        return `${item.year}`;
+    }
+  };
+  
+  // 🔑 El resultado SELECCIONADO es el que está en 'indicator' (pasado desde IndicatorTable)
+  // Este es el que debe mostrarse como resultado actual
+  const selectedResultPeriodo = formatPeriodo(indicator);
+  
+  // Obtener todos los resultados del MISMO INDICADOR para poder mostrar el gráfico de evolución
   const resultsForThisIndicator = results.filter((r) => {
-    // Si tenemos ID del indicador, comparar por ID
+    // Si tenemos ID del indicador, comparar por ID (más preciso)
     if (indicatorData?.id && r.indicator?.id) {
       return r.indicator.id === indicatorData.id;
     }
@@ -53,89 +73,61 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
       return r.indicator === indicatorData || r.indicator?.name === indicatorData?.name;
     }
     return false;
-  });  const chartData = resultsForThisIndicator
+  });
+  
+  // Crear datos para el gráfico con ordenamiento CRONOLÓGICO ASCENDENTE (pasado a futuro)
+  const chartData = resultsForThisIndicator
     .map((item) => ({
       resultado: item.calculatedValue || 0,
       meta: parseFloat(indicator.target || indicatorData?.target || '0'),
-      periodo: (() => {
-        switch (item.measurementFrequency) {
-          case "monthly":
-            return `${item.year}-${String(item.month).padStart(2, "0")}`;
-          case "quarterly":
-            return `Q${item.quarter} ${item.year}`;
-          case "semiannual":
-            return `S${item.semester} ${item.year}`;
-          case "annual":
-            return `${item.year}`;
-          default:
-            return `${item.year}`;
-        }
-      })(),
+      periodo: formatPeriodo(item),
       year: item.year,
       month: item.month || 1,
       quarter: item.quarter || 1,
       semester: item.semester || 1,
+      // Guardar el ID del resultado para poder identificarlo después
+      resultId: item.id,
     }))
     .sort((a, b) => {
-      // Ordenar por año primero (descendente - más reciente primero)
-      if (a.year !== b.year) return b.year - a.year;
+      // 📈 ORDENAMIENTO CRONOLÓGICO ASCENDENTE (antiguo → reciente) para que el gráfico sea claro
+      // Ordenar por año primero (ascendente - más antiguo primero)
+      if (a.year !== b.year) return a.year - b.year;
       // Luego por mes
-      if (a.month !== b.month) return b.month - a.month;
+      if (a.month !== b.month) return a.month - b.month;
       // Luego por trimestre
-      if (a.quarter !== b.quarter) return b.quarter - a.quarter;
+      if (a.quarter !== b.quarter) return a.quarter - b.quarter;
       // Luego por semestre
-      return b.semester - a.semester;
+      return a.semester - b.semester;
     });
 
-  // Calcular estadísticas - USAR EL RESULTADO MÁS RECIENTE (primero en array ordenado)
-  const currentResult = chartData[0] ? resultsForThisIndicator
-    .filter(r => {
-      const periodo = (() => {
-        switch (r.measurementFrequency) {
-          case "monthly":
-            return `${r.year}-${String(r.month).padStart(2, "0")}`;
-          case "quarterly":
-            return `Q${r.quarter} ${r.year}`;
-          case "semiannual":
-            return `S${r.semester} ${r.year}`;
-          case "annual":
-            return `${r.year}`;
-          default:
-            return `${r.year}`;
-        }
-      })();
-      return periodo === chartData[0]?.periodo;
-    })
-    .sort((a, b) => {
-      // Si hay múltiples resultados para el mismo período, tomar el más reciente por fecha de actualización
-      const dateA = new Date(a.updateDate || a.creationDate || 0).getTime();
-      const dateB = new Date(b.updateDate || b.creationDate || 0).getTime();
-      return dateB - dateA; // Descendente - más reciente primero
-    })[0] : (resultsForThisIndicator[0] || indicator);
+  // Calcular estadísticas - USAR EL RESULTADO SELECCIONADO (el que se abrió del modal)
+  // Este debe ser el "currentResult" porque es el que el usuario seleccionó
+  const currentResult = indicator;
   
-  const previousResult = chartData[1] ? resultsForThisIndicator
-    .filter(r => {
-      const periodo = (() => {
-        switch (r.measurementFrequency) {
-          case "monthly":
-            return `${r.year}-${String(r.month).padStart(2, "0")}`;
-          case "quarterly":
-            return `Q${r.quarter} ${r.year}`;
-          case "semiannual":
-            return `S${r.semester} ${r.year}`;
-          case "annual":
-            return `${r.year}`;
-          default:
-            return `${r.year}`;
-        }
-      })();
-      return periodo === chartData[1]?.periodo;
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.updateDate || a.creationDate || 0).getTime();
-      const dateB = new Date(b.updateDate || b.creationDate || 0).getTime();
-      return dateB - dateA;
-    })[0] : null;
+  // Para calcular tendencia visual, obtener el resultado anterior en el tiempo
+  // Primero, encontrar el período anterior del resultado seleccionado
+  const previousResult = chartData.length > 0 
+    ? resultsForThisIndicator
+        .map((item) => ({
+          ...item,
+          periodo: formatPeriodo(item),
+          year: item.year,
+          month: item.month || 1,
+          quarter: item.quarter || 1,
+          semester: item.semester || 1,
+        }))
+        .sort((a, b) => {
+          if (a.year !== b.year) return a.year - b.year;
+          if (a.month !== b.month) return a.month - b.month;
+          if (a.quarter !== b.quarter) return a.quarter - b.quarter;
+          return a.semester - b.semester;
+        })
+        .find((item) => {
+          // Buscar el resultado anterior al seleccionado
+          const selectedIndex = chartData.findIndex(d => d.periodo === selectedResultPeriodo);
+          return selectedIndex > 0 && chartData[selectedIndex - 1]?.periodo === item.periodo;
+        }) || null
+    : null;
   
   // Mejor manejo de target - usar !== undefined
   // IMPORTANTE: Usar !== undefined en lugar de solo truthy check, porque 0 es falsy

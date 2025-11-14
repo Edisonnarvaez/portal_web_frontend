@@ -87,10 +87,14 @@ export default function IndicatorTable({ data, loading }: Props) {
             // 📅 Fechas
             creationDate: item.creationDate,
             updateDate: item.updateDate,
-            // computed fields
+            
+            // 📊 Campos computados
             compliant: typeof item.compliant === 'boolean' ? item.compliant : undefined,
-            trend: item.trend || undefined,
-            diferencia: typeof item.diferencia === 'number' ? item.diferencia : undefined
+            trend: item.trend || indicatorObj?.trend || undefined,
+            diferencia: typeof item.diferencia === 'number' ? item.diferencia : undefined,
+            
+            // ✅ Copiar todos los campos del indicador original para asegurar disponibilidad en modal
+            ...indicatorObj,
         };
         
         return processedItem;
@@ -176,8 +180,10 @@ export default function IndicatorTable({ data, loading }: Props) {
                                     cumple = false;
                                 }
                             }
+                            // 🔑 Crear una key única combinando ID, período y índice de página
+                            const uniqueKey = `${item.id || 'no-id'}-${formatPeriodo(item)}-${startIndex + idx}`;
                             return (
-                                <tr key={item.id || idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <tr key={uniqueKey} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-4 py-2">
                                         <button
                                             onClick={() => {
