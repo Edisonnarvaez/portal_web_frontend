@@ -214,6 +214,12 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             const mesSpanish = transformMonthToSpanish(monthNum);
             const periodoLabel = monthNum > 0 ? `${mesSpanish}'${String(yearNum).slice(-2)}` : `Q${quarterNum}'${String(yearNum).slice(-2)}`;
             
+            // 🔑 CRÍTICO: Crear una clave de ordenamiento única que combine año+mes/trimestre
+            // Esto permite ordenar correctamente incluso si hay fechas de diferentes años
+            const sortKey = monthNum > 0 
+                ? (yearNum * 100 + monthNum)  // Ej: 2024 * 100 + 3 = 202403
+                : (yearNum * 100 + quarterNum);  // Ej: 2024 * 100 + 1 = 202401
+            
             // Crear ID único para cada registro (para grouping en Recharts)
             const uniqueId = `${sede}|${indicadorLabel}|${periodo}|${mes}|${año}|${idx}`;
 
@@ -247,53 +253,23 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                 sortMonth: monthNum && !isNaN(monthNum) ? monthNum : 0,
                 sortQuarter: quarterNum && !isNaN(quarterNum) ? quarterNum : 0,
                 sortSemester: semesterNum && !isNaN(semesterNum) ? semesterNum : 0,
+                // 🔑 CRÍTICO: clave única para ordenamiento cronológico correcto
+                sortKey: sortKey,
             };
         }).filter(Boolean) // Eliminar nulos del mapeo
         .sort((a, b) => {
             // Protección: el compilador puede seguir pensando que a o b son null, así que validamos
             if (!a || !b) return 0;
 
-            // 🆕 ORDENAMIENTO CRONOLÓGICO: Primero por año (antiguo a reciente), luego por mes/trimestre/semestre
+            // 🆕 ORDENAMIENTO CRONOLÓGICO SIMPLE Y CORRECTO: Usar sortKey que ya tiene año+mes/trimestre combinados
+            const sortKeyA = a.sortKey ?? 0;
+            const sortKeyB = b.sortKey ?? 0;
             
-            // Comparar años (usar 0 como fallback si faltan)
-            const yearA = a.sortYear ?? 0;
-            const yearB = b.sortYear ?? 0;
-            if (yearA !== yearB) {
-                return yearA - yearB; // De antiguo a reciente
+            if (sortKeyA !== sortKeyB) {
+                return sortKeyA - sortKeyB; // De antiguo a reciente
             }
             
-            // Si el año es el mismo, ordenar por frecuencia (usar '' como fallback)
-            const frequencyA = (a.frequency || '').toString().toLowerCase();
-            const frequencyB = (b.frequency || '').toString().toLowerCase();
-            
-            // Si es mensual, ordenar por mes (usar 0 como fallback)
-            if (frequencyA.includes('mensual') && frequencyB.includes('mensual')) {
-                const monthA = a.sortMonth ?? 0;
-                const monthB = b.sortMonth ?? 0;
-                if (monthA !== monthB) {
-                    return monthA - monthB; // De enero a diciembre
-                }
-            }
-            
-            // Si es trimestral, ordenar por trimestre
-            if (frequencyA.includes('trimestral') && frequencyB.includes('trimestral')) {
-                const quarterA = a.sortQuarter ?? 0;
-                const quarterB = b.sortQuarter ?? 0;
-                if (quarterA !== quarterB) {
-                    return quarterA - quarterB; // De Q1 a Q4
-                }
-            }
-            
-            // Si es semestral, ordenar por semestre
-            if (frequencyA.includes('semestral') && frequencyB.includes('semestral')) {
-                const semesterA = a.sortSemester ?? 0;
-                const semesterB = b.sortSemester ?? 0;
-                if (semesterA !== semesterB) {
-                    return semesterA - semesterB; // De S1 a S2
-                }
-            }
-            
-            // Por último ordenar por sede si es el mismo período (usar '' como fallback)
+            // Si tienen el mismo sortKey, ordenar por sede como fallback
             return (a.sedeDisplay || '').localeCompare(b.sedeDisplay || '');
         });
     }, [data]);
