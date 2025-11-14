@@ -202,47 +202,47 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 overflow-y-auto flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-3xl rounded-xl bg-white dark:bg-gray-800 shadow-2xl">
+      <div className="fixed inset-0 overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+        <Dialog.Panel className="w-full max-w-3xl rounded-xl bg-white dark:bg-gray-800 shadow-2xl max-h-[95vh] overflow-y-auto">
           {/* Encabezado */}
-          <div className="flex justify-between items-start p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex-1">
-              <Dialog.Title className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="sticky top-0 bg-white dark:bg-gray-800 flex justify-between items-start p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 z-10">
+            <div className="flex-1 pr-4">
+              <Dialog.Title className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
                 {indicator.indicatorName || indicatorData?.name || 'Indicador'}
               </Dialog.Title>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Código: <span className="font-mono font-semibold">{indicator.indicatorCode || indicatorData?.code || '-'}</span>
               </p>
             </div>
             <button 
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex-shrink-0 p-1 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {/* Tarjetas de resumen */}
             {currentResult && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className={`p-4 rounded-lg border-2 ${cumple ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className={`p-3 sm:p-4 rounded-lg border-2 ${cumple ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'}`}>
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Estado Actual</p>
-                  <div className="flex items-center mt-2">
+                  <div className="flex items-center mt-2 gap-2">
                     {cumple ? (
-                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 mr-2" />
+                      <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
                     ) : (
-                      <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 mr-2" />
+                      <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
                     )}
-                    <span className={`text-lg font-bold ${cumple ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                    <span className={`text-base sm:text-lg font-bold ${cumple ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
                       {cumple ? 'Cumple ✓' : 'No Cumple ✗'}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg border-2 bg-blue-50 dark:bg-blue-900/20 border-blue-500">
+                <div className="p-3 sm:p-4 rounded-lg border-2 bg-blue-50 dark:bg-blue-900/20 border-blue-500">
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Resultado</p>
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-400 mt-2">
+                  <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400 mt-2 break-words">
                     {currentValue?.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -250,9 +250,9 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                   </p>
                 </div>
 
-                <div className="p-4 rounded-lg border-2 bg-green-50 dark:bg-green-900/20 border-green-500">
+                <div className="p-3 sm:p-4 rounded-lg border-2 bg-green-50 dark:bg-green-900/20 border-green-500">
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Cumplimiento</p>
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-400 mt-2">
+                  <p className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400 mt-2">
                     {cumplimiento}%
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -264,52 +264,58 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
 
             {/* Gráfico de evolución */}
             {resultsForThisIndicator.length > 0 && (
-              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">📈 Evolución Temporal</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                    <CartesianGrid 
-                      strokeDasharray="3 3" 
-                      stroke={isDarkMode ? '#4b5563' : '#ddd'}
-                    />
-                    <XAxis 
-                      dataKey="periodo"
-                      tick={{ fill: isDarkMode ? '#9ca3af' : '#666', fontSize: 12 }}
-                      stroke={isDarkMode ? '#4b5563' : '#ddd'}
-                    />
-                    <YAxis 
-                      tick={{ fill: isDarkMode ? '#9ca3af' : '#666', fontSize: 12 }}
-                      stroke={isDarkMode ? '#4b5563' : '#ddd'}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend 
-                      wrapperStyle={{ paddingTop: '20px' }}
-                      formatter={(value) => {
-                        if (value === 'resultado') {
-                          return <span style={{ color: '#3b82f6' }}>📊 Resultado</span>;
-                        }
-                        return <span style={{ color: '#10b981' }}>🎯 Meta</span>;
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="resultado"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      dot={{ fill: '#3b82f6', r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="meta"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      strokeDasharray="5 5"
-                      dot={{ fill: '#10b981', r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="border rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">📈 Evolución Temporal</h3>
+                <div className="w-full h-64 sm:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke={isDarkMode ? '#4b5563' : '#ddd'}
+                      />
+                      <XAxis 
+                        dataKey="periodo"
+                        tick={{ fill: isDarkMode ? '#9ca3af' : '#666', fontSize: 11 }}
+                        stroke={isDarkMode ? '#4b5563' : '#ddd'}
+                        angle={-45}
+                        textAnchor="end"
+                        height={70}
+                      />
+                      <YAxis 
+                        tick={{ fill: isDarkMode ? '#9ca3af' : '#666', fontSize: 11 }}
+                        stroke={isDarkMode ? '#4b5563' : '#ddd'}
+                        width={40}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        formatter={(value) => {
+                          if (value === 'resultado') {
+                            return <span style={{ color: '#3b82f6', fontSize: '12px' }}>📊 Resultado</span>;
+                          }
+                          return <span style={{ color: '#10b981', fontSize: '12px' }}>🎯 Meta</span>;
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="resultado"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="meta"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#10b981', r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
 
