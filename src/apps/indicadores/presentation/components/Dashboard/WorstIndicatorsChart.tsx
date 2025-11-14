@@ -9,45 +9,7 @@ import {
   ResponsiveContainer,
   LabelList,
   CartesianGrid,
-  Legend,
 } from "recharts";
-
-/**
- * Transformar mes (número o nombre en inglés) a español
- */
-function transformMonthToSpanish(month: string | number): string {
-  const monthMap: Record<string | number, string> = {
-    '1': 'Enero', 'january': 'Enero', 'jan': 'Enero',
-    '2': 'Febrero', 'february': 'Febrero', 'feb': 'Febrero',
-    '3': 'Marzo', 'march': 'Marzo', 'mar': 'Marzo',
-    '4': 'Abril', 'april': 'Abril', 'apr': 'Abril',
-    '5': 'Mayo', 'may': 'Mayo',
-    '6': 'Junio', 'june': 'Junio', 'jun': 'Junio',
-    '7': 'Julio', 'july': 'Julio', 'jul': 'Julio',
-    '8': 'Agosto', 'august': 'Agosto', 'aug': 'Agosto',
-    '9': 'Septiembre', 'september': 'Septiembre', 'sep': 'Septiembre',
-    '10': 'Octubre', 'october': 'Octubre', 'oct': 'Octubre',
-    '11': 'Noviembre', 'november': 'Noviembre', 'nov': 'Noviembre',
-    '12': 'Diciembre', 'december': 'Diciembre', 'dec': 'Diciembre',
-  };
-  return monthMap[String(month).toLowerCase()] || String(month);
-}
-
-/**
- * Transformar período (Q1, S1, etc.) a español
- */
-function transformPeriodToSpanish(period: string): string {
-  const periodMap: Record<string, string> = {
-    'q1': 'Primer Trimestre',
-    'q2': 'Segundo Trimestre',
-    'q3': 'Tercer Trimestre',
-    'q4': 'Cuarto Trimestre',
-    's1': 'Primer Semestre',
-    's2': 'Segundo Semestre',
-    'annual': 'Anual',
-  };
-  return periodMap[String(period).toLowerCase()] || String(period);
-}
 
 /**
  * Transformar tendencia a español con iconos
@@ -73,6 +35,8 @@ function transformFrequencyToSpanish(frequency: string): string {
   };
   return frequencyMap[String(frequency).toLowerCase()] || String(frequency);
 }
+
+// CustomTooltip removido - ahora inline en el Tooltip prop
 
 interface Props {
   data: any[];
@@ -109,11 +73,24 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
 
   // IMPORTANTE: Los hooks deben estar ANTES de cualquier early return
   const ranked = useMemo(() => {
-    return data
-      .map((item) => {
+    console.log('🔍 WorstIndicatorsChart - INICIO useMemo ranked. Data recibida:', {
+      length: data.length,
+      primero: data[0] ? {
+        id: (data[0] as any).id,
+        indicatorName: (data[0] as any).indicatorName,
+        headquarterName: (data[0] as any).headquarterName,
+        calculatedValue: (data[0] as any).calculatedValue,
+        target: (data[0] as any).target
+      } : null
+    });
+
+    const result = data
+      .map((item, index) => {
         const calculatedValue = safeNumber(item.calculatedValue ?? item.calculated_value ?? item.value ?? 0);
         const target = safeNumber(item.target ?? getIndicatorField(item, 'target', (item as any).target ?? 0));
         const trend = String(item.trend ?? getIndicatorField(item, 'trend', '') ?? '').toLowerCase();
+        const measurementFrequency = item.measurementFrequency ?? item.measurement_frequency ?? getIndicatorField(item, 'measurementFrequency', 'annual');
+        const measurementUnit = item.measurementUnit ?? item.measurement_unit ?? getIndicatorField(item, 'measurementUnit', '');
 
         let diferencia: number;
         if (typeof item.diferencia === 'number' && !isNaN(item.diferencia)) {
@@ -123,20 +100,63 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
           diferencia = (calculatedValue - target) * direction;
         }
 
+        // 🔑 Generar un ID único y estable para cada item del ranked
+        const uniqueId = `${item.indicatorCode || item.id}-${item.headquarterName || index}`;
+        
+        // 📅 Obtener información del período para hacer el displayName único
+        const monthName = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][(item.month || 1) - 1];
+        const periodStr = item.month ? `${monthName}'${String(item.year || 2025).slice(-2)}` : 
+                         item.quarter ? `Q${item.quarter}` : 
+                         item.semester ? `S${item.semester}` : '';
+        
         return {
           ...item,
+          id: item.id || index,
+          // KEY IMPORTANTE: identificador único para Recharts
+          _rechartsKey: uniqueId,
           calculatedValue,
           target,
           diferencia,
+          trend,
+          measurementFrequency,
+          measurementUnit,
           name: item.indicatorName || (item.indicator && item.indicator.name) || item.name || `Indicador ${item.id}`,
           sede: item.headquarterName || (item.headquarters && item.headquarters.name) || item.sede || 'Sin sede',
-          displayName: `${item.indicatorCode || (item.indicator && item.indicator.code) || item.code || 'IND'} - ${item.headquarterName || (item.headquarters && item.headquarters.name) || 'Sin sede'}`
+          // 🔑 CRÍTICO: displayName DEBE SER ÚNICO para que Recharts diferencie las barras
+          displayName: `${item.indicatorCode || (item.indicator && item.indicator.code) || item.code || 'IND'} - ${periodStr}` 
         };
       })
       .filter(item => typeof item.diferencia === 'number' && !isNaN(item.diferencia))
       // sort ascending so worst (most negative after direction normalization) come first
       .sort((a, b) => a.diferencia - b.diferencia)
-      .slice(0, top);
+      .slice(0, top)
+      // 🔑 CRÍTICO: Agregar index único para cada item en el array final
+      .map((item, arrayIndex) => ({
+        ...item,
+        _arrayIndex: arrayIndex,  // Este es el index en el array FINAL
+        _uniqueTooltipKey: `${item._rechartsKey}-${arrayIndex}-${item.calculatedValue}` // key extra para Recharts
+      }));
+
+    console.log('🔍 WorstIndicatorsChart - RESULTADO ranked:', {
+      length: result.length,
+      items: result.map(r => ({
+        id: r.id,
+        name: r.name,
+        sede: r.sede,
+        displayName: r.displayName,
+        diferencia: r.diferencia,
+        _arrayIndex: r._arrayIndex,
+        _uniqueTooltipKey: r._uniqueTooltipKey,
+        calculatedValue: r.calculatedValue,
+        target: r.target,
+        trend: r.trend
+      }))
+    });
+
+    // 🔍 CRÍTICO: Log del ARRAY COMPLETO en JSON
+    console.log('🔍 ARRAY COMPLETO RANKED (JSON):', JSON.stringify(result, null, 2));
+
+    return result;
   }, [data, top]);
 
   // AHORA sí, hacer early returns si es necesario
@@ -186,61 +206,93 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
             axisLine={{ stroke: chartColors.axisLine }}
           />
           <Tooltip 
+            content={({ active, payload, label }: any) => {
+              if (active && payload && payload.length > 0) {
+                const chartItem = payload[0]?.payload;
+                
+                if (!chartItem) {
+                  return null;
+                }
+
+                // 🔍 DEBUG: Ver exactamente qué recibimos de Recharts
+                console.log('🔍 Tooltip INLINE - Datos del payload:', {
+                  label,
+                  _arrayIndex: chartItem._arrayIndex,
+                  displayName: chartItem.displayName,
+                  name: chartItem.name,
+                  id: chartItem.id,
+                  _rechartsKey: chartItem._rechartsKey,
+                  _uniqueTooltipKey: chartItem._uniqueTooltipKey,
+                  calculatedValue: chartItem.calculatedValue,
+                  target: chartItem.target,
+                  diferencia: chartItem.diferencia,
+                });
+
+                const resultado = Number(chartItem.calculatedValue || 0);
+                const meta = Number(chartItem.target || 0);
+                const sede = chartItem.sede || 'Sin sede';
+                const indicatorName = chartItem.name || chartItem.indicatorName || 'Sin nombre';
+                const diferencia = Number(chartItem.diferencia || 0);
+                const trend = chartItem.trend || '';
+                const frequency = chartItem.measurementFrequency || '';
+                const unit = chartItem.measurementUnit || '';
+
+                return (
+                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-xs">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-300 dark:border-gray-600 pb-2">
+                      📊 {indicatorName}
+                    </p>
+                    
+                    <div className="space-y-2 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">📈 Valor actual:</span> {resultado.toFixed(2)} {unit}
+                      </p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">🎯 Meta:</span> {meta.toFixed(2)} {unit}
+                      </p>
+                      <p className={`text-sm font-semibold ${
+                        diferencia < 0 ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                        📊 Diferencia: {diferencia.toFixed(2)} {unit}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <p>
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">🏢 Sede:</span> {sede}
+                      </p>
+                      {trend && (
+                        <p>
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">📉 Tendencia:</span> {transformTrendToSpanish(trend)}
+                        </p>
+                      )}
+                      {frequency && (
+                        <p>
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">⏱️ Frecuencia:</span> {transformFrequencyToSpanish(frequency)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            }}
             contentStyle={{
               backgroundColor: chartColors.tooltipBg,
               border: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`,
               borderRadius: '8px',
               color: chartColors.tooltipText,
             }}
-            formatter={(value: any, name: string) => {
-              const numValue = parseFloat(value);
-              if (isNaN(numValue)) {
-                return ['N/A', name];
-              }
-              return [numValue.toFixed(2), name];
-            }}
-            content={({ active, payload }) => {
-              if (active && payload && payload.length > 0) {
-                const data = payload[0].payload;
-                return (
-                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      📊 {data.name}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      🏢 Sede: {data.sede}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      📈 Valor actual: {data.calculatedValue.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      🎯 Meta: {data.target.toFixed(2)}
-                    </p>
-                    <p className={`text-sm font-medium ${
-                      data.diferencia < 0 ? 'text-red-600' : 'text-green-600'
-                    }`}>
-                      📊 Diferencia: {data.diferencia.toFixed(2)}
-                    </p>
-                    {data.trend && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        📉 Tendencia: {transformTrendToSpanish(data.trend)}
-                      </p>
-                    )}
-                    {data.frequency && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        ⏱️ Frecuencia: {transformFrequencyToSpanish(data.frequency)}
-                      </p>
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            }}
+            cursor={{ fill: chartColors.cursorFill }}
+            wrapperStyle={{ outline: 'none' }}
+            isAnimationActive={false}
           />
           <Bar 
             dataKey="diferencia" 
             fill={chartColors.barFill}
             radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
+            shape={{ ...({} as any) }}
           >
             <LabelList 
               dataKey="diferencia" 
