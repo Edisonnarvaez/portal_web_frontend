@@ -15,6 +15,32 @@ import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 
+// 📅 Función para convertir número de mes a nombre
+const monthToSpanish = (month: string | number | null | undefined): string => {
+  const monthMap: { [key: string]: string } = {
+    '1': 'Enero', '2': 'Febrero', '3': 'Marzo', '4': 'Abril', '5': 'Mayo', '6': 'Junio',
+    '7': 'Julio', '8': 'Agosto', '9': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+  };
+  if (!month && month !== 0) return '—';
+  const monthStr = String(month);
+  return monthMap[monthStr] || monthStr;
+};
+
+// 📅 Función para convertir período a nombre legible
+const periodToSpanish = (period: string | number | null | undefined): string => {
+  if (!period && period !== 0) return '—';
+  const periodStr = String(period).toLowerCase();
+  
+  if (periodStr.includes('q1') || periodStr === '1') return 'Trim 1';
+  if (periodStr.includes('q2') || periodStr === '2') return 'Trim 2';
+  if (periodStr.includes('q3') || periodStr === '3') return 'Trim 3';
+  if (periodStr.includes('q4') || periodStr === '4') return 'Trim 4';
+  if (periodStr.includes('h1') || periodStr === 'h1' || (periodStr === '1' && periodStr.includes('semester'))) return 'Sem 1';
+  if (periodStr.includes('h2') || periodStr === 'h2' || (periodStr === '2' && periodStr.includes('semester'))) return 'Sem 2';
+  
+  return periodStr || '—';
+};
+
 // Componentes auxiliares reutilizables
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-12">
@@ -161,87 +187,102 @@ const FilterPanel = ({
 );
 
 const ResultsTable = ({ data, onEdit, onDelete, onView, indicators }: any) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900">
+      <table className="w-full divide-y divide-gray-300 dark:divide-gray-600">
+        <thead className="bg-gray-100 dark:bg-gray-900">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Indicador
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Sede
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Resultado
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Meta
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Año
             </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+              Mes
+            </th>
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+              Período
+            </th>
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Acciones
             </th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {data.map((result: DetailedResult) => (
-            <tr key={result.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <td className="px-6 py-4 whitespace-nowrap">
+            <tr key={result.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <td className="px-6 py-4">
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {result.indicatorName}
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {result.indicatorCode}
-                  </div>
+                  </p>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                 {result.headquarterName}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {result.calculatedValue?.toFixed(2) || '0.00'} {result.measurementUnit}
+              <td className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {result.calculatedValue?.toFixed(2) || '0.00'} <span className="text-xs font-normal text-gray-600 dark:text-gray-400">{result.measurementUnit}</span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {(() => {
                   const targFromResult = typeof result.target === 'number' ? result.target : Number(result.target ?? NaN);
                   const indicatorObj = result.indicator && typeof result.indicator === 'object' ? (result.indicator as any) : undefined;
-                  // Try indicators list as fallback (indicators prop passed from parent)
                   const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? result.indicator)) : undefined;
                   const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
                   const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
-                  const unit = result.measurementUnit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || indicatorFromList?.measurementUnit || indicatorFromList?.measurement_unit || '';
-                  return (isNaN(targ) ? '—' : targ.toFixed(2)) + (unit ? ` ${unit}` : '');
+                  return (isNaN(targ) ? '—' : targ.toFixed(2));
                 })()}
+                <span className="text-xs font-normal text-gray-600 dark:text-gray-400 ml-1">{result.measurementUnit}</span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {result.year}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex justify-end gap-2">
+              <td className="px-6 py-4 text-center">
+                <span className="inline-block px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-medium">
+                  {monthToSpanish(result.month)}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <span className="inline-block px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-medium">
+                  {periodToSpanish(result.quarter || result.semester || (result as any).period)}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <div className="flex justify-center gap-3">
                   <button
                     onClick={() => onView(result)}
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded"
+                    className="p-1.5 rounded text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
                     title="Ver detalles"
                   >
-                    <HiEye className="w-4 h-4" />
+                    <HiEye className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onEdit(result)}
-                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 p-1 rounded"
+                    className="p-1.5 rounded text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                     title="Editar"
                   >
-                    <HiPencil className="w-4 h-4" />
+                    <HiPencil className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onDelete(result)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 rounded"
+                    className="p-1.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                     title="Eliminar"
                   >
-                    <HiTrash className="w-4 h-4" />
+                    <HiTrash className="w-5 h-5" />
                   </button>
                 </div>
               </td>
