@@ -48,24 +48,41 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const CrudModal = ({ isOpen, onClose, title, children }: any) => {
+const CrudModal = ({ isOpen, onClose, title, children, icon, onCloseLabel = "Cerrar" }: any) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            {icon && <span className="text-2xl">{icon}</span>}
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
           >
             ✕
           </button>
         </div>
-        <div className="p-6">
+        <div className="px-8 py-6">
           {children}
         </div>
-      </div>
+        <div className="flex justify-end px-8 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg font-medium transition-colors"
+          >
+            {onCloseLabel}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 };
@@ -895,39 +912,102 @@ const ResultadosPage: React.FC = () => {
           setShowViewModal(false);
           setSelectedResult(null);
         }}
-        title="Ver Resultado"
+        title="Detalles del Resultado"
+        icon="📊"
+        onCloseLabel="Cerrar"
       >
         {selectedResult ? (
-          <div className="space-y-3">
-            <div>
-              <strong>Indicador:</strong> {selectedResult.indicatorName} ({selectedResult.indicatorCode})
+          <div className="space-y-5">
+            {/* Grid de 2 columnas - Principal */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Código */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Código:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {selectedResult.indicatorCode}
+                </p>
+              </div>
+
+              {/* Nombre del indicador */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Nombre:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold line-clamp-2">
+                  {selectedResult.indicatorName}
+                </p>
+              </div>
+
+              {/* Sede */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Sede:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {selectedResult.headquarterName}
+                </p>
+              </div>
+
+              {/* Año */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Año:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {selectedResult.year}
+                </p>
+              </div>
+
+              {/* Resultado */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Resultado:</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                    {selectedResult.calculatedValue?.toFixed(2) || '0.00'}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {selectedResult.measurementUnit}
+                  </p>
+                </div>
+              </div>
+
+              {/* Meta */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Meta:</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                    {(() => {
+                      const targFromResult = typeof selectedResult.target === 'number' ? selectedResult.target : Number(selectedResult.target ?? NaN);
+                      const indicatorObj = selectedResult.indicator && typeof selectedResult.indicator === 'object' ? (selectedResult.indicator as any) : undefined;
+                      const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? selectedResult.indicator)) : undefined;
+                      const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
+                      const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
+                      return (isNaN(targ) ? '—' : targ.toFixed(2));
+                    })()}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {selectedResult.measurementUnit}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mes */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Mes:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {monthToSpanish(selectedResult.month)}
+                </p>
+              </div>
+
+              {/* Período */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Período:</p>
+                <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                  {periodToSpanish(selectedResult.quarter || selectedResult.semester)}
+                </span>
+              </div>
             </div>
-            <div>
-              <strong>Sede:</strong> {selectedResult.headquarterName}
-            </div>
-            <div>
-              <strong>Resultado:</strong> {selectedResult.calculatedValue?.toFixed(2) || '0.00'} {selectedResult.measurementUnit}
-            </div>
-            <div>
-              <strong>Meta:</strong> {(() => {
-                const targFromResult = typeof selectedResult.target === 'number' ? selectedResult.target : Number(selectedResult.target ?? NaN);
-                const indicatorObj = selectedResult.indicator && typeof selectedResult.indicator === 'object' ? (selectedResult.indicator as any) : undefined;
-                const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? selectedResult.indicator)) : undefined;
-                const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
-                const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
-                const unit = selectedResult.measurementUnit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || indicatorFromList?.measurementUnit || indicatorFromList?.measurement_unit || '';
-                return (isNaN(targ) ? '—' : targ.toFixed(2)) + (unit ? ` ${unit}` : '');
-              })()}
-            </div>
-            <div>
-              <strong>Año:</strong> {selectedResult.year}
-            </div>
-            <div>
-              <strong>Observaciones:</strong> {('observations' in selectedResult && (selectedResult as any).observations) || '-'}
-            </div>
+
+            
           </div>
         ) : (
-          <div>No hay resultado seleccionado</div>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No hay resultado seleccionado
+          </div>
         )}
       </CrudModal>
 
