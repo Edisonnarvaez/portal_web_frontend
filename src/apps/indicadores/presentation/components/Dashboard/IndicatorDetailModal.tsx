@@ -143,14 +143,53 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
   
   // 🔑 Obtener trend del indicador (meta: increasing/decreasing)
   const indicatorTrend = (indicator?.trend || indicatorData?.trend || 'increasing').toLowerCase();
-  // También calcular trend visual basado en comparación histórica
-  const trendVisual = currentValue >= (previousResult?.calculatedValue || currentValue) ? 'up' : 'down';
   
-  // ✅ Calcular cumplimiento basado en el trend del indicador
-  const cumplimiento = target > 0 ? ((currentValue / target) * 100).toFixed(1) : '0';
-  const cumple = indicatorTrend === 'decreasing' || indicatorTrend === 'descendente' 
-    ? currentValue <= target 
-    : currentValue >= target;
+  // ✅ LÓGICA MEJORADA: Calcular cumplimiento basado en el trend del indicador
+  // Para indicadores INCREASING: cumplimiento >= 100% significa que actual >= meta (CUMPLE)
+  // Para indicadores DECREASING: cumplimiento <= 100% significa que actual <= meta (CUMPLE)
+  
+  const isDecreasing = indicatorTrend === 'decreasing' || indicatorTrend === 'descendente';
+  
+  // Calcular cumplimiento como DISTANCIA A LA META (siempre positivo y significativo)
+  let cumplimiento: string;
+  let cumple: boolean;
+  
+  if (isDecreasing) {
+    // Para DECREASING (ej: Tasa de caída): queremos que baje
+    // Si actual < meta: Cumple (100% = meta, menos es mejor)
+    // Fórmula: (meta / actual) * 100 - muestra cuánto más bajo estamos
+    cumple = currentValue <= target;
+    cumplimiento = currentValue > 0 
+      ? ((target / currentValue) * 100).toFixed(1) 
+      : '0';
+  } else {
+    // Para INCREASING (ej: Satisfacción): queremos que suba
+    // Si actual >= meta: Cumple (100% = meta, más es mejor)
+    // Fórmula: (actual / meta) * 100 - muestra cuánto hemos logrado
+    cumple = currentValue >= target;
+    cumplimiento = target > 0 
+      ? ((currentValue / target) * 100).toFixed(1) 
+      : '0';
+  }
+  
+  // Calcular trend visual basado en dirección del cambio vs objetivo
+  let trendVisual: 'up' | 'down';
+  if (previousResult?.calculatedValue !== undefined && previousResult?.calculatedValue !== null) {
+    const previousValue = parseFloat(previousResult.calculatedValue);
+    
+    if (isDecreasing) {
+      // Para DECREASING: mejora = ir hacia ABAJO (disminuir)
+      // Si actual < anterior: Mejora (está disminuyendo hacia la meta)
+      trendVisual = currentValue < previousValue ? 'down' : 'up';
+    } else {
+      // Para INCREASING: mejora = ir hacia ARRIBA (aumentar)
+      // Si actual > anterior: Mejora (está aumentando hacia la meta)
+      trendVisual = currentValue > previousValue ? 'up' : 'down';
+    }
+  } else {
+    // Sin dato anterior: asumir que cumple = mejora
+    trendVisual = cumple ? 'up' : 'down';
+  }
 
   // console.log('🔍 Debugging Modal - Final Data:', {
   //   totalResults: results.length,
@@ -223,9 +262,21 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
           </div>
 
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-            {/* Tarjetas de resumen */}
+            {/* Tarjetas de resumen - MEJORADO: Mostrar período, resultado, cumplimiento, estado */}
             {currentResult && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* Período del Resultado */}
+                <div className="p-3 sm:p-4 rounded-lg border-2 bg-purple-50 dark:bg-purple-900/20 border-purple-500">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Período</p>
+                  <p className="text-lg sm:text-xl font-bold text-purple-700 dark:text-purple-400 mt-2">
+                    {selectedResultPeriodo}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {new Date(currentResult.creationDate).toLocaleDateString('es-CO')}
+                  </p>
+                </div>
+
+                {/* Estado Actual */}
                 <div className={`p-3 sm:p-4 rounded-lg border-2 ${cumple ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'}`}>
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Estado Actual</p>
                   <div className="flex items-center mt-2 gap-2">
@@ -240,23 +291,25 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                   </div>
                 </div>
 
+                {/* Resultado */}
                 <div className="p-3 sm:p-4 rounded-lg border-2 bg-blue-50 dark:bg-blue-900/20 border-blue-500">
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Resultado</p>
                   <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400 mt-2 break-words">
                     {currentValue?.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    {indicator.measurementUnit || indicatorData?.measurementUnit || ''}
+                    {indicator.measurementUnit || indicatorData?.measurementUnit || 'Sin unidad'}
                   </p>
                 </div>
 
+                {/* Cumplimiento */}
                 <div className="p-3 sm:p-4 rounded-lg border-2 bg-green-50 dark:bg-green-900/20 border-green-500">
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Cumplimiento</p>
                   <p className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400 mt-2">
                     {cumplimiento}%
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Meta: {target?.toFixed(2)}
+                    vs {target?.toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -319,87 +372,122 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
               </div>
             )}
 
-            {/* Información detallada - 3 columnas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Información del indicador */}
+            {/* Información detallada - 2 columnas mejorado (Indicador + Resultado Específico) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Información Detallada del Indicador */}
               <div className="space-y-3">
                 <h4 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                  ℹ️ Información del Indicador
+                  📋 Información del Indicador
                 </h4>
                 <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <p><strong>Versión:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.version ?? indicator?.version ?? currentResult?.version ?? '-'}</span></p>
-                  <p><strong>Descripción:</strong> <span className="text-gray-600 dark:text-gray-400 block text-xs">{indicatorData?.description ?? indicator?.description ?? currentResult?.description ?? '-'}</span></p>
-                  <p><strong>Unidad:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.measurementUnit ?? indicatorData?.measurementUnit ?? currentResult?.measurementUnit ?? '-'}</span></p>
-                  <p><strong>Frecuencia:</strong> <span className="text-gray-600 dark:text-gray-400 capitalize">{indicator.measurementFrequency ?? indicatorData?.measurementFrequency ?? currentResult?.measurementFrequency ?? '-'}</span></p>
-                  <p><strong>Método:</strong> <span className="text-gray-600 dark:text-gray-400 text-xs">{indicator.calculationMethod ?? indicatorData?.calculationMethod ?? currentResult?.calculationMethod ?? '-'}</span></p>
+                  <p><strong>Código:</strong> <span className="text-gray-600 dark:text-gray-400 font-mono">{indicator.indicatorCode ?? indicatorData?.code ?? '-'}</span></p>
+                  <p><strong>Descripción:</strong> <span className="text-gray-600 dark:text-gray-400 block text-xs leading-relaxed">{indicatorData?.description ?? indicator?.description ?? 'No disponible'}</span></p>
+                  <p><strong>Unidad de Medida:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.measurementUnit ?? indicatorData?.measurementUnit ?? 'Sin especificar'}</span></p>
+                  <p><strong>Frecuencia de Medición:</strong> <span className="text-gray-600 dark:text-gray-400 capitalize">{indicator.measurementFrequency ?? indicatorData?.measurementFrequency ?? 'No especificada'}</span></p>
+                  <p><strong>Sede:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.headquarterName ?? currentResult?.headquarterName ?? '-'}</span></p>
                 </div>
               </div>
 
-              {/* Fórmula y Responsables */}
+              {/* Fórmula y Cálculo del Indicador */}
               <div className="space-y-3">
                 <h4 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                  🔧 Fórmula
+                  🔧 Fórmula de Cálculo
                 </h4>
-                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
                   <div>
-                    <strong>Numerador / Denominador:</strong>
-                    <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded font-mono text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                      <p><span className="text-blue-600 dark:text-blue-400">Numerador:</span> {indicatorData?.numerator ?? indicator?.numerator ?? currentResult?.numerator ?? '-'}</p>
-                      <p><span className="text-green-600 dark:text-green-400">Denominador:</span> {indicatorData?.denominator ?? indicator?.denominator ?? currentResult?.denominator ?? '-'}</p>
+                    <strong className="text-gray-800 dark:text-gray-200">Definición:</strong>
+                    <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded font-mono text-xs text-gray-600 dark:text-gray-400 space-y-1 border-l-4 border-blue-500">
+                      <p><span className="text-blue-600 dark:text-blue-400 font-semibold">📊 Numerador (este período):</span> {currentResult?.numerator ?? '-'}</p>
+                      <p><span className="text-green-600 dark:text-green-400 font-semibold">📉 Denominador (este período):</span> {currentResult?.denominator ?? '-'}</p>
+                      <hr className="border-gray-400 dark:border-gray-500 my-1" />
+                      <p><span className="text-purple-600 dark:text-purple-400 font-semibold">📈 Resultado = Numerador / Denominador</span></p>
+                      <p className="text-gray-700 dark:text-gray-300">= {currentResult?.numerator} / {currentResult?.denominator} = <strong>{currentValue?.toFixed(4)}</strong></p>
                     </div>
                   </div>
-                  <p><strong>Responsable Numerador:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.numeratorResponsible ?? indicator?.numeratorResponsible ?? currentResult?.numeratorResponsible ?? '-'}</span></p>
-                  <p><strong>Responsable Denominador:</strong> <span className="text-gray-600 dark:text-gray-400">{indicatorData?.denominatorResponsible ?? indicator?.denominatorResponsible ?? currentResult?.denominatorResponsible ?? '-'}</span></p>
-                </div>
-              </div>
-
-              {/* Información de la Sede y Resultado */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                  🏢 Sede e Información del Resultado
-                </h4>
-                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <p><strong>Sede:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.headquarterName ?? currentResult?.headquarterName ?? '-'}</span></p>
-                  <p><strong>Resultado Valor:</strong> <span className="text-blue-600 dark:text-blue-400 font-semibold">{(currentResult?.calculatedValue ?? currentValue)?.toFixed(2) ?? '-'}</span></p>
-                  <p><strong>Meta Valor:</strong> <span className="text-green-600 dark:text-green-400 font-semibold">{(currentResult?.target ?? target)?.toFixed(2) ?? '-'}</span></p>
-                  <p><strong>Numerador:</strong> <span className="text-gray-600 dark:text-gray-400">{currentResult?.numerator ?? indicator?.numerator ?? '-'}</span></p>
-                  <p><strong>Denominador:</strong> <span className="text-gray-600 dark:text-gray-400">{currentResult?.denominator ?? indicator?.denominator ?? '-'}</span></p>
-                  {currentResult?.creationDate && (
-                    <p><strong>Fecha Creación:</strong> <span className="text-gray-600 dark:text-gray-400 text-xs">{new Date(currentResult.creationDate).toLocaleDateString('es-CO')}</span></p>
-                  )}
-                  {currentResult?.updateDate && (
-                    <p><strong>Última Actualización:</strong> <span className="text-gray-600 dark:text-gray-400 text-xs">{new Date(currentResult.updateDate).toLocaleDateString('es-CO')}</span></p>
+                  {(indicatorData?.numeratorResponsible || indicatorData?.denominatorResponsible) && (
+                    <div>
+                      <strong>Responsables del Indicador:</strong>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">📌 Numerador: {indicatorData?.numeratorResponsible ?? 'No asignado'}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">📌 Denominador: {indicatorData?.denominatorResponsible ?? 'No asignado'}</p>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Resultado actual */}
+            {/* Información de Seguimiento y Auditoría */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
+                <strong className="text-gray-900 dark:text-white">📅 Auditoría del Resultado</strong>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                  <strong>Creado:</strong> {currentResult?.creationDate ? new Date(currentResult.creationDate).toLocaleDateString('es-CO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <strong>Actualizado:</strong> {currentResult?.updateDate ? new Date(currentResult.updateDate).toLocaleDateString('es-CO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
+                <strong className="text-gray-900 dark:text-white">📊 Comparativa Período</strong>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                  <strong>Período Actual:</strong> {selectedResultPeriodo}
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <strong>Total Períodos Registrados:</strong> {resultsForThisIndicator.length}
+                </p>
+              </div>
+            </div>
+
+            {/* Análisis Estadístico - Mejorado sin redundancia */}
             {currentResult && (
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">📊 Último Resultado</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Valor</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{currentValue?.toFixed(2)}</p>
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700/50 dark:to-purple-900/20 rounded-lg p-4 border border-blue-200 dark:border-purple-600/30">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">📊 Análisis Estadístico del Resultado</h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                  {/* Valor del Resultado */}
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase font-semibold">Valor</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{currentValue?.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{indicator.measurementUnit || '-'}</p>
                   </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Meta</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{target?.toFixed(2)}</p>
+                  
+                  {/* Meta */}
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase font-semibold">Meta</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{target?.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{indicator.measurementUnit || '-'}</p>
                   </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Diferencia</p>
-                    <p className={`text-lg font-bold ${(currentValue - target) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {(currentValue - target).toFixed(2)}
+                  
+                  {/* Diferencia */}
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase font-semibold">Diferencia</p>
+                    <p className={`text-2xl font-bold mt-1 ${(currentValue - target) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {(currentValue - target) >= 0 ? '+' : ''}{(currentValue - target).toFixed(2)}
                     </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{(currentValue - target) >= 0 ? 'Sobre' : 'Bajo'} meta</p>
                   </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase">Tendencia</p>
-                    <div className="flex items-center mt-1">
+                  
+                  {/* Cumplimiento Porcentaje */}
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase font-semibold">% Cumpl.</p>
+                    <p className={`text-2xl font-bold mt-1 ${parseFloat(cumplimiento) >= 100 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                      {cumplimiento}%
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{parseFloat(cumplimiento) >= 100 ? 'Cumple' : 'Incumple'}</p>
+                  </div>
+                  
+                  {/* Tendencia */}
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs uppercase font-semibold">Tendencia</p>
+                    <div className="flex items-center justify-center mt-2">
                       {trendVisual === 'up' ? (
-                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <div className="flex flex-col items-center">
+                          <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                          <p className="text-xs text-green-600 dark:text-green-400 font-semibold mt-1">Mejora</p>
+                        </div>
                       ) : (
-                        <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <div className="flex flex-col items-center">
+                          <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+                          <p className="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">Declina</p>
+                        </div>
                       )}
                     </div>
                   </div>
