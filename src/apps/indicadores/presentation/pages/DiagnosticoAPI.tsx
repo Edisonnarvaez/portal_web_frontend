@@ -31,7 +31,7 @@ const DiagnosticoAPI: React.FC = () => {
     const startTime = performance.now();
     
     try {
-      console.log(`🔄 Testing: ${endpoint.name}`);
+      //console.log(`🔄 Testing: ${endpoint.name}`);
       const response = await axiosInstance.get(endpoint.url);
       const responseTime = performance.now() - startTime;
       
@@ -41,7 +41,7 @@ const DiagnosticoAPI: React.FC = () => {
       updated.data = response.data;
       updated.responseTime = responseTime;
       
-      console.log(`✅ ${endpoint.name} SUCCESS (${responseTime.toFixed(2)}ms)`, response.data);
+      //console.log(`✅ ${endpoint.name} SUCCESS (${responseTime.toFixed(2)}ms)`, response.data);
       
       setTests(prev => {
         const newTests = [...prev];
@@ -57,7 +57,7 @@ const DiagnosticoAPI: React.FC = () => {
       updated.error = error.response?.data?.detail || error.message || String(error);
       updated.responseTime = responseTime;
       
-      console.error(`❌ ${endpoint.name} FAILED (${responseTime.toFixed(2)}ms)`, error);
+      //console.error(`❌ ${endpoint.name} FAILED (${responseTime.toFixed(2)}ms)`, error);
       
       setTests(prev => {
         const newTests = [...prev];

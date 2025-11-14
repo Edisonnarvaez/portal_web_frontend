@@ -21,7 +21,7 @@ export const useResultsData = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Cargando datos paginados para dashboard...');
+      //console.log('🔄 Cargando datos paginados para dashboard...');
 
       const effectiveParams = { page: params?.page || 1, page_size: params?.page_size || DEFAULT_PAGE_SIZE, ...params };
       const paginatedRaw = await resultService.getPaginatedResults(effectiveParams as any);
@@ -37,8 +37,8 @@ export const useResultsData = () => {
       const next = (paginatedRaw && (paginatedRaw as any).next) ? (paginatedRaw as any).next : null;
       const previous = (paginatedRaw && (paginatedRaw as any).previous) ? (paginatedRaw as any).previous : null;
 
-      console.log('📊 Paginated results loaded:', count);
-      console.log('📝 First result (if any):', resultsArr[0]);
+      //console.log('📊 Paginated results loaded:', count);
+      //console.log('📝 First result (if any):', resultsArr[0]);
 
       // Ensure indicators and headquarters are available to enrich the results with codes/names
       let indicatorsList: any[] = [];
@@ -48,7 +48,7 @@ export const useResultsData = () => {
         indicatorsList = Array.isArray(inds) ? inds : [];
         hqList = Array.isArray(hqs) ? hqs : [];
       } catch (e) {
-        console.warn('⚠️ No se pudieron obtener indicadores/sedes para enriquecer dashboard:', e);
+        //console.warn('⚠️ No se pudieron obtener indicadores/sedes para enriquecer dashboard:', e);
       }
 
       const indicatorMap = indicatorsList.reduce<Record<number | string, any>>((acc, ind: any) => {
@@ -148,7 +148,7 @@ export const useResultsData = () => {
       setData(enriched);
       setPagination({ count, next, previous, page: effectiveParams.page, page_size: effectiveParams.page_size });
     } catch (err: any) {
-      console.error('❌ Error al cargar datos paginados del dashboard:', err);
+      //console.error('❌ Error al cargar datos paginados del dashboard:', err);
       const errorMessage = err.message || 'Error al cargar los datos de resultados';
       setError(errorMessage);
       setData([]);

@@ -153,28 +153,28 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
   const cumplimiento = target > 0 ? ((currentValue / target) * 100).toFixed(1) : '0';
   const cumple = currentValue >= target;
 
-  console.log('🔍 Debugging Modal - Final Data:', {
-    totalResults: results.length,
-    filteredResults: resultsForThisIndicator.length,
-    chartDataLength: chartData.length,
-    mostRecentPeriodo: chartData[0]?.periodo,
-    currentResult: {
-      id: currentResult?.id,
-      calculatedValue: currentResult?.calculatedValue,
-      target: currentResult?.target,
-      year: currentResult?.year,
-      month: currentResult?.month,
-      creationDate: currentResult?.creationDate,
-      updateDate: currentResult?.updateDate,
-    },
-    computedValues: {
-      currentValue,
-      target,
-      cumplimiento: `${cumplimiento}%`,
-      cumple,
-      trend,
-    },
-  });
+  // console.log('🔍 Debugging Modal - Final Data:', {
+  //   totalResults: results.length,
+  //   filteredResults: resultsForThisIndicator.length,
+  //   chartDataLength: chartData.length,
+  //   mostRecentPeriodo: chartData[0]?.periodo,
+  //   currentResult: {
+  //     id: currentResult?.id,
+  //     calculatedValue: currentResult?.calculatedValue,
+  //     target: currentResult?.target,
+  //     year: currentResult?.year,
+  //     month: currentResult?.month,
+  //     creationDate: currentResult?.creationDate,
+  //     updateDate: currentResult?.updateDate,
+  //   },
+  //   computedValues: {
+  //     currentValue,
+  //     target,
+  //     cumplimiento: `${cumplimiento}%`,
+  //     cumple,
+  //     trend,
+  //   },
+  // });
 
   const CustomTooltip = (props: any) => {
     const { active, payload } = props;

@@ -182,16 +182,16 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             
             // DEBUG: Log solo de la primera fila que tenga valor 10
             if (resultado === 10 && idx < 1) {
-                console.warn('⚠️ IndicatorBarChart [Item 0]:', {
-                    sede,
-                    indicadorLabel,
-                    resultado,
-                    meta,
-                    calculatedValue: `${item.calculatedValue} | ${item.calculated_value} | ${item.value}`,
-                    targetValue,
-                    periodo: item.period || item.resultado_periodo,
-                    raw: { ...item }
-                });
+                // console.warn('⚠️ IndicatorBarChart [Item 0]:', {
+                //     sede,
+                //     indicadorLabel,
+                //     resultado,
+                //     meta,
+                //     calculatedValue: `${item.calculatedValue} | ${item.calculated_value} | ${item.value}`,
+                //     targetValue,
+                //     periodo: item.period || item.resultado_periodo,
+                //     raw: { ...item }
+                // });
             }
             
             // Validar que resultado y target sean números válidos
@@ -204,12 +204,24 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             const periodo = item.period || item.resultado_periodo || item.periodo || item.quarter || 'N/A';
             const año = item.year || item.ano || new Date().getFullYear();
             
+            // 🔑 Conversión segura a números para ordenamiento
+            const monthNum = typeof mes === 'number' ? mes : (typeof mes === 'string' ? parseInt(mes, 10) : 0);
+            const quarterNum = item.quarter ? (typeof item.quarter === 'number' ? item.quarter : parseInt(String(item.quarter), 10)) : 0;
+            const semesterNum = item.semester ? (typeof item.semester === 'number' ? item.semester : parseInt(String(item.semester), 10)) : 0;
+            const yearNum = typeof año === 'number' ? año : parseInt(String(año), 10);
+            
+            // 📅 Crear etiqueta legible para el eje X con el período
+            const mesSpanish = transformMonthToSpanish(monthNum);
+            const periodoLabel = monthNum > 0 ? `${mesSpanish}'${String(yearNum).slice(-2)}` : `Q${quarterNum}'${String(yearNum).slice(-2)}`;
+            
             // Crear ID único para cada registro (para grouping en Recharts)
             const uniqueId = `${sede}|${indicadorLabel}|${periodo}|${mes}|${año}|${idx}`;
 
             return {
                 // 🔑 Usar uniqueId como key en Recharts para evitar agrupaciones
                 sede: uniqueId,
+                // 📅 NUEVO: Etiqueta legible para mostrar en el eje X
+                periodoLabel: periodoLabel,
                 // 🔑 Guardar los datos "limpios" para mostrar en el gráfico
                 sedeDisplay: sede,
                 indicadorDisplay: indicadorLabel,
@@ -230,11 +242,11 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                 cumple: cumple,
                 // Tendencia explícita para debugging
                 tendencia: (String(item?.trend ?? getIndicatorField(item, 'trend', '') ?? '') || trend) || 'No especificada',
-                // 🔑 Campos para ordenamiento cronológico
-                sortYear: año,
-                sortMonth: Number(item?.month ?? item?.mes ?? 1),
-                sortQuarter: Number(item?.quarter ?? 1),
-                sortSemester: Number(item?.semester ?? 1),
+                // 🔑 Campos para ordenamiento cronológico (valores numéricos garantizados)
+                sortYear: yearNum && !isNaN(yearNum) ? yearNum : 0,
+                sortMonth: monthNum && !isNaN(monthNum) ? monthNum : 0,
+                sortQuarter: quarterNum && !isNaN(quarterNum) ? quarterNum : 0,
+                sortSemester: semesterNum && !isNaN(semesterNum) ? semesterNum : 0,
             };
         }).filter(Boolean) // Eliminar nulos del mapeo
         .sort((a, b) => {
@@ -244,8 +256,10 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             // 🆕 ORDENAMIENTO CRONOLÓGICO: Primero por año (antiguo a reciente), luego por mes/trimestre/semestre
             
             // Comparar años (usar 0 como fallback si faltan)
-            if ((a.sortYear ?? 0) !== (b.sortYear ?? 0)) {
-                return (a.sortYear ?? 0) - (b.sortYear ?? 0); // De antiguo a reciente
+            const yearA = a.sortYear ?? 0;
+            const yearB = b.sortYear ?? 0;
+            if (yearA !== yearB) {
+                return yearA - yearB; // De antiguo a reciente
             }
             
             // Si el año es el mismo, ordenar por frecuencia (usar '' como fallback)
@@ -254,17 +268,29 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             
             // Si es mensual, ordenar por mes (usar 0 como fallback)
             if (frequencyA.includes('mensual') && frequencyB.includes('mensual')) {
-                return (a.sortMonth ?? 0) - (b.sortMonth ?? 0);
+                const monthA = a.sortMonth ?? 0;
+                const monthB = b.sortMonth ?? 0;
+                if (monthA !== monthB) {
+                    return monthA - monthB; // De enero a diciembre
+                }
             }
             
             // Si es trimestral, ordenar por trimestre
             if (frequencyA.includes('trimestral') && frequencyB.includes('trimestral')) {
-                return (a.sortQuarter ?? 0) - (b.sortQuarter ?? 0);
+                const quarterA = a.sortQuarter ?? 0;
+                const quarterB = b.sortQuarter ?? 0;
+                if (quarterA !== quarterB) {
+                    return quarterA - quarterB; // De Q1 a Q4
+                }
             }
             
             // Si es semestral, ordenar por semestre
             if (frequencyA.includes('semestral') && frequencyB.includes('semestral')) {
-                return (a.sortSemester ?? 0) - (b.sortSemester ?? 0);
+                const semesterA = a.sortSemester ?? 0;
+                const semesterB = b.sortSemester ?? 0;
+                if (semesterA !== semesterB) {
+                    return semesterA - semesterB; // De S1 a S2
+                }
             }
             
             // Por último ordenar por sede si es el mismo período (usar '' como fallback)
@@ -274,44 +300,59 @@ export default function IndicatorBarChart({ data, loading }: Props) {
 
     // DEBUG: Mostrar datos procesados con cumplimiento basado en tendencia
     if (data.length > 0 && allChartData.length > 0) {
-        console.log('📊 IndicatorBarChart - Datos Originales (primeros 3):', {
-            valores: data.slice(0, 3).map(d => ({
-                resultado: (d as any).calculatedValue ?? (d as any).calculated_value ?? (d as any).value,
-                meta: (d as any).target,
-                periodo: (d as any).period,
-                tendencia: (d as any).trend
-            }))
-        });
-        console.log('📊 AllChartData Procesado (primeros 5) - CON CUMPLIMIENTO BASADO EN TENDENCIA:', allChartData.slice(0, 5).map(d => ({
-            resultado: d?.resultado ?? null,
-            meta: d?.meta ?? null,
-            cumplimiento: d?.cumplimiento ?? '❌ No especificado',
-            cumple: d?.cumple ?? false,
-            tendencia: d?.tendencia ?? 'No especificada',
-            regla: (d?.tendencia === 'creciente') ? 'resultado >= meta' : (d?.tendencia === 'decreciente') ? 'resultado <= meta' : 'no especificada'
-        })));
+        // console.log('📊 IndicatorBarChart - Datos Originales (primeros 3):', {
+        //     valores: data.slice(0, 3).map(d => ({
+        //         resultado: (d as any).calculatedValue ?? (d as any).calculated_value ?? (d as any).value,
+        //         meta: (d as any).target,
+        //         periodo: (d as any).period,
+        //         mes: (d as any).month,
+        //         año: (d as any).year,
+        //         tendencia: (d as any).trend
+        //     }))
+        // });
+        // console.log('📊 AllChartData Procesado (primeros 5) - CON CUMPLIMIENTO BASADO EN TENDENCIA:', allChartData.slice(0, 5).map(d => ({
+        //     resultado: d?.resultado ?? null,
+        //     meta: d?.meta ?? null,
+        //     cumplimiento: d?.cumplimiento ?? '❌ No especificado',
+        //     cumple: d?.cumple ?? false,
+        //     tendencia: d?.tendencia ?? 'No especificada',
+        //     regla: (d?.tendencia === 'creciente') ? 'resultado >= meta' : (d?.tendencia === 'decreciente') ? 'resultado <= meta' : 'no especificada'
+        // })));
+        
+        // 🆕 DEBUG: Mostrar ordenamiento cronológico
+        // console.log('📅 IndicatorBarChart - TOTAL AllChartData:', allChartData.length);
+        // console.log('📅 IndicatorBarChart - Ordenamiento Cronológico (primeros 10):', allChartData.slice(0, 10).map((d, idx) => ({
+        //     idx,
+        //     año: d?.sortYear ?? 'N/A',
+        //     mes: d?.sortMonth ?? 'N/A',
+        //     trimestre: d?.sortQuarter ?? 'N/A',
+        //     semestre: d?.sortSemester ?? 'N/A',
+        //     frecuencia: d?.frequency ?? 'N/A',
+        //     sede: d?.sedeDisplay ?? 'N/A',
+        //     resultado: d?.resultado ?? 'N/A'
+        // })));
     }
     // ✅ Usar directamente allChartData sin paginación
     const chartData = allChartData;
 
     // DEBUG: Verificar que chartData se actualiza con los filtros
-    console.log('🔄 IndicatorBarChart - ChartData recalculado:', {
-        totalItems: chartData.length,
-        primeraBarraLabel: chartData[0]?.sede || 'N/A',
-        primeraBarraResultado: chartData[0]?.resultado || 'N/A',
-        primeraBarraMeta: chartData[0]?.meta || 'N/A',
-        timestamp: new Date().toLocaleTimeString()
-    });
+    // console.log('🔄 IndicatorBarChart - ChartData recalculado:', {
+    //     totalItems: chartData.length,
+    //     primeraBarraLabel: chartData[0]?.sede || 'N/A',
+    //     primeraBarraResultado: chartData[0]?.resultado || 'N/A',
+    //     primeraBarraMeta: chartData[0]?.meta || 'N/A',
+    //     timestamp: new Date().toLocaleTimeString()
+    // });
 
     // 🆕 DEBUG: Mostrar los PRIMEROS 10 items para ver si hay duplicados o agrupaciones
-    console.log('📊 PRIMEROS 10 ITEMS DE CHARTDATA:', chartData.slice(0, 10).map((item, idx) => ({
-        idx,
-        sede: item?.sede ?? 'N/A',
-        resultado: item?.resultado ?? null,
-        meta: item?.meta ?? null,
-        mes: item?.mes ?? 'N/A',
-        periodo: item?.periodo ?? 'N/A'
-    })));
+    // console.log('📊 PRIMEROS 10 ITEMS DE CHARTDATA:', chartData.slice(0, 10).map((item, idx) => ({
+    //     idx,
+    //     sede: item?.sede ?? 'N/A',
+    //     resultado: item?.resultado ?? null,
+    //     meta: item?.meta ?? null,
+    //     mes: item?.mes ?? 'N/A',
+    //     periodo: item?.periodo ?? 'N/A'
+    // })));
 
     // Calcular altura dinámica del gráfico según cantidad de barras
     const chartHeight = Math.max(300, 280 + (chartData.length * 15));
@@ -320,7 +361,7 @@ export default function IndicatorBarChart({ data, loading }: Props) {
     // Esto es importante para que el tooltip se sincronice con los datos nuevos al filtrar
     const chartKey = `chart-${chartData.length}-${chartData[0]?.sede || 'empty'}`;
     
-    console.log('🔑 ChartKey:', chartKey);
+    // console.log('🔑 ChartKey:', chartKey);
 
     // Componente personalizado del Tooltip con información detallada
     const CustomTooltip = ({ active, payload, label }: any) => {
@@ -330,21 +371,21 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             const chartItem = payload[0]?.payload;
             
             if (!chartItem) {
-                console.warn('⚠️ CustomTooltip: payload.payload es null/undefined');
+                //console.warn('⚠️ CustomTooltip: payload.payload es null/undefined');
                 return null;
             }
 
             // DEBUG: Mostrar qué datos recibimos de Recharts
-            console.log('🔍 CustomTooltip - Datos de Recharts (payload[0].payload):', {
-                sede: chartItem.sede,
-                resultado: chartItem.resultado,
-                meta: chartItem.meta,
-                mes: chartItem.mes,
-                periodo: chartItem.periodo,
-                año: chartItem.año,
-                cumplimiento: chartItem.cumplimiento,
-                tendencia: chartItem.tendencia
-            });
+            // console.log('🔍 CustomTooltip - Datos de Recharts (payload[0].payload):', {
+            //     sede: chartItem.sede,
+            //     resultado: chartItem.resultado,
+            //     meta: chartItem.meta,
+            //     mes: chartItem.mes,
+            //     periodo: chartItem.periodo,
+            //     año: chartItem.año,
+            //     cumplimiento: chartItem.cumplimiento,
+            //     tendencia: chartItem.tendencia
+            // });
 
             // Los datos ya están procesados en allChartData, solo extraer directamente
             const resultado = chartItem.resultado || 0;
@@ -455,22 +496,13 @@ export default function IndicatorBarChart({ data, loading }: Props) {
                         </linearGradient>
                     </defs>
                     <XAxis 
-                        dataKey="sede" 
-                        tick={{ fontSize: 10, fill: chartColors.axisText }}
+                        dataKey="periodoLabel" 
+                        tick={{ fontSize: 11, fill: chartColors.axisText, fontWeight: 500 }}
                         axisLine={{ stroke: chartColors.axisLine }}
                         angle={-45}
                         textAnchor="end"
-                        height={100}
+                        height={80}
                         interval={0}
-                        tickFormatter={(value) => {
-                            // value es como "Sede A|Indicador 1|Q1|Enero|2025|0"
-                            // Extrae: "Sede A - Indicador 1 - Enero"
-                            const parts = value.split('|');
-                            if (parts.length >= 4) {
-                                return `${parts[0]} - ${parts[1]}`;
-                            }
-                            return value;
-                        }}
                     />
                     <YAxis 
                         tick={{ fontSize: 11, fill: chartColors.axisText }}

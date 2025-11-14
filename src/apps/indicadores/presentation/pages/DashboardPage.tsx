@@ -19,17 +19,17 @@ export default function DashboardPage() {
     // 🔧 CORREGIR: Verificar que data sea un array válido
     const safeData = useMemo(() => {
         if (!data || !Array.isArray(data)) {
-            console.warn('⚠️ Data no es un array válido:', data);
+            //console.warn('⚠️ Data no es un array válido:', data);
             return [];
         }
-        console.log('✅ Data cargada correctamente:', data.length, 'items');
+        //console.log('✅ Data cargada correctamente:', data.length, 'items');
         if (data.length > 0) {
-            console.log('📌 Primer item:', data[0]);
-            console.log('📌 Proceso en primer item:', {
-                'item.process': (data[0] as any).process,
-                'item.indicator.process': (data[0] as any).indicator?.process,
-                'indicador completo': (data[0] as any).indicator
-            });
+            // console.log('📌 Primer item:', data[0]);
+            // console.log('📌 Proceso en primer item:', {
+            //     'item.process': (data[0] as any).process,
+            //     'item.indicator.process': (data[0] as any).indicator?.process,
+            //     'indicador completo': (data[0] as any).indicator
+            // });
         }
         return data;
     }, [data]);

@@ -16,20 +16,20 @@ export const useIndicators = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Iniciando carga de indicadores...');
+      //console.log('🔄 Iniciando carga de indicadores...');
       
       const [indicatorsData, processesData] = await Promise.all([
         indicatorService.getAllIndicators(),
         indicatorService.getProcesses()
       ]);
       
-      console.log('📊 Indicadores cargados:', indicatorsData.length);
-      console.log('🏭 Procesos cargados:', processesData.length);
+      //console.log('📊 Indicadores cargados:', indicatorsData.length);
+      //console.log('🏭 Procesos cargados:', processesData.length);
       
       setIndicators(indicatorsData);
       setProcesses(processesData);
     } catch (err: any) {
-      console.error('❌ Error al cargar indicadores:', err);
+      //console.error('❌ Error al cargar indicadores:', err);
       setError(err.message || 'Error al cargar los indicadores');
       notifyError(err.message || 'Error al cargar los indicadores');
     } finally {
@@ -39,7 +39,7 @@ export const useIndicators = () => {
 
   const createIndicator = async (indicator: CreateIndicatorRequest): Promise<boolean> => {
     try {
-      console.log('🚀 Creando indicador:', indicator);
+      //console.log('🚀 Creando indicador:', indicator);
       
       // 🔧 Validar datos requeridos
       if (!indicator.process || indicator.process === 0) {
@@ -51,10 +51,10 @@ export const useIndicators = () => {
       setIndicators(prev => [...prev, newIndicator]);
       notifySuccess('Indicador creado exitosamente');
       
-      console.log('✅ Indicador creado:', newIndicator);
+      //console.log('✅ Indicador creado:', newIndicator);
       return true;
     } catch (err: any) {
-      console.error('❌ Error al crear indicador:', err);
+      //console.error('❌ Error al crear indicador:', err);
       notifyError(err.message || 'Error al crear el indicador');
       return false;
     }
@@ -62,7 +62,7 @@ export const useIndicators = () => {
 
   const updateIndicator = async (indicator: UpdateIndicatorRequest): Promise<boolean> => {
     try {
-      console.log('🔄 Actualizando indicador:', indicator);
+      //console.log('🔄 Actualizando indicador:', indicator);
       
       const updatedIndicator = await indicatorService.updateIndicator(indicator);
       setIndicators(prev => prev.map(item => 
@@ -70,10 +70,10 @@ export const useIndicators = () => {
       ));
       notifySuccess('Indicador actualizado exitosamente');
       
-      console.log('✅ Indicador actualizado:', updatedIndicator);
+      //console.log('✅ Indicador actualizado:', updatedIndicator);
       return true;
     } catch (err: any) {
-      console.error('❌ Error al actualizar indicador:', err);
+      //console.error('❌ Error al actualizar indicador:', err);
       notifyError(err.message || 'Error al actualizar el indicador');
       return false;
     }
@@ -81,16 +81,16 @@ export const useIndicators = () => {
 
   const deleteIndicator = async (id: number): Promise<boolean> => {
     try {
-      console.log('🗑️ Eliminando indicador:', id);
+      //console.log('🗑️ Eliminando indicador:', id);
       
       await indicatorService.deleteIndicator(id);
       setIndicators(prev => prev.filter(item => item.id !== id));
       notifySuccess('Indicador eliminado exitosamente');
       
-      console.log('✅ Indicador eliminado:', id);
+      //console.log('✅ Indicador eliminado:', id);
       return true;
     } catch (err: any) {
-      console.error('❌ Error al eliminar indicador:', err);
+      //console.error('❌ Error al eliminar indicador:', err);
       notifyError(err.message || 'Error al eliminar el indicador');
       return false;
     }
@@ -98,7 +98,7 @@ export const useIndicators = () => {
 
   const toggleIndicatorStatus = async (id: number, status: boolean): Promise<boolean> => {
     try {
-      console.log(`🔄 Cambiando estado del indicador ${id} a:`, status);
+      //console.log(`🔄 Cambiando estado del indicador ${id} a:`, status);
       
       const updatedIndicator = await indicatorService.toggleIndicatorStatus(id, status);
       setIndicators(prev => prev.map(item => 
@@ -106,10 +106,10 @@ export const useIndicators = () => {
       ));
       notifySuccess(`Indicador ${status ? 'activado' : 'inactivado'} exitosamente`);
       
-      console.log('✅ Estado cambiado:', updatedIndicator);
+      //console.log('✅ Estado cambiado:', updatedIndicator);
       return true;
     } catch (err: any) {
-      console.error('❌ Error al cambiar estado:', err);
+      //console.error('❌ Error al cambiar estado:', err);
       notifyError(err.message || 'Error al cambiar el estado del indicador');
       return false;
     }

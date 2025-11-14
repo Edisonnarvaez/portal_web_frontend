@@ -21,7 +21,7 @@ export class ApiResultRepository implements ResultRepository {
     try {
       return await this.apiService.getResultById(id);
     } catch (error) {
-      console.error(`Error fetching result ${id}:`, error);
+      //console.error(`Error fetching result ${id}:`, error);
       return null;
     }
   }

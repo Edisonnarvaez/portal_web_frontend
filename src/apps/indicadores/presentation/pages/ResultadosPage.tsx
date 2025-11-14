@@ -340,12 +340,12 @@ const ResultadosPage: React.FC = () => {
 
   // DEBUG: Log datos del hook
   useEffect(() => {
-    console.log('📋 [ResultadosPage] Hook useResults retornó:', {
-      detailedResults: detailedResults.length,
-      indicators: indicators.length,
-      headquarters: headquarters.length,
-      loading
-    });
+    // console.log('📋 [ResultadosPage] Hook useResults retornó:', {
+    //   detailedResults: detailedResults.length,
+    //   indicators: indicators.length,
+    //   headquarters: headquarters.length,
+    //   loading
+    // });
   }, [detailedResults, indicators, headquarters, loading]);
 
   // Opciones para filtros (label/value)
@@ -355,14 +355,14 @@ const ResultadosPage: React.FC = () => {
 
   // DEBUG: Log opciones de filtros
   useEffect(() => {
-    console.log('🎯 [ResultadosPage] Opciones de filtros:', {
-      headquarterOptions: headquarterOptions.length,
-      indicatorOptions: indicatorOptions.length,
-      yearOptions: yearOptions.length,
-      firstHeadquarter: headquarterOptions[0],
-      firstIndicator: indicatorOptions[0],
-      firstYear: yearOptions[0]
-    });
+    // console.log('🎯 [ResultadosPage] Opciones de filtros:', {
+    //   headquarterOptions: headquarterOptions.length,
+    //   indicatorOptions: indicatorOptions.length,
+    //   yearOptions: yearOptions.length,
+    //   firstHeadquarter: headquarterOptions[0],
+    //   firstIndicator: indicatorOptions[0],
+    //   firstYear: yearOptions[0]
+    // });
   }, [headquarterOptions, indicatorOptions, yearOptions]);
 
   // Filtros aplicados
@@ -390,11 +390,11 @@ const ResultadosPage: React.FC = () => {
       return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear;
     });
     
-    console.log('🔍 [ResultadosPage] Filtrado:', {
-      detailedResultsCount: detailedResults.length,
-      filteredCount: filtered.length,
-      filters: { searchTerm, selectedIndicator, selectedHeadquarters, selectedYear }
-    });
+    // console.log('🔍 [ResultadosPage] Filtrado:', {
+    //   detailedResultsCount: detailedResults.length,
+    //   filteredCount: filtered.length,
+    //   filters: { searchTerm, selectedIndicator, selectedHeadquarters, selectedYear }
+    // });
     
     return filtered;
   }, [detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
@@ -442,8 +442,8 @@ const ResultadosPage: React.FC = () => {
       uniqueIndicators: new Set(metricsData.map(r => (r.indicator && typeof r.indicator === 'object') ? (r.indicator as any).id : r.indicator)).size
     };
     
-    console.log('📊 [ResultadosPage] Dashboard Metrics:', result);
-    console.log('📊 [ResultadosPage] Valid metrics for compliance:', validCount, '/', metricsData.length);
+    //console.log('📊 [ResultadosPage] Dashboard Metrics:', result);
+    //console.log('📊 [ResultadosPage] Valid metrics for compliance:', validCount, '/', metricsData.length);
     
     return result;
   }, [filteredResults, detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
@@ -626,7 +626,7 @@ const ResultadosPage: React.FC = () => {
                           URL.revokeObjectURL(url);
                         } catch (err: any) {
                           // Show a user-friendly toast and keep a console trace for debugging
-                          console.error('Error generating template CSV', err);
+                          //console.error('Error generating template CSV', err);
                           notify.error(`No se pudo generar la plantilla CSV: ${err?.message ?? 'error desconocido'}`);
                         }
                       }}
@@ -651,7 +651,7 @@ const ResultadosPage: React.FC = () => {
                             const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
                             window.dispatchEvent(evt);
                           } catch (err: any) {
-                            console.error('Error parsing CSV', err);
+                            //console.error('Error parsing CSV', err);
                             // If the parser detected a binary/XLSX file, show a more specific message
                             const msg = err?.message || String(err);
                             if (/xlsx|binario|binary|PK/i.test(msg)) {
