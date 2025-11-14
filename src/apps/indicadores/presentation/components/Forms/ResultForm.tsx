@@ -195,10 +195,12 @@ const ResultForm: React.FC<ResultFormProps> = ({
       newErrors.indicator = 'Debe seleccionar un indicador';
     }
     
+    // ✅ Numerador PUEDE ser 0 (se permite valores >= 0)
     if (form.numerator === undefined || form.numerator < 0) {
       newErrors.numerator = 'El numerador no puede ser negativo';
     }
     
+    // 🚫 Denominador DEBE ser > 0 (no puede ser 0 ni negativo)
     if (!form.denominator || form.denominator <= 0) {
       newErrors.denominator = 'El denominador debe ser mayor que cero';
     }
@@ -418,9 +420,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
           <input
             type="number"
             name="numerator"
-            value={form.numerator || ''}
+            value={form.numerator !== undefined && form.numerator !== null ? form.numerator : ''}
             onChange={handleChange}
-            step="0.01"
+            step="0.0"
             min="0"
             placeholder="Ej: 85"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -438,10 +440,10 @@ const ResultForm: React.FC<ResultFormProps> = ({
           <input
             type="number"
             name="denominator"
-            value={form.denominator || ''}
+            value={form.denominator !== undefined && form.denominator !== null ? form.denominator : ''}
             onChange={handleChange}
             step="0.01"
-            min="0.01"
+            min="0.0"
             placeholder="Ej: 100"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.denominator ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
