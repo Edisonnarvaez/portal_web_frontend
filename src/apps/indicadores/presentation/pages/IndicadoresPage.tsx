@@ -4,8 +4,6 @@ import {
   HiChartBar,
   HiPlus,
   HiSparkles,
-  HiMagnifyingGlass,
-  HiAdjustmentsHorizontal,
   HiPencil,
   HiTrash,
   HiEye
@@ -15,7 +13,28 @@ import { useIndicators } from '../hooks/useIndicators';
 import type { Indicator } from '../../domain/entities/Indicator';
 import IndicatorForm from '../components/Forms/IndicadoresForm';
 import FilterPanel from '../components/Shared/FilterPanel';
-import IndicatorDebug from '../components/Debug/IndicatorDebug';
+
+// 📅 Función para convertir frecuencia a español
+const frequencyToSpanish = (frequency: string | undefined): string => {
+  if (!frequency) return 'No especificada';
+  const frequencyMap: { [key: string]: string } = {
+    'monthly': 'Mensual',
+    'quarterly': 'Trimestral',
+    'semiannual': 'Semestral',
+    'annual': 'Anual'
+  };
+  return frequencyMap[frequency.toLowerCase()] || frequency;
+};
+
+// 📈 Función para convertir tendencia a español
+const trendToSpanish = (trend: string | undefined): string => {
+  if (!trend) return 'No especificada';
+  const trendMap: { [key: string]: string } = {
+    'increasing': 'Creciente',
+    'decreasing': 'Decreciente'
+  };
+  return trendMap[trend.toLowerCase()] || trend;
+};
 
 // Componentes auxiliares
 const LoadingSpinner = () => (
@@ -40,6 +59,95 @@ const CrudModal = ({ isOpen, onClose, title, children }: any) => {
         </div>
         <div className="p-6">
           {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ViewModal = ({ isOpen, onClose, indicator }: any) => {
+  if (!isOpen || !indicator) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{indicator.name}</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Código: {indicator.code}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Descripción */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Descripción</label>
+            <p className="text-gray-900 dark:text-gray-100 mt-2 leading-relaxed">
+              {indicator.description || 'No disponible'}
+            </p>
+          </div>
+
+          {/* Configuración */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Frecuencia</label>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-2">
+                {frequencyToSpanish(indicator.measurementFrequency)}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Meta</label>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-2">
+                {indicator.target}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Tendencia</label>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-2">
+                {trendToSpanish(indicator.trend)}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Unidad</label>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-2">
+                {indicator.measurementUnit || '—'}
+              </p>
+            </div>
+          </div>
+
+          {/* Información Adicional */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Numerador</label>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{indicator.numerator || '—'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Denominador</label>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{indicator.denominator || '—'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Estado</label>
+              <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                indicator.status 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+              }`}>
+                {indicator.status ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+          >
+            Cerrar
+          </button>
         </div>
       </div>
     </div>
@@ -126,7 +234,7 @@ const IndicatorsTable = ({ data, onEdit, onDelete, onView }: any) => (
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {indicator.measurementFrequency}
+                {frequencyToSpanish(indicator.measurementFrequency)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {indicator.target}
@@ -185,6 +293,7 @@ const IndicadoresPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   // Estados de elementos seleccionados
   const [selectedIndicator, setSelectedIndicator] = useState<Indicator | null>(null);
@@ -202,8 +311,8 @@ const IndicadoresPage: React.FC = () => {
 
   // process options for the filter (from processes list)
   const processOptions = (processes || []).map((p: any) => ({ label: p.name, value: String(p.id) }));
-  // trend options based on indicators data
-  const trendOptions = Array.from(new Set((indicators || []).map((i:any) => (i.trend || '').toString().toLowerCase()).filter(Boolean))).map(t => ({ label: t, value: t }));
+  // trend options based on indicators data - Convertir tendencias a español
+  const trendOptions = Array.from(new Set((indicators || []).map((i:any) => (i.trend || '').toString().toLowerCase()).filter(Boolean))).map(t => ({ label: trendToSpanish(t), value: t }));
 
   // Filtros aplicados
   const filteredIndicators = indicators.filter((indicator: Indicator) => {
@@ -235,7 +344,7 @@ const IndicadoresPage: React.FC = () => {
 
   const handleViewIndicator = (indicator: Indicator) => {
     setSelectedIndicator(indicator);
-    // Aquí podrías agregar un modal de vista si lo necesitas
+    setShowViewModal(true);
   };
 
   const handleSubmitIndicator = async (data: any) => {
@@ -375,6 +484,16 @@ const IndicadoresPage: React.FC = () => {
       </AnimatePresence>
 
       {/* Modales */}
+
+      {/* Modal ver indicador */}
+      <ViewModal
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedIndicator(null);
+        }}
+        indicator={selectedIndicator}
+      />
 
       {/* Modal crear indicador */}
       <CrudModal
