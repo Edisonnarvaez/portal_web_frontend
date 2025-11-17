@@ -250,21 +250,31 @@ const ResultForm: React.FC<ResultFormProps> = ({
     onSubmit(data);
   };
 
-  const renderPeriodFields = () => {
-  if (!selectedIndicator) return null;
+  const frequencyToSpanish = (frequency: string): string => {
+    const frequencyMap: { [key: string]: string } = {
+      'monthly': 'Mensual',
+      'quarterly': 'Trimestral',
+      'semiannual': 'Semestral',
+      'annual': 'Anual'
+    };
+    return frequencyMap[frequency.toLowerCase()] || frequency;
+  };
 
-  const { measurementFrequency } = selectedIndicator;
+  const renderPeriodFields = () => {
+    if (!selectedIndicator) return null;
+
+    const { measurementFrequency } = selectedIndicator;
 
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Período de Medición</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">📅 Período de Medición</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* 📅 MES - Solo para mensual */}
           {measurementFrequency === 'monthly' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                Mes *
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                📆 Mes *
               </label>
               <select
                 name="month"
@@ -283,8 +293,8 @@ const ResultForm: React.FC<ResultFormProps> = ({
               </select>
               {errors.month && <p className="text-red-500 text-sm mt-1">{errors.month}</p>}
               {form.month && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  ✓ Auto: Trimestre {form.quarter}, Semestre {form.semester}
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                  ✓ <span>Trimestre {form.quarter} • Semestre {form.semester}</span>
                 </p>
               )}
             </div>
@@ -293,8 +303,8 @@ const ResultForm: React.FC<ResultFormProps> = ({
           {/* 📅 TRIMESTRE - Solo para trimestral */}
           {measurementFrequency === 'quarterly' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                Trimestre *
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                📊 Trimestre *
               </label>
               <select
                 name="quarter"
@@ -313,8 +323,8 @@ const ResultForm: React.FC<ResultFormProps> = ({
               </select>
               {errors.quarter && <p className="text-red-500 text-sm mt-1">{errors.quarter}</p>}
               {form.quarter && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  ✓ Auto: Mes {form.month} ({MONTHS.find(m => m.value === form.month)?.label}), Semestre {form.semester}
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                  ✓ <span>Mes {form.month} ({MONTHS.find(m => m.value === form.month)?.label}) • Semestre {form.semester}</span>
                 </p>
               )}
             </div>
@@ -323,8 +333,8 @@ const ResultForm: React.FC<ResultFormProps> = ({
           {/* 📅 SEMESTRE - Solo para semestral */}
           {measurementFrequency === 'semiannual' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                Semestre *
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                📈 Semestre *
               </label>
               <select
                 name="semester"
@@ -343,18 +353,18 @@ const ResultForm: React.FC<ResultFormProps> = ({
               </select>
               {errors.semester && <p className="text-red-500 text-sm mt-1">{errors.semester}</p>}
               {form.semester && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  ✓ Auto: Mes {form.month} ({MONTHS.find(m => m.value === form.month)?.label}), Trimestre {form.quarter}
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                  ✓ <span>Mes {form.month} ({MONTHS.find(m => m.value === form.month)?.label}) • Trimestre {form.quarter}</span>
                 </p>
               )}
             </div>
           )}
 
-          {/* ANUAL - Sin entrada del usuario */}
           {measurementFrequency === 'annual' && (
-            <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                📅 Frecuencia Anual: Se registra automáticamente para diciembre (mes 12, trimestre 4, semestre 2)
+            <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <span className="text-lg">📅</span>
+                <span><strong>Frecuencia Anual:</strong> Se registra automáticamente para diciembre (mes 12, trimestre 4, semestre 2)</span>
               </p>
             </div>
           )}
@@ -365,11 +375,35 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 📋 Información del Indicador */}
+      {selectedIndicator && (
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
+            <span>ℹ️</span> Información del Indicador
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="space-y-1">
+              <span className="text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Código</span>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedIndicator.code}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Frecuencia</span>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{frequencyToSpanish(selectedIndicator.measurementFrequency)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Nombre</span>
+              <p className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{selectedIndicator.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 🏢 Sede */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Sede *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>🏢</span> Sede
+            <span className="text-red-500">*</span>
           </label>
             <select
             name="headquarters"
@@ -391,8 +425,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 📊 Indicador */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Indicador *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>📊</span> Indicador
+            <span className="text-red-500">*</span>
           </label>
           <select
             name="indicator"
@@ -414,8 +449,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 🔢 Numerador */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Numerador *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>🔢</span> Numerador
+            <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -434,8 +470,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 🔢 Denominador */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Denominador *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>➗</span> Denominador
+            <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -454,8 +491,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 📅 Año */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Año *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>📅</span> Año
+            <span className="text-red-500">*</span>
           </label>
           <select
             name="year"
@@ -475,20 +513,6 @@ const ResultForm: React.FC<ResultFormProps> = ({
           {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
         </div>
 
-        {/* 🗓️ Mostrar información del indicador seleccionado */}
-        {selectedIndicator && (
-          <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
-              Información del Indicador
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-blue-800 dark:text-blue-300">
-              <div><strong>Código:</strong> {selectedIndicator.code}</div>
-              <div><strong>Frecuencia:</strong> {selectedIndicator.measurementFrequency}</div>
-              <div><strong>Nombre:</strong> {selectedIndicator.name}</div>
-            </div>
-          </div>
-        )}
-
         {/* 📅 Campos de período dinámicos */}
         {selectedIndicator && (
           <div className="md:col-span-2">
@@ -501,14 +525,23 @@ const ResultForm: React.FC<ResultFormProps> = ({
       </div>
 
       {/* 🔘 Botones */}
-      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-500 text-white rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
         >
-          {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
-          {result ? 'Actualizar' : 'Crear'} Resultado
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              <span>{result ? 'Actualizando...' : 'Guardando...'}</span>
+            </>
+          ) : (
+            <>
+              <span>{result ? '💾' : '➕'}</span>
+              <span>{result ? 'Actualizar Resultado' : 'Guardar Resultado'}</span>
+            </>
+          )}
         </button>
       </div>
     </form>
