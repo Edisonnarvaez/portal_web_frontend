@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { getIndicatorField, getHeadquarterField, safeNumber } from '../../utils/dataHelpers';
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { exportToExcel, exportToPDF } from "../../utils/exportUtils";
@@ -41,10 +41,33 @@ export default function IndicatorTable({ data, loading }: Props) {
     if (loading) return <p className="text-center">Cargando tabla...</p>;
     if (data.length === 0) return <p className="text-center">No hay datos para mostrar.</p>;
 
+    console.log('🎯 [IndicatorTable] RECEIVED DATA:', {
+      dataLength: data.length,
+      firstItemFields: data.length > 0 ? Object.keys(data[0]) : [],
+      firstItemHasDescription: data.length > 0 ? 'description' in data[0] : false,
+      firstItemHasCalculationMethod: data.length > 0 ? 'calculationMethod' in data[0] : false,
+      firstItemDescription: data.length > 0 ? (data[0] as any).description : undefined,
+      firstItemCalculationMethod: data.length > 0 ? (data[0] as any).calculationMethod : undefined
+    });
+
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedIndicator, setSelectedIndicator] = useState<any>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(20);
+
+    // DEBUG: Monitor selectedIndicator changes
+    React.useEffect(() => {
+        if (selectedIndicator) {
+            console.log('🔄 [IndicatorTable] selectedIndicator STATE UPDATED:', {
+                hasDescription: 'description' in selectedIndicator,
+                descriptionValue: (selectedIndicator as any).description,
+                hasCalculationMethod: 'calculationMethod' in selectedIndicator,
+                calculationMethodValue: (selectedIndicator as any).calculationMethod,
+                allFields: Object.keys(selectedIndicator).length,
+                fieldsList: Object.keys(selectedIndicator)
+            });
+        }
+    }, [selectedIndicator]);
 
     // 🔧 Procesar datos para asegurar que tengan la estructura correcta
     const processedData = data.map((item, index) => {
@@ -76,10 +99,14 @@ export default function IndicatorTable({ data, loading }: Props) {
             quarter: item.quarter,
             semester: item.semester,
             
-            // 🏷️ Metadatos
-            measurementUnit: getIndicatorField(item, 'measurementUnit', indicatorObj?.measurementUnit ?? '' ) || '',
-            measurementFrequency: getIndicatorField(item, 'measurementFrequency', 'annual'),
-            calculationMethod: getIndicatorField(item, 'calculationMethod', ''),
+            // 🏷️ Metadatos - PRIORIDAD: item directo > indicatorObj > default
+            measurementUnit: item.measurementUnit || indicatorObj?.measurementUnit || '',
+            measurementFrequency: item.measurementFrequency || indicatorObj?.measurementFrequency || 'annual',
+            calculationMethod: item.calculationMethod || indicatorObj?.calculationMethod || '',
+            description: item.description || indicatorObj?.description || '',
+            version: item.version || indicatorObj?.version || '',
+            numeratorResponsible: item.numeratorResponsible || indicatorObj?.numeratorResponsible || '',
+            denominatorResponsible: item.denominatorResponsible || indicatorObj?.denominatorResponsible || '',
             
             // 👤 Usuario
             user: item.user,
@@ -187,6 +214,14 @@ export default function IndicatorTable({ data, loading }: Props) {
                                     <td className="px-4 py-2">
                                         <button
                                             onClick={() => {
+                                                console.log('📋 [IndicatorTable] ITEM TO BE SENT TO MODAL:', {
+                                                  itemFields: Object.keys(item),
+                                                  hasDescription: 'description' in item,
+                                                  descriptionValue: (item as any).description,
+                                                  hasCalculationMethod: 'calculationMethod' in item,
+                                                  calculationMethodValue: (item as any).calculationMethod,
+                                                  indicatorFields: item.indicator ? Object.keys(item.indicator) : 'NO INDICATOR'
+                                                });
                                                 setSelectedIndicator(item);
                                                 setModalOpen(true);
                                             }}

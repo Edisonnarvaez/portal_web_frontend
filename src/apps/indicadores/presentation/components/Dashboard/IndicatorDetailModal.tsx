@@ -381,7 +381,26 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                 </h4>
                 <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                   <p><strong>Código:</strong> <span className="text-gray-600 dark:text-gray-400 font-mono">{indicator.indicatorCode ?? indicatorData?.code ?? '-'}</span></p>
-                  <p><strong>Descripción:</strong> <span className="text-gray-600 dark:text-gray-400 block text-xs leading-relaxed">{indicatorData?.description ?? indicator?.description ?? 'No disponible'}</span></p>
+                  <p><strong>Descripción:</strong> <span className="text-gray-600 dark:text-gray-400 block text-xs leading-relaxed">{indicator?.description ?? indicator?.indicator?.description ?? indicatorData?.description ?? 'No disponible'}</span></p>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
+                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-200 uppercase mb-2">Componentes del Indicador (Definiciones)</p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-700 dark:text-gray-300"><strong>📊 Numerador:</strong></p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 ml-2 mt-1 p-1 bg-white dark:bg-gray-800 rounded italic">{indicator?.numeratorDefinition ?? indicator?.indicator?.numeratorDefinition ?? indicatorData?.numeratorDefinition ?? 'No definido'}</p>
+                        {(indicator?.numeratorDescription || indicator?.indicator?.numeratorDescription || indicatorData?.numeratorDescription) && (
+                          <p className="text-xs text-gray-500 dark:text-gray-500 ml-2 mt-1 border-l-2 border-blue-300 pl-2">Descripción: {indicator?.numeratorDescription ?? indicator?.indicator?.numeratorDescription ?? indicatorData?.numeratorDescription}</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-700 dark:text-gray-300"><strong>📉 Denominador:</strong></p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 ml-2 mt-1 p-1 bg-white dark:bg-gray-800 rounded italic">{indicator?.denominatorDefinition ?? indicator?.indicator?.denominatorDefinition ?? indicatorData?.denominatorDefinition ?? 'No definido'}</p>
+                        {(indicator?.denominatorDescription || indicator?.indicator?.denominatorDescription || indicatorData?.denominatorDescription) && (
+                          <p className="text-xs text-gray-500 dark:text-gray-500 ml-2 mt-1 border-l-2 border-green-300 pl-2">Descripción: {indicator?.denominatorDescription ?? indicator?.indicator?.denominatorDescription ?? indicatorData?.denominatorDescription}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <p><strong>Unidad de Medida:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.measurementUnit ?? indicatorData?.measurementUnit ?? 'Sin especificar'}</span></p>
                   <p><strong>Frecuencia de Medición:</strong> <span className="text-gray-600 dark:text-gray-400 capitalize">{indicator.measurementFrequency ?? indicatorData?.measurementFrequency ?? 'No especificada'}</span></p>
                   <p><strong>Sede:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.headquarterName ?? currentResult?.headquarterName ?? '-'}</span></p>
@@ -395,47 +414,55 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                 </h4>
                 <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
                   <div>
-                    <strong className="text-gray-800 dark:text-gray-200">Definición:</strong>
-                    <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded font-mono text-xs text-gray-600 dark:text-gray-400 space-y-1 border-l-4 border-blue-500">
-                      <p><span className="text-blue-600 dark:text-blue-400 font-semibold">📊 Numerador (este período):</span> {currentResult?.numerator ?? '-'}</p>
-                      <p><span className="text-green-600 dark:text-green-400 font-semibold">📉 Denominador (este período):</span> {currentResult?.denominator ?? '-'}</p>
-                      <hr className="border-gray-400 dark:border-gray-500 my-1" />
-                      <p><span className="text-purple-600 dark:text-purple-400 font-semibold">📈 Resultado = Numerador / Denominador</span></p>
-                      <p className="text-gray-700 dark:text-gray-300">= {currentResult?.numerator} / {currentResult?.denominator} = <strong>{currentValue?.toFixed(4)}</strong></p>
+                    <strong className="text-gray-800 dark:text-gray-200">Método de Cálculo:</strong>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 bg-gray-100 dark:bg-gray-700 p-2 rounded">{indicator.calculationMethod ?? indicator.indicator?.calculationMethod ?? indicatorData?.calculationMethod ?? 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <strong className="text-gray-800 dark:text-gray-200">Fórmula de Aplicación:</strong>
+                    <div className="mt-2 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 rounded space-y-3 border border-blue-200 dark:border-blue-600/30">
+                      {/* Numerador del resultado actual */}
+                      <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border-l-4 border-blue-500">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">📊 Numerador</p>
+                          {/*<p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{indicator?.numeratorDefinition ?? indicator?.indicator?.numeratorDefinition ?? indicatorData?.numeratorDefinition ?? 'No especificado'}</p>*/}
+                        </div>
+                        <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{currentResult?.numerator ?? '-'}</p>
+                      </div>
+                      
+                      {/* Denominador del resultado actual */}
+                      <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border-l-4 border-green-500">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">📉 Denominador</p>
+                          {/*<p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{indicator?.denominatorDefinition ?? indicator?.indicator?.denominatorDefinition ?? indicatorData?.denominatorDefinition ?? 'No especificado'}</p>*/}
+                        </div>
+                        <p className="text-xl font-bold text-green-600 dark:text-green-400">{currentResult?.denominator ?? '-'}</p>
+                      </div>
+                      
+                      {/* Resultado */}
+                      <div className="pt-2 border-t border-gray-300 dark:border-gray-600">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">📈 Resultado Final</p>
+                        <p className="text-center text-sm font-mono text-gray-700 dark:text-gray-300">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold">{currentResult?.numerator}</span> ÷ 
+                          <span className="text-green-600 dark:text-green-400 font-bold ml-1">{currentResult?.denominator}</span> = 
+                          <span className="text-purple-600 dark:text-purple-400 font-bold text-lg ml-1">{currentValue?.toFixed(4)}</span>
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  {(indicatorData?.numeratorResponsible || indicatorData?.denominatorResponsible) && (
-                    <div>
-                      <strong>Responsables del Indicador:</strong>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">📌 Numerador: {indicatorData?.numeratorResponsible ?? 'No asignado'}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">📌 Denominador: {indicatorData?.denominatorResponsible ?? 'No asignado'}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Información de Seguimiento y Auditoría */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            {/* Información de Auditoría - Compacta */}
+            {currentResult && (
               <div className="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-                <strong className="text-gray-900 dark:text-white">📅 Auditoría del Resultado</strong>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                  <strong>Creado:</strong> {currentResult?.creationDate ? new Date(currentResult.creationDate).toLocaleDateString('es-CO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  <strong>Actualizado:</strong> {currentResult?.updateDate ? new Date(currentResult.updateDate).toLocaleDateString('es-CO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <strong>Creado:</strong> {currentResult?.creationDate ? new Date(currentResult.creationDate).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'} | 
+                  <strong className="ml-3">Período:</strong> {selectedResultPeriodo} | 
+                  <strong className="ml-3">Total Períodos:</strong> {resultsForThisIndicator.length}
                 </p>
               </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-                <strong className="text-gray-900 dark:text-white">📊 Comparativa Período</strong>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                  <strong>Período Actual:</strong> {selectedResultPeriodo}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  <strong>Total Períodos Registrados:</strong> {resultsForThisIndicator.length}
-                </p>
-              </div>
-            </div>
+            )}
 
             {/* Análisis Estadístico - Mejorado sin redundancia */}
             {currentResult && (

@@ -14,7 +14,15 @@ export class ApiResultRepository implements ResultRepository {
   }
 
   async getAllWithDetails(): Promise<DetailedResult[]> {
-    return await this.apiService.getResultsWithDetails();
+    console.log('📍 [ApiResultRepository.getAllWithDetails] Calling apiService.getResultsWithDetails()');
+    const results = await this.apiService.getResultsWithDetails();
+    console.log('📍 [ApiResultRepository.getAllWithDetails] Got', results.length, 'results from API');
+    if (results.length > 0) {
+      console.log('📍 [ApiResultRepository] First result fields:', Object.keys(results[0]));
+      console.log('📍 [ApiResultRepository] Has description:', 'description' in results[0], '- Value:', (results[0] as any).description);
+      console.log('📍 [ApiResultRepository] Has calculationMethod:', 'calculationMethod' in results[0], '- Value:', (results[0] as any).calculationMethod);
+    }
+    return results;
   }
 
   async getById(id: number): Promise<Result | null> {

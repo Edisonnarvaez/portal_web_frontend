@@ -87,6 +87,25 @@ export const useResultsData = () => {
 
         const measurementUnit = item.measurementUnit ?? item.measurement_unit ?? indicatorObj?.measurementUnit ?? indicatorObj?.measurement_unit ?? indicatorObj?.measurementUnit ?? '';
         const measurementFrequency = item.measurementFrequency ?? item.measurement_frequency ?? indicatorObj?.measurementFrequency ?? indicatorObj?.measurement_frequency ?? '';
+        
+        // Extract enriched fields from indicator object
+        const description = item.description ?? indicatorObj?.description ?? '';
+        const calculationMethod = item.calculationMethod ?? item.calculation_method ?? indicatorObj?.calculationMethod ?? indicatorObj?.calculation_method ?? '';
+        const version = item.version ?? indicatorObj?.version ?? '';
+        const numeratorResponsible = item.numeratorResponsible ?? item.numerator_responsible ?? indicatorObj?.numeratorResponsible ?? indicatorObj?.numerator_responsible ?? '';
+        const denominatorResponsible = item.denominatorResponsible ?? item.denominator_responsible ?? indicatorObj?.denominatorResponsible ?? indicatorObj?.denominator_responsible ?? '';
+
+        // DEBUG: Log enrichment for specific indicator
+        if (indicatorId === 3 || (item.indicatorName && item.indicatorName.includes('caída'))) {
+          console.log('🔍 [useResultsData] Enrichment for', item.indicatorName, ':', {
+            sourceDescription: item.description,
+            objDescription: indicatorObj?.description,
+            finalDescription: description,
+            sourceCalculationMethod: item.calculationMethod,
+            objCalculationMethod: indicatorObj?.calculationMethod,
+            finalCalculationMethod: calculationMethod
+          });
+        }
 
         // Prefer indicator's target (may be string) but normalize to number when possible
         const rawTarget = item.target ?? indicatorObj?.target ?? indicatorObj?.meta_target ?? undefined;
@@ -138,6 +157,15 @@ export const useResultsData = () => {
           headquarterName,
           measurementUnit,
           measurementFrequency,
+          description,
+          calculationMethod,
+          version,
+          numeratorResponsible,
+          denominatorResponsible,
+          numeratorDefinition: indicatorObj?.numerator || '', // Definición del numerador del modelo Indicator
+          denominatorDefinition: indicatorObj?.denominator || '', // Definición del denominador del modelo Indicator
+          numeratorDescription: indicatorObj?.numeratorDescription || item.numeratorDescription || '',
+          denominatorDescription: indicatorObj?.denominatorDescription || item.denominatorDescription || '',
           target: parsedTarget,
           trend,
           compliant,
