@@ -97,14 +97,14 @@ export const useResultsData = () => {
 
         // DEBUG: Log enrichment for specific indicator
         if (indicatorId === 3 || (item.indicatorName && item.indicatorName.includes('caída'))) {
-          console.log('🔍 [useResultsData] Enrichment for', item.indicatorName, ':', {
-            sourceDescription: item.description,
-            objDescription: indicatorObj?.description,
-            finalDescription: description,
-            sourceCalculationMethod: item.calculationMethod,
-            objCalculationMethod: indicatorObj?.calculationMethod,
-            finalCalculationMethod: calculationMethod
-          });
+          // console.log('🔍 [useResultsData] Enrichment for', item.indicatorName, ':', {
+          //   sourceDescription: item.description,
+          //   objDescription: indicatorObj?.description,
+          //   finalDescription: description,
+          //   sourceCalculationMethod: item.calculationMethod,
+          //   objCalculationMethod: indicatorObj?.calculationMethod,
+          //   finalCalculationMethod: calculationMethod
+          // });
         }
 
         // Prefer indicator's target (may be string) but normalize to number when possible

@@ -37,6 +37,28 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
 
   // Obtener el objeto indicador del nested object
   const indicatorData = indicator.indicator || indicator;
+
+  // Funciones para traducir valores del backend
+  const translateFrequency = (frequency: string): string => {
+    const frequencyMap: { [key: string]: string } = {
+      'monthly': 'Mensual',
+      'quarterly': 'Trimestral',
+      'semiannual': 'Semestral',
+      'annual': 'Anual'
+    };
+    return frequencyMap[frequency?.toLowerCase()] || frequency || 'No especificada';
+  };
+
+  const translateCalculationMethod = (method: string): string => {
+    const methodMap: { [key: string]: string } = {
+      'percentage': 'Porcentaje',
+      'rate_per_1000': 'Tasa por 1000',
+      'rate_per_10000': 'Tasa por 10000',
+      'average': 'Promedio',
+      'ratio': 'Razón'
+    };
+    return methodMap[method?.toLowerCase()] || method || 'No especificado';
+  };
   
   // Función auxiliar para formatear período (reutilizable)
   const formatPeriodo = (item: any): string => {
@@ -402,7 +424,7 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                     </div>
                   </div>
                   <p><strong>Unidad de Medida:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.measurementUnit ?? indicatorData?.measurementUnit ?? 'Sin especificar'}</span></p>
-                  <p><strong>Frecuencia de Medición:</strong> <span className="text-gray-600 dark:text-gray-400 capitalize">{indicator.measurementFrequency ?? indicatorData?.measurementFrequency ?? 'No especificada'}</span></p>
+                  <p><strong>Frecuencia de Medición:</strong> <span className="text-gray-600 dark:text-gray-400">{translateFrequency(indicator.measurementFrequency ?? indicatorData?.measurementFrequency ?? '')}</span></p>
                   <p><strong>Sede:</strong> <span className="text-gray-600 dark:text-gray-400">{indicator.headquarterName ?? currentResult?.headquarterName ?? '-'}</span></p>
                 </div>
               </div>
@@ -415,7 +437,9 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
                 <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
                   <div>
                     <strong className="text-gray-800 dark:text-gray-200">Método de Cálculo:</strong>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 bg-gray-100 dark:bg-gray-700 p-2 rounded">{indicator.calculationMethod ?? indicator.indicator?.calculationMethod ?? indicatorData?.calculationMethod ?? 'No disponible'}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 bg-gray-100 dark:bg-gray-700 p-2 rounded font-semibold text-blue-600 dark:text-blue-400">
+                      {translateCalculationMethod(indicator.calculationMethod ?? indicator.indicator?.calculationMethod ?? indicatorData?.calculationMethod ?? '')}
+                    </p>
                   </div>
                   <div>
                     <strong className="text-gray-800 dark:text-gray-200">Fórmula de Aplicación:</strong>

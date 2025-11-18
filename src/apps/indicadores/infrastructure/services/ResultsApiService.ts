@@ -72,22 +72,22 @@ export class ResultsApiService {
   async getResultsWithDetails(): Promise<DetailedResult[]> {
     try {
       const url = `${this.baseUrl}/results/detailed/`;
-      console.log('🔍 [getResultsWithDetails] Fetching from URL:', url);
+      // console.log('🔍 [getResultsWithDetails] Fetching from URL:', url);
       
       const response = await axiosInstance.get(url);
       const data = response.data;
 
-      console.log('📥 [getResultsWithDetails] RAW Response data:', {
-        type: typeof data,
-        isArray: Array.isArray(data),
-        hasResults: !!data?.results,
-        resultsCount: data?.results?.length,
-        keysInData: Object.keys(data || {}).slice(0, 10),
-        sampleItem: Array.isArray(data) ? data[0] : (data?.results ? data.results[0] : null),
-        sampleIndicatorFields: Array.isArray(data) ? Object.keys(data[0]?.indicator || {}) : (data?.results ? Object.keys(data.results[0]?.indicator || {}) : [])
-      });
+      // console.log('📥 [getResultsWithDetails] RAW Response data:', {
+      //   type: typeof data,
+      //   isArray: Array.isArray(data),
+      //   hasResults: !!data?.results,
+      //   resultsCount: data?.results?.length,
+      //   keysInData: Object.keys(data || {}).slice(0, 10),
+      //   sampleItem: Array.isArray(data) ? data[0] : (data?.results ? data.results[0] : null),
+      //   sampleIndicatorFields: Array.isArray(data) ? Object.keys(data[0]?.indicator || {}) : (data?.results ? Object.keys(data.results[0]?.indicator || {}) : [])
+      // });
       
-      console.log('📥 [getResultsWithDetails] Full raw data (first 500 chars):', JSON.stringify(data).slice(0, 500));
+      // console.log('📥 [getResultsWithDetails] Full raw data (first 500 chars):', JSON.stringify(data).slice(0, 500));
 
       // Extract the results array from whatever structure it comes in
       let resultsArray: any[] = [];
@@ -100,16 +100,16 @@ export class ResultsApiService {
         return [];
       }
 
-      console.log('✅ [getResultsWithDetails] Got', resultsArray.length, 'raw items from endpoint');
+      // console.log('✅ [getResultsWithDetails] Got', resultsArray.length, 'raw items from endpoint');
       
       // Log first item structure BEFORE enrichment
       if (resultsArray.length > 0) {
-        console.log('🔎 [getResultsWithDetails] FIRST ITEM BEFORE ENRICHMENT:', {
-          allFields: Object.keys(resultsArray[0]),
-          hasDescription: 'description' in resultsArray[0],
-          hasCalculationMethod: 'calculationMethod' in resultsArray[0],
-          indicatorObjectFields: resultsArray[0].indicator ? Object.keys(resultsArray[0].indicator) : 'no indicator object'
-        });
+        // console.log('🔎 [getResultsWithDetails] FIRST ITEM BEFORE ENRICHMENT:', {
+        //   allFields: Object.keys(resultsArray[0]),
+        //   hasDescription: 'description' in resultsArray[0],
+        //   hasCalculationMethod: 'calculationMethod' in resultsArray[0],
+        //   indicatorObjectFields: resultsArray[0].indicator ? Object.keys(resultsArray[0].indicator) : 'no indicator object'
+        // });
       }
 
       // Now, we need to check if items are already enriched or if they only have IDs
@@ -120,16 +120,16 @@ export class ResultsApiService {
         (typeof firstItem.indicator === 'object' && !firstItem.indicatorName)
       );
       
-      console.log('🔎 [getResultsWithDetails] Check enrichment:', {
-        hasFirstItem: !!firstItem,
-        indicatorType: typeof firstItem?.indicator,
-        indicatorValue: firstItem?.indicator,
-        hasIndicatorName: !!firstItem?.indicatorName,
-        needsEnrichment
-      });
+      // console.log('🔎 [getResultsWithDetails] Check enrichment:', {
+      //   hasFirstItem: !!firstItem,
+      //   indicatorType: typeof firstItem?.indicator,
+      //   indicatorValue: firstItem?.indicator,
+      //   hasIndicatorName: !!firstItem?.indicatorName,
+      //   needsEnrichment
+      // });
 
       if (needsEnrichment) {
-        console.log('⚠️ [getResultsWithDetails] Items are NOT enriched, fetching indicators/headquarters for enrichment...');
+        // console.log('⚠️ [getResultsWithDetails] Items are NOT enriched, fetching indicators/headquarters for enrichment...');
         
         try {
           // Fetch indicators and headquarters in parallel for enrichment
@@ -141,10 +141,10 @@ export class ResultsApiService {
           const indicators = Array.isArray(indicatorsResp.data) ? indicatorsResp.data : (indicatorsResp.data?.results || []);
           const headquarters = Array.isArray(headquartersResp.data) ? headquartersResp.data : (headquartersResp.data?.results || []);
 
-          console.log('✅ [getResultsWithDetails] Fetched', indicators.length, 'indicators and', headquarters.length, 'headquarters for enrichment');
+          // console.log('✅ [getResultsWithDetails] Fetched', indicators.length, 'indicators and', headquarters.length, 'headquarters for enrichment');
           
           if (indicators.length > 0) {
-            console.log('🔎 Sample indicator has fields:', Object.keys(indicators[0]));
+            // console.log('🔎 Sample indicator has fields:', Object.keys(indicators[0]));
           }
 
           // Build lookup maps
@@ -224,25 +224,25 @@ export class ResultsApiService {
 
           //console.log('✅ [getResultsWithDetails] Enriched', transformedResults.length, 'items');
           //console.log('🔎 First enriched item:', transformedResults[0]);
-          console.log('✅ [getResultsWithDetails] Enriched', transformedResults.length, 'items');
+          // console.log('✅ [getResultsWithDetails] Enriched', transformedResults.length, 'items');
           if (transformedResults.length > 0) {
-            console.log('🔎 FIRST ENRICHED ITEM FIELDS:', Object.keys(transformedResults[0]));
-            console.log('🔎 Description present in result:', 'description' in transformedResults[0], 'Value:', transformedResults[0].description);
-            console.log('🔎 CalculationMethod present in result:', 'calculationMethod' in transformedResults[0], 'Value:', transformedResults[0].calculationMethod);
-            console.log('🔎 Nested indicator fields:', Object.keys(transformedResults[0].indicator || {}));
-            console.log('🔎 Description in indicator:', 'description' in (transformedResults[0].indicator || {}), 'Value:', transformedResults[0].indicator?.description);
-            console.log('🔎 CalculationMethod in indicator:', 'calculationMethod' in (transformedResults[0].indicator || {}), 'Value:', transformedResults[0].indicator?.calculationMethod);
+            // console.log('🔎 FIRST ENRICHED ITEM FIELDS:', Object.keys(transformedResults[0]));
+            // console.log('🔎 Description present in result:', 'description' in transformedResults[0], 'Value:', transformedResults[0].description);
+            // console.log('🔎 CalculationMethod present in result:', 'calculationMethod' in transformedResults[0], 'Value:', transformedResults[0].calculationMethod);
+            // console.log('🔎 Nested indicator fields:', Object.keys(transformedResults[0].indicator || {}));
+            // console.log('🔎 Description in indicator:', 'description' in (transformedResults[0].indicator || {}), 'Value:', transformedResults[0].indicator?.description);
+            // console.log('🔎 CalculationMethod in indicator:', 'calculationMethod' in (transformedResults[0].indicator || {}), 'Value:', transformedResults[0].indicator?.calculationMethod);
             
             // 🔍 DEBUG: Check what source data looks like
             const sourceIndicator = indicators.find((ind: any) => ind.id === (transformedResults[0].indicator?.id));
-            console.log('🔍 SOURCE INDICATOR DATA (from API):', {
-              indicatorId: transformedResults[0].indicator?.id,
-              indicatorFields: sourceIndicator ? Object.keys(sourceIndicator) : 'NOT FOUND',
-              description: sourceIndicator?.description,
-              calculation_method: sourceIndicator?.calculation_method,
-              calculationMethod: sourceIndicator?.calculationMethod,
-              allSourceData: sourceIndicator
-            });
+            // console.log('🔍 SOURCE INDICATOR DATA (from API):', {
+            //   indicatorId: transformedResults[0].indicator?.id,
+            //   indicatorFields: sourceIndicator ? Object.keys(sourceIndicator) : 'NOT FOUND',
+            //   description: sourceIndicator?.description,
+            //   calculation_method: sourceIndicator?.calculation_method,
+            //   calculationMethod: sourceIndicator?.calculationMethod,
+            //   allSourceData: sourceIndicator
+            // });
           }
           return transformedResults;
 
@@ -253,30 +253,30 @@ export class ResultsApiService {
         }
       } else {
         // Items are already enriched from the endpoint, but may be missing detailed fields
-        console.log('✅ [getResultsWithDetails] Items are already enriched from endpoint');
-        console.log('🔍 Checking if we need to fetch full indicator details...');
+        // console.log('✅ [getResultsWithDetails] Items are already enriched from endpoint');
+        // console.log('🔍 Checking if we need to fetch full indicator details...');
         
         // Check if the returned indicators have description/calculationMethod
         const firstIndicator = resultsArray[0]?.indicator;
         const hasDescriptionInResponse = 'description' in (firstIndicator || {}) && resultsArray[0].description !== undefined;
         const hasCalcMethodInResponse = 'calculationMethod' in (firstIndicator || {}) && resultsArray[0].calculationMethod !== undefined;
         
-        console.log('🔍 Response check:', {
-          hasDescription: hasDescriptionInResponse,
-          hasCalculationMethod: hasCalcMethodInResponse,
-          indicatorFields: Object.keys(firstIndicator || {})
-        });
+        // console.log('🔍 Response check:', {
+        //   hasDescription: hasDescriptionInResponse,
+        //   hasCalculationMethod: hasCalcMethodInResponse,
+        //   indicatorFields: Object.keys(firstIndicator || {})
+        // });
         
         // If the endpoint response doesn't have detailed indicator data, fetch it separately
         if (!hasDescriptionInResponse || !hasCalcMethodInResponse) {
-          console.log('⚠️ Response lacks description/calculationMethod, fetching full indicator details...');
+          // console.log('⚠️ Response lacks description/calculationMethod, fetching full indicator details...');
           
           try {
             // Fetch full indicators for enrichment
             const indicatorsResp = await axiosInstance.get(`${this.baseUrl}/indicators/`);
             const indicators = Array.isArray(indicatorsResp.data) ? indicatorsResp.data : (indicatorsResp.data?.results || []);
             
-            console.log('✅ Fetched', indicators.length, 'full indicators for enrichment');
+            // console.log('✅ Fetched', indicators.length, 'full indicators for enrichment');
             
             // Build lookup map
             const indicatorMap = new Map();
@@ -289,12 +289,12 @@ export class ResultsApiService {
               const indicatorId = typeof item.indicator === 'number' ? item.indicator : item.indicator?.id;
               const fullIndicatorData = indicatorMap.get(indicatorId);
               
-              console.log('🔍 Enriching with full indicator:', {
-                resultId: item.id,
-                indicatorId,
-                hasFullData: !!fullIndicatorData,
-                fullDataFields: fullIndicatorData ? Object.keys(fullIndicatorData) : 'NONE'
-              });
+              // console.log('🔍 Enriching with full indicator:', {
+              //   resultId: item.id,
+              //   indicatorId,
+              //   hasFullData: !!fullIndicatorData,
+              //   fullDataFields: fullIndicatorData ? Object.keys(fullIndicatorData) : 'NONE'
+              // });
               
               // Merge enriched indicator
               const enrichedIndicator = {
@@ -331,14 +331,14 @@ export class ResultsApiService {
               };
             });
             
-            console.log('✅ [getResultsWithDetails] Fully enriched', transformedResults.length, 'items with indicator details');
+            // console.log('✅ [getResultsWithDetails] Fully enriched', transformedResults.length, 'items with indicator details');
             if (transformedResults.length > 0) {
-              console.log('🔎 First result after full enrichment:', {
-                hasDescription: transformedResults[0].description,
-                hasCalculationMethod: transformedResults[0].calculationMethod,
-                indicatorHasDescription: transformedResults[0].indicator?.description,
-                indicatorHasCalculationMethod: transformedResults[0].indicator?.calculationMethod
-              });
+              // console.log('🔎 First result after full enrichment:', {
+              //   hasDescription: transformedResults[0].description,
+              //   hasCalculationMethod: transformedResults[0].calculationMethod,
+              //   indicatorHasDescription: transformedResults[0].indicator?.description,
+              //   indicatorHasCalculationMethod: transformedResults[0].indicator?.calculationMethod
+              // });
             }
             return transformedResults;
           } catch (enrichError) {
@@ -376,11 +376,11 @@ export class ResultsApiService {
           };
         });
 
-        console.log('✅ [getResultsWithDetails] Normalized', transformedResults.length, 'already-enriched items');
+        // console.log('✅ [getResultsWithDetails] Normalized', transformedResults.length, 'already-enriched items');
         if (transformedResults.length > 0) {
-          console.log('🔎 First normalized item indicator fields:', Object.keys(transformedResults[0].indicator));
-          console.log('🔎 First normalized item has description:', transformedResults[0].indicator?.description);
-          console.log('🔎 First normalized item has calculationMethod:', transformedResults[0].indicator?.calculationMethod);
+          // console.log('🔎 First normalized item indicator fields:', Object.keys(transformedResults[0].indicator));
+          // console.log('🔎 First normalized item has description:', transformedResults[0].indicator?.description);
+          // console.log('🔎 First normalized item has calculationMethod:', transformedResults[0].indicator?.calculationMethod);
         }
         return transformedResults;
       }
