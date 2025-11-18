@@ -759,7 +759,7 @@ const ResultadosPage: React.FC = () => {
               headquarterOptions={headquarterOptions}
               yearOptions={yearOptions}
             />
-            {/* Estadísticas */}
+            {/* Estadísticas 
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <HiSparkles className="w-5 h-5 text-yellow-500" />
@@ -767,7 +767,7 @@ const ResultadosPage: React.FC = () => {
                   {filteredResults.length} resultado(s) encontrado(s)
                 </span>
               </div>
-            </div>
+            </div>*/}
 
             {/* Controles de paginación - Arriba */}
             <div className="flex justify-between items-center mb-4">

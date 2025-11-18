@@ -448,7 +448,7 @@ const IndicadoresPage: React.FC = () => {
               onTrendChange={setSelectedTrendFilter}
             />
 
-            {/* Estadísticas */}
+            {/* Estadísticas
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <HiSparkles className="w-5 h-5 text-yellow-500" />
@@ -456,7 +456,7 @@ const IndicadoresPage: React.FC = () => {
                   {filteredIndicators.length} indicador(es) encontrado(s)
                 </span>
               </div>
-            </div>
+            </div> */}
 
             {/* Tabla de indicadores */}
             <IndicatorsTable
