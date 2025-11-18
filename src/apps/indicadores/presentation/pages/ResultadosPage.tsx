@@ -205,7 +205,7 @@ const FilterPanel = ({
   </div>
 );
 
-const ResultsTable = ({ data, onEdit, onDelete, onView, indicators }: any) => (
+const ResultsTable = ({ data, onEdit, onDelete, onView, indicators, canDelete }: any) => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
     <div className="overflow-x-auto">
       <table className="w-full divide-y divide-gray-300 dark:divide-gray-600">
@@ -296,13 +296,16 @@ const ResultsTable = ({ data, onEdit, onDelete, onView, indicators }: any) => (
                   >
                     <HiPencil className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={() => onDelete(result)}
-                    className="p-1.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                    title="Eliminar"
-                  >
-                    <HiTrash className="w-5 h-5" />
-                  </button>
+                  {/* Botón Eliminar - Solo si el usuario es Admin */}
+                  {canDelete && (
+                    <button
+                      onClick={() => onDelete(result)}
+                      className="p-1.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      title="Eliminar"
+                    >
+                      <HiTrash className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
@@ -387,7 +390,7 @@ const ResultadosPage: React.FC = () => {
   const [crudLoading, setCrudLoading] = useState(false);
 
   // Hook de permisos para resultados
-  const { canView, canCreate, roleDescription } = usePermissions('resultados');
+  const { canView, canCreate, canDelete, roleDescription } = usePermissions('resultados');
 
   // 👈 Solo usar este hook - eliminamos toda la lógica duplicada
   const {
@@ -821,6 +824,7 @@ const ResultadosPage: React.FC = () => {
               onDelete={handleDeleteResult}
               onView={handleViewResult}
               indicators={indicators}
+              canDelete={canDelete}
             />
 
             {/* Controles de paginación - Abajo */}
