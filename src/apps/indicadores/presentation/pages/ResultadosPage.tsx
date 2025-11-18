@@ -6,10 +6,12 @@ import {
   HiSparkles,
   HiPencil,
   HiTrash,
-  HiEye
+  HiEye,
+  HiExclamationTriangle
 } from 'react-icons/hi2';
 
 import { useResults } from '../hooks/useResults'; // 👈 Solo usar este hook
+import { usePermissions } from '../hooks/usePermissions'; // 👈 Hook de permisos
 import { notify } from '../../../../shared/utils/notifications';
 import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
@@ -384,6 +386,9 @@ const ResultadosPage: React.FC = () => {
   const [selectedResult, setSelectedResult] = useState<DetailedResult | null>(null);
   const [crudLoading, setCrudLoading] = useState(false);
 
+  // Hook de permisos para resultados
+  const { canView, canCreate, roleDescription } = usePermissions('resultados');
+
   // 👈 Solo usar este hook - eliminamos toda la lógica duplicada
   const {
     detailedResults,
@@ -646,7 +651,7 @@ const ResultadosPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* Header con información de permisos */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
           <div>
@@ -654,88 +659,108 @@ const ResultadosPage: React.FC = () => {
               Gestión de Resultados
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Registro y seguimiento de resultados de indicadores
+              {roleDescription}
             </p>
           </div>
 
-          <button
-            onClick={handleCreateResult}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-lg"
-          >
-            <HiPlus className="w-5 h-5" />
-            <span>Nuevo Resultado</span>
-          </button>
-                  {/* Bulk upload controls */}
-                  <div className="ml-4 flex items-center gap-3">
-                    <a
-                      href="#"
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        try {
-                          const { generateTemplateCSV } = await import('../utils/csvUtils');
-                          const blob = generateTemplateCSV(indicators || [], headquarters || []);
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'resultados_template.csv';
-                          document.body.appendChild(a);
-                          a.click();
-                          a.remove();
-                          URL.revokeObjectURL(url);
-                        } catch (err: any) {
-                          // Show a user-friendly toast and keep a console trace for debugging
-                          //console.error('Error generating template CSV', err);
-                          notify.error(`No se pudo generar la plantilla CSV: ${err?.message ?? 'error desconocido'}`);
-                        }
-                      }}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Descargar plantilla CSV
-                    </a>
+          {/* Botón Nuevo Resultado - Con validaciones de permisos */}
+          {canCreate ? (
+            <button
+              onClick={handleCreateResult}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-lg"
+            >
+              <HiPlus className="w-5 h-5" />
+              <span>Nuevo Resultado</span>
+            </button>
+          ) : (
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-300 rounded-lg cursor-not-allowed" title="No tienes permiso para crear resultados">
+              <HiPlus className="w-5 h-5" />
+              <span>Nuevo Resultado</span>
+            </div>
+          )}
 
-                    <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer">
-                      Cargar CSV
-                      <input type="file" accept=".csv" className="hidden" id="csvUploadInput"
-                        onChange={async (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0];
-                          if (!file) return;
-                          const text = await file.text();
-                          try {
-                            const { parseCSV, validateRowForCreate } = await import('../utils/csvUtils');
-                            const rows = parseCSV(text);
-                            // Validate each row
-                            const validated = rows.map((r,i) => ({ row: r, ...validateRowForCreate(r), __index: i+2 }));
-                            // Store preview in state (use a custom event to open preview modal)
-                            const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
-                            window.dispatchEvent(evt);
-                          } catch (err: any) {
-                            //console.error('Error parsing CSV', err);
-                            // If the parser detected a binary/XLSX file, show a more specific message
-                            const msg = err?.message || String(err);
-                            if (/xlsx|binario|binary|PK/i.test(msg)) {
-                              notify.error('El archivo parece ser un archivo binario (.xlsx). Exporta a CSV (UTF-8) y vuelve a intentar.');
-                            } else {
-                              notify.error(`Error al parsear el CSV: ${msg}`);
-                            }
-                          }
-                          // reset input
-                          (e.target as HTMLInputElement).value = '';
-                        }}
-                      />
-                    </label>
-                  </div>
+          {/* Bulk upload controls - Solo si puede crear */}
+          {canCreate && (
+            <div className="ml-4 flex items-center gap-3">
+              <a
+                href="#"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  try {
+                    const { generateTemplateCSV } = await import('../utils/csvUtils');
+                    const blob = generateTemplateCSV(indicators || [], headquarters || []);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'resultados_template.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  } catch (err: any) {
+                    notify.error(`No se pudo generar la plantilla CSV: ${err?.message ?? 'error desconocido'}`);
+                  }
+                }}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Descargar plantilla CSV
+              </a>
+
+              <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer">
+                Cargar CSV
+                <input type="file" accept=".csv" className="hidden" id="csvUploadInput"
+                  onChange={async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    const text = await file.text();
+                    try {
+                      const { parseCSV, validateRowForCreate } = await import('../utils/csvUtils');
+                      const rows = parseCSV(text);
+                      const validated = rows.map((r,i) => ({ row: r, ...validateRowForCreate(r), __index: i+2 }));
+                      const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
+                      window.dispatchEvent(evt);
+                    } catch (err: any) {
+                      const msg = err?.message || String(err);
+                      if (/xlsx|binario|binary|PK/i.test(msg)) {
+                        notify.error('El archivo parece ser un archivo binario (.xlsx). Exporta a CSV (UTF-8) y vuelve a intentar.');
+                      } else {
+                        notify.error(`Error al parsear el CSV: ${msg}`);
+                      }
+                    }
+                    (e.target as HTMLInputElement).value = '';
+                  }}
+                />
+              </label>
+            </div>
+          )}
         </div>
       </div>
 
       <motion.div
-        key={loading ? 'loading' : 'content'}
+        key={loading ? 'loading' : canView ? 'content' : 'no-access'}
         initial={{ opacity: 0, y: loading ? 0 : 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.25 }}
         className="space-y-6"
       >
-        {loading ? (
+        {!canView ? (
+          // Pantalla de acceso denegado
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <HiExclamationTriangle className="w-24 h-24 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Acceso Denegado
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                No tienes permisos para acceder a la gestión de resultados.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {roleDescription}
+              </p>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner />
           </div>

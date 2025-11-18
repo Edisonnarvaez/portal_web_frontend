@@ -94,8 +94,8 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
         ]
       : []),
     // Indicadores: cualquier rol en "auditorias" o "indicadores"
-    ...(hasAppAccess(roles, "indicadores")
-      ? [
+    //...(hasAppAccess(roles, "indicadores")
+      //? [
     {
       to: "/dashboard",
       label: "Indicadores",
@@ -107,7 +107,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
           label: "Dashboard",
           icon: <HiPresentationChartBar className="w-4 h-4" />,
         },
-        ...(hasAppAccess(roles, "indicadores")
+        ...(hasAppAccess(roles , "indicadores")
           ? [
             
               {
@@ -123,8 +123,8 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
             ]
           : []),
       ],
-    },]
-      : []),
+    },//]
+      //: []),
     // Procesos: cualquier rol en "procesos"
     ...(hasAppAccess(roles, "procesos")
       ? [

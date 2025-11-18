@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   HiChartBar,
   HiPlus,
-  HiSparkles,
   HiPencil,
   HiTrash,
-  HiEye
+  HiEye,
+  HiExclamationTriangle
 } from 'react-icons/hi2';
 
 import { useIndicators } from '../hooks/useIndicators';
+import { usePermissions } from '../hooks/usePermissions';
 import type { Indicator } from '../../domain/entities/Indicator';
 import IndicatorForm from '../components/Forms/IndicadoresForm';
 import FilterPanel from '../components/Shared/FilterPanel';
@@ -191,7 +192,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, loading, itemName }: a
   );
 };
 
-const IndicatorsTable = ({ data, onEdit, onDelete, onView }: any) => (
+const IndicatorsTable = ({ data, onEdit, onDelete, onView, permissions }: any) => (
   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -250,27 +251,38 @@ const IndicatorsTable = ({ data, onEdit, onDelete, onView }: any) => (
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => onView(indicator)}
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded"
-                    title="Ver detalles"
-                  >
-                    <HiEye className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onEdit(indicator)}
-                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 p-1 rounded"
-                    title="Editar"
-                  >
-                    <HiPencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(indicator)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 rounded"
-                    title="Eliminar"
-                  >
-                    <HiTrash className="w-4 h-4" />
-                  </button>
+                  {/* Botón Ver - Siempre disponible si puede ver */}
+                  {permissions.canView && (
+                    <button
+                      onClick={() => onView(indicator)}
+                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded transition-colors"
+                      title="Ver detalles"
+                    >
+                      <HiEye className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Botón Editar - Solo Admin */}
+                  {permissions.canUpdate && (
+                    <button
+                      onClick={() => onEdit(indicator)}
+                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 p-1 rounded transition-colors"
+                      title="Editar"
+                    >
+                      <HiPencil className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Botón Eliminar - Solo Admin */}
+                  {permissions.canDelete && (
+                    <button
+                      onClick={() => onDelete(indicator)}
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 rounded transition-colors"
+                      title="Eliminar"
+                    >
+                      <HiTrash className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
@@ -298,6 +310,9 @@ const IndicadoresPage: React.FC = () => {
   // Estados de elementos seleccionados
   const [selectedIndicator, setSelectedIndicator] = useState<Indicator | null>(null);
   const [crudLoading, setCrudLoading] = useState(false);
+
+  // Hook de permisos
+  const { canView, canCreate, canUpdate, canDelete, roleDescription } = usePermissions('indicadores');
 
   // Hook de indicadores
   const {
@@ -389,7 +404,7 @@ const IndicadoresPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* Header con información de permisos */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
           <div>
@@ -397,22 +412,52 @@ const IndicadoresPage: React.FC = () => {
               Gestión de Indicadores
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Administra los indicadores de la organización
+              {roleDescription}
             </p>
           </div>
 
-          <button
-            onClick={handleCreateIndicator}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-lg"
-          >
-            <HiPlus className="w-5 h-5" />
-            <span>Nuevo Indicador</span>
-          </button>
+          {/* Botón Nuevo Indicador - Solo si tiene permiso */}
+          {canCreate ? (
+            <button
+              onClick={handleCreateIndicator}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-lg"
+            >
+              <HiPlus className="w-5 h-5" />
+              <span>Nuevo Indicador</span>
+            </button>
+          ) : (
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-300 rounded-lg cursor-not-allowed" title="No tienes permiso para crear indicadores">
+              <HiPlus className="w-5 h-5" />
+              <span>Nuevo Indicador</span>
+            </div>
+          )}
         </div>
       </div>
 
       <AnimatePresence mode="wait">
-        {loading ? (
+        {!canView ? (
+          // Pantalla de acceso denegado
+          <motion.div
+            key="no-access"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex justify-center items-center h-64"
+          >
+            <div className="text-center">
+              <HiExclamationTriangle className="w-24 h-24 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Acceso Denegado
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                No tienes permisos para acceder a la gestión de indicadores.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {roleDescription}
+              </p>
+            </div>
+          </motion.div>
+        ) : loading ? (
           <motion.div
             key="loading"
             initial={{ opacity: 0 }}
@@ -448,22 +493,13 @@ const IndicadoresPage: React.FC = () => {
               onTrendChange={setSelectedTrendFilter}
             />
 
-            {/* Estadísticas
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <HiSparkles className="w-5 h-5 text-yellow-500" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {filteredIndicators.length} indicador(es) encontrado(s)
-                </span>
-              </div>
-            </div> */}
-
             {/* Tabla de indicadores */}
             <IndicatorsTable
               data={filteredIndicators}
               onEdit={handleEditIndicator}
               onDelete={handleDeleteIndicator}
               onView={handleViewIndicator}
+              permissions={{ canView, canCreate, canUpdate, canDelete }}
             />
 
             {filteredIndicators.length === 0 && (
