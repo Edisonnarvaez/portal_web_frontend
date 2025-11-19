@@ -8,7 +8,6 @@ export class IndicadoresApiService {
   async getIndicators(): Promise<Indicator[]> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/indicators/`);
-      console.log('📥 Respuesta API (lista indicadores):', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ Error al obtener indicadores:', error);
@@ -19,7 +18,6 @@ export class IndicadoresApiService {
   async getIndicatorById(id: number): Promise<Indicator> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/indicators/${id}/`);
-      console.log('📥 Respuesta API (indicador individual):', response.data);
       return response.data;
     } catch (error) {
       console.error(`❌ Error al obtener indicador ${id}:`, error);
@@ -29,7 +27,6 @@ export class IndicadoresApiService {
 
   async createIndicator(indicator: CreateIndicatorRequest): Promise<Indicator> {
     try {
-      console.log('📤 Enviando indicador al backend:', indicator);
       
       // 🔧 Validar datos antes de enviar
       if (!indicator.process || indicator.process === 0) {
@@ -37,7 +34,6 @@ export class IndicadoresApiService {
       }
 
       const response = await axiosInstance.post(`${this.baseUrl}/indicators/`, indicator);
-      console.log('📥 Respuesta del backend:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Error al crear indicador:', error);
@@ -59,9 +55,7 @@ export class IndicadoresApiService {
 
   async updateIndicator(indicator: UpdateIndicatorRequest): Promise<Indicator> {
     try {
-      console.log('📤 Actualizando indicador:', indicator);
       const response = await axiosInstance.put(`${this.baseUrl}/indicators/${indicator.id}/`, indicator);
-      console.log('📥 Respuesta de actualización:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Error al actualizar indicador:', error);
@@ -83,7 +77,6 @@ export class IndicadoresApiService {
   async deleteIndicator(id: number): Promise<void> {
     try {
       await axiosInstance.delete(`${this.baseUrl}/indicators/${id}/`);
-      console.log(`✅ Indicador ${id} eliminado exitosamente`);
     } catch (error: any) {
       console.error(`❌ Error al eliminar indicador ${id}:`, error);
       throw new Error(`Error al eliminar el indicador: ${error.response?.data?.detail || error.message}`);
@@ -93,7 +86,6 @@ export class IndicadoresApiService {
   async toggleIndicatorStatus(id: number, status: boolean): Promise<Indicator> {
     try {
       const response = await axiosInstance.patch(`${this.baseUrl}/indicators/${id}/`, { status });
-      console.log(`✅ Estado del indicador ${id} cambiado a:`, status);
       return response.data;
     } catch (error: any) {
       console.error(`❌ Error al cambiar estado del indicador ${id}:`, error);
@@ -105,7 +97,6 @@ export class IndicadoresApiService {
   async getProcesses(): Promise<Array<{id: number, name: string}>> {
     try {
       const response = await axiosInstance.get('/companies/processes/');
-      console.log('📥 Procesos obtenidos:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Error al obtener procesos:', error);

@@ -18,20 +18,36 @@ export interface Result {
   semester?: number | null;
 }
 
-export interface DetailedResult extends Result {
+export interface DetailedResult {
+  id?: number;
+  headquarters: Headquarters | number;
+  indicator: Indicator | number;
+  user: number;
+  numerator: number;
+  denominator: number;
+  calculatedValue?: number;
+  creationDate?: string;
+  updateDate?: string;
+  year: number;
+  month?: number | null;
+  quarter?: number | null;
+  semester?: number | null;
+  // Enriched fields from indicator
   indicatorName: string;
   indicatorCode: string;
   headquarterName: string;
   measurementUnit: string;
   measurementFrequency: string;
-  // Target should be numeric according to the backend contract
   target?: number;
   calculationMethod: string;
+  description?: string;
+  version?: string;
+  numeratorResponsible?: string;
+  denominatorResponsible?: string;
   // Additional computed/enriched fields
   trend?: string | null;
   compliant?: boolean | undefined;
   diferencia?: number | undefined;
-  calculatedValue?: number | undefined;
 }
 
 export interface CreateResultRequest {

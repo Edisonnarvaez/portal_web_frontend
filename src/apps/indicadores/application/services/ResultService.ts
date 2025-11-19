@@ -42,7 +42,7 @@ export class ResultService {
     return await this.repository.getByHeadquarters(headquartersId);
   }
 
-  async getIndicators(): Promise<Array<{id: number, name: string, code: string, measurementFrequency: string}>> {
+  async getIndicators(): Promise<Array<{id: number, name: string, code: string, measurementFrequency: string, target?: number | null, measurementUnit?: string, trend?: string, description?: string, calculationMethod?: string, version?: string, numeratorResponsible?: string, denominatorResponsible?: string}>> {
     return await this.repository.getIndicators();
   }
 

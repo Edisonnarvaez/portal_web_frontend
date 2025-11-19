@@ -21,8 +21,6 @@ export const useResultsData = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Cargando datos paginados para dashboard...');
-
       const effectiveParams = { page: params?.page || 1, page_size: params?.page_size || DEFAULT_PAGE_SIZE, ...params };
       const paginatedRaw = await resultService.getPaginatedResults(effectiveParams as any);
 
@@ -37,9 +35,6 @@ export const useResultsData = () => {
       const next = (paginatedRaw && (paginatedRaw as any).next) ? (paginatedRaw as any).next : null;
       const previous = (paginatedRaw && (paginatedRaw as any).previous) ? (paginatedRaw as any).previous : null;
 
-      console.log('📊 Paginated results loaded:', count);
-      console.log('📝 First result (if any):', resultsArr[0]);
-
       // Ensure indicators and headquarters are available to enrich the results with codes/names
       let indicatorsList: any[] = [];
       let hqList: any[] = [];
@@ -48,7 +43,7 @@ export const useResultsData = () => {
         indicatorsList = Array.isArray(inds) ? inds : [];
         hqList = Array.isArray(hqs) ? hqs : [];
       } catch (e) {
-        console.warn('⚠️ No se pudieron obtener indicadores/sedes para enriquecer dashboard:', e);
+        //console.warn('⚠️ No se pudieron obtener indicadores/sedes para enriquecer dashboard:', e);
       }
 
       const indicatorMap = indicatorsList.reduce<Record<number | string, any>>((acc, ind: any) => {
@@ -87,6 +82,17 @@ export const useResultsData = () => {
 
         const measurementUnit = item.measurementUnit ?? item.measurement_unit ?? indicatorObj?.measurementUnit ?? indicatorObj?.measurement_unit ?? indicatorObj?.measurementUnit ?? '';
         const measurementFrequency = item.measurementFrequency ?? item.measurement_frequency ?? indicatorObj?.measurementFrequency ?? indicatorObj?.measurement_frequency ?? '';
+        
+        // Extract enriched fields from indicator object
+        const description = item.description ?? indicatorObj?.description ?? '';
+        const calculationMethod = item.calculationMethod ?? item.calculation_method ?? indicatorObj?.calculationMethod ?? indicatorObj?.calculation_method ?? '';
+        const version = item.version ?? indicatorObj?.version ?? '';
+        const numeratorResponsible = item.numeratorResponsible ?? item.numerator_responsible ?? indicatorObj?.numeratorResponsible ?? indicatorObj?.numerator_responsible ?? '';
+        const denominatorResponsible = item.denominatorResponsible ?? item.denominator_responsible ?? indicatorObj?.denominatorResponsible ?? indicatorObj?.denominator_responsible ?? '';
+
+        // DEBUG: Log enrichment for specific indicator
+        if (indicatorId === 3 || (item.indicatorName && item.indicatorName.includes('caída'))) {
+        }
 
         // Prefer indicator's target (may be string) but normalize to number when possible
         const rawTarget = item.target ?? indicatorObj?.target ?? indicatorObj?.meta_target ?? undefined;
@@ -138,6 +144,15 @@ export const useResultsData = () => {
           headquarterName,
           measurementUnit,
           measurementFrequency,
+          description,
+          calculationMethod,
+          version,
+          numeratorResponsible,
+          denominatorResponsible,
+          numeratorDefinition: indicatorObj?.numerator || '', // Definición del numerador del modelo Indicator
+          denominatorDefinition: indicatorObj?.denominator || '', // Definición del denominador del modelo Indicator
+          numeratorDescription: indicatorObj?.numeratorDescription || item.numeratorDescription || '',
+          denominatorDescription: indicatorObj?.denominatorDescription || item.denominatorDescription || '',
           target: parsedTarget,
           trend,
           compliant,
@@ -148,7 +163,7 @@ export const useResultsData = () => {
       setData(enriched);
       setPagination({ count, next, previous, page: effectiveParams.page, page_size: effectiveParams.page_size });
     } catch (err: any) {
-      console.error('❌ Error al cargar datos paginados del dashboard:', err);
+      //console.error('❌ Error al cargar datos paginados del dashboard:', err);
       const errorMessage = err.message || 'Error al cargar los datos de resultados';
       setError(errorMessage);
       setData([]);

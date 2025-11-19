@@ -6,14 +6,42 @@ import {
   HiSparkles,
   HiPencil,
   HiTrash,
-  HiEye
+  HiEye,
+  HiExclamationTriangle
 } from 'react-icons/hi2';
 
 import { useResults } from '../hooks/useResults'; // 👈 Solo usar este hook
+import { usePermissions } from '../hooks/usePermissions'; // 👈 Hook de permisos
 import { notify } from '../../../../shared/utils/notifications';
 import type { DetailedResult } from '../../domain/entities/Result';
 import ResultForm from '../components/Forms/ResultForm';
 import { FaSearch, FaTimes } from 'react-icons/fa';
+
+// 📅 Función para convertir número de mes a nombre
+const monthToSpanish = (month: string | number | null | undefined): string => {
+  const monthMap: { [key: string]: string } = {
+    '1': 'Enero', '2': 'Febrero', '3': 'Marzo', '4': 'Abril', '5': 'Mayo', '6': 'Junio',
+    '7': 'Julio', '8': 'Agosto', '9': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+  };
+  if (!month && month !== 0) return '—';
+  const monthStr = String(month);
+  return monthMap[monthStr] || monthStr;
+};
+
+// 📅 Función para convertir período a nombre legible
+const periodToSpanish = (period: string | number | null | undefined): string => {
+  if (!period && period !== 0) return '—';
+  const periodStr = String(period).toLowerCase();
+  
+  if (periodStr.includes('q1') || periodStr === '1') return 'Trim 1';
+  if (periodStr.includes('q2') || periodStr === '2') return 'Trim 2';
+  if (periodStr.includes('q3') || periodStr === '3') return 'Trim 3';
+  if (periodStr.includes('q4') || periodStr === '4') return 'Trim 4';
+  if (periodStr.includes('h1') || periodStr === 'h1' || (periodStr === '1' && periodStr.includes('semester'))) return 'Sem 1';
+  if (periodStr.includes('h2') || periodStr === 'h2' || (periodStr === '2' && periodStr.includes('semester'))) return 'Sem 2';
+  
+  return periodStr || '—';
+};
 
 // Componentes auxiliares reutilizables
 const LoadingSpinner = () => (
@@ -22,24 +50,41 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const CrudModal = ({ isOpen, onClose, title, children }: any) => {
+const CrudModal = ({ isOpen, onClose, title, children, icon, onCloseLabel = "Cerrar" }: any) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            {icon && <span className="text-2xl">{icon}</span>}
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
           >
             ✕
           </button>
         </div>
-        <div className="p-6">
+        <div className="px-8 py-6">
           {children}
         </div>
-      </div>
+        <div className="flex justify-end px-8 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg font-medium transition-colors"
+          >
+            {onCloseLabel}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 };
@@ -160,89 +205,107 @@ const FilterPanel = ({
   </div>
 );
 
-const ResultsTable = ({ data, onEdit, onDelete, onView, indicators }: any) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+const ResultsTable = ({ data, onEdit, onDelete, onView, indicators, canDelete }: any) => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900">
+      <table className="w-full divide-y divide-gray-300 dark:divide-gray-600">
+        <thead className="bg-gray-100 dark:bg-gray-900">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Indicador
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Sede
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Resultado
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Meta
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Año
             </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+              Mes
+            </th>
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+              Período
+            </th>
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
               Acciones
             </th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {data.map((result: DetailedResult) => (
-            <tr key={result.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <td className="px-6 py-4 whitespace-nowrap">
+            <tr key={result.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <td className="px-6 py-4">
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {result.indicatorName}
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {result.indicatorCode}
-                  </div>
+                  </p>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                 {result.headquarterName}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {result.calculatedValue?.toFixed(2) || '0.00'} {result.measurementUnit}
+              <td className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {result.calculatedValue?.toFixed(2) || '0.00'} <span className="text-xs font-normal text-gray-600 dark:text-gray-400">{result.measurementUnit}</span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {(() => {
                   const targFromResult = typeof result.target === 'number' ? result.target : Number(result.target ?? NaN);
                   const indicatorObj = result.indicator && typeof result.indicator === 'object' ? (result.indicator as any) : undefined;
-                  // Try indicators list as fallback (indicators prop passed from parent)
                   const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? result.indicator)) : undefined;
                   const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
                   const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
-                  const unit = result.measurementUnit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || indicatorFromList?.measurementUnit || indicatorFromList?.measurement_unit || '';
-                  return (isNaN(targ) ? '—' : targ.toFixed(2)) + (unit ? ` ${unit}` : '');
+                  return (isNaN(targ) ? '—' : targ.toFixed(2));
                 })()}
+                <span className="text-xs font-normal text-gray-600 dark:text-gray-400 ml-1">{result.measurementUnit}</span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {result.year}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex justify-end gap-2">
+              <td className="px-6 py-4 text-center">
+                <span className="inline-block px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-medium">
+                  {monthToSpanish(result.month)}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <span className="inline-block px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-medium">
+                  {periodToSpanish(result.quarter || result.semester || (result as any).period)}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <div className="flex justify-center gap-3">
                   <button
                     onClick={() => onView(result)}
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded"
+                    className="p-1.5 rounded text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
                     title="Ver detalles"
                   >
-                    <HiEye className="w-4 h-4" />
+                    <HiEye className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onEdit(result)}
-                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 p-1 rounded"
+                    className="p-1.5 rounded text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                     title="Editar"
                   >
-                    <HiPencil className="w-4 h-4" />
+                    <HiPencil className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={() => onDelete(result)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 rounded"
-                    title="Eliminar"
-                  >
-                    <HiTrash className="w-4 h-4" />
-                  </button>
+                  {/* Botón Eliminar - Solo si el usuario es Admin */}
+                  {canDelete && (
+                    <button
+                      onClick={() => onDelete(result)}
+                      className="p-1.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      title="Eliminar"
+                    >
+                      <HiTrash className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
@@ -326,6 +389,9 @@ const ResultadosPage: React.FC = () => {
   const [selectedResult, setSelectedResult] = useState<DetailedResult | null>(null);
   const [crudLoading, setCrudLoading] = useState(false);
 
+  // Hook de permisos para resultados
+  const { canView, canCreate, canDelete, roleDescription } = usePermissions('resultados');
+
   // 👈 Solo usar este hook - eliminamos toda la lógica duplicada
   const {
     detailedResults,
@@ -340,12 +406,6 @@ const ResultadosPage: React.FC = () => {
 
   // DEBUG: Log datos del hook
   useEffect(() => {
-    console.log('📋 [ResultadosPage] Hook useResults retornó:', {
-      detailedResults: detailedResults.length,
-      indicators: indicators.length,
-      headquarters: headquarters.length,
-      loading
-    });
   }, [detailedResults, indicators, headquarters, loading]);
 
   // Opciones para filtros (label/value)
@@ -355,14 +415,6 @@ const ResultadosPage: React.FC = () => {
 
   // DEBUG: Log opciones de filtros
   useEffect(() => {
-    console.log('🎯 [ResultadosPage] Opciones de filtros:', {
-      headquarterOptions: headquarterOptions.length,
-      indicatorOptions: indicatorOptions.length,
-      yearOptions: yearOptions.length,
-      firstHeadquarter: headquarterOptions[0],
-      firstIndicator: indicatorOptions[0],
-      firstYear: yearOptions[0]
-    });
   }, [headquarterOptions, indicatorOptions, yearOptions]);
 
   // Filtros aplicados
@@ -389,13 +441,7 @@ const ResultadosPage: React.FC = () => {
 
       return matchesSearch && matchesIndicator && matchesHeadquarters && matchesYear;
     });
-    
-    console.log('🔍 [ResultadosPage] Filtrado:', {
-      detailedResultsCount: detailedResults.length,
-      filteredCount: filtered.length,
-      filters: { searchTerm, selectedIndicator, selectedHeadquarters, selectedYear }
-    });
-    
+
     return filtered;
   }, [detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
 
@@ -441,10 +487,7 @@ const ResultadosPage: React.FC = () => {
       }).length,
       uniqueIndicators: new Set(metricsData.map(r => (r.indicator && typeof r.indicator === 'object') ? (r.indicator as any).id : r.indicator)).size
     };
-    
-    console.log('📊 [ResultadosPage] Dashboard Metrics:', result);
-    console.log('📊 [ResultadosPage] Valid metrics for compliance:', validCount, '/', metricsData.length);
-    
+
     return result;
   }, [filteredResults, detailedResults, searchTerm, selectedIndicator, selectedHeadquarters, selectedYear]);
 
@@ -588,7 +631,7 @@ const ResultadosPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* Header con información de permisos */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
           <div>
@@ -596,88 +639,108 @@ const ResultadosPage: React.FC = () => {
               Gestión de Resultados
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Registro y seguimiento de resultados de indicadores
+              {roleDescription}
             </p>
           </div>
 
-          <button
-            onClick={handleCreateResult}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-lg"
-          >
-            <HiPlus className="w-5 h-5" />
-            <span>Nuevo Resultado</span>
-          </button>
-                  {/* Bulk upload controls */}
-                  <div className="ml-4 flex items-center gap-3">
-                    <a
-                      href="#"
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        try {
-                          const { generateTemplateCSV } = await import('../utils/csvUtils');
-                          const blob = generateTemplateCSV(indicators || [], headquarters || []);
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'resultados_template.csv';
-                          document.body.appendChild(a);
-                          a.click();
-                          a.remove();
-                          URL.revokeObjectURL(url);
-                        } catch (err: any) {
-                          // Show a user-friendly toast and keep a console trace for debugging
-                          console.error('Error generating template CSV', err);
-                          notify.error(`No se pudo generar la plantilla CSV: ${err?.message ?? 'error desconocido'}`);
-                        }
-                      }}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Descargar plantilla CSV
-                    </a>
+          {/* Botón Nuevo Resultado - Con validaciones de permisos */}
+          {canCreate ? (
+            <button
+              onClick={handleCreateResult}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-lg"
+            >
+              <HiPlus className="w-5 h-5" />
+              <span>Nuevo Resultado</span>
+            </button>
+          ) : (
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-300 rounded-lg cursor-not-allowed" title="No tienes permiso para crear resultados">
+              <HiPlus className="w-5 h-5" />
+              <span>Nuevo Resultado</span>
+            </div>
+          )}
 
-                    <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer">
-                      Cargar CSV
-                      <input type="file" accept=".csv" className="hidden" id="csvUploadInput"
-                        onChange={async (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0];
-                          if (!file) return;
-                          const text = await file.text();
-                          try {
-                            const { parseCSV, validateRowForCreate } = await import('../utils/csvUtils');
-                            const rows = parseCSV(text);
-                            // Validate each row
-                            const validated = rows.map((r,i) => ({ row: r, ...validateRowForCreate(r), __index: i+2 }));
-                            // Store preview in state (use a custom event to open preview modal)
-                            const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
-                            window.dispatchEvent(evt);
-                          } catch (err: any) {
-                            console.error('Error parsing CSV', err);
-                            // If the parser detected a binary/XLSX file, show a more specific message
-                            const msg = err?.message || String(err);
-                            if (/xlsx|binario|binary|PK/i.test(msg)) {
-                              notify.error('El archivo parece ser un archivo binario (.xlsx). Exporta a CSV (UTF-8) y vuelve a intentar.');
-                            } else {
-                              notify.error(`Error al parsear el CSV: ${msg}`);
-                            }
-                          }
-                          // reset input
-                          (e.target as HTMLInputElement).value = '';
-                        }}
-                      />
-                    </label>
-                  </div>
+          {/* Bulk upload controls - Solo si puede crear */}
+          {canCreate && (
+            <div className="ml-4 flex items-center gap-3">
+              <a
+                href="#"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  try {
+                    const { generateTemplateCSV } = await import('../utils/csvUtils');
+                    const blob = generateTemplateCSV(indicators || [], headquarters || []);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'resultados_template.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  } catch (err: any) {
+                    notify.error(`No se pudo generar la plantilla CSV: ${err?.message ?? 'error desconocido'}`);
+                  }
+                }}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Descargar plantilla CSV
+              </a>
+
+              <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer">
+                Cargar CSV
+                <input type="file" accept=".csv" className="hidden" id="csvUploadInput"
+                  onChange={async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    const text = await file.text();
+                    try {
+                      const { parseCSV, validateRowForCreate } = await import('../utils/csvUtils');
+                      const rows = parseCSV(text);
+                      const validated = rows.map((r,i) => ({ row: r, ...validateRowForCreate(r), __index: i+2 }));
+                      const evt = new CustomEvent('bulkCsvPreview', { detail: { rows: validated } });
+                      window.dispatchEvent(evt);
+                    } catch (err: any) {
+                      const msg = err?.message || String(err);
+                      if (/xlsx|binario|binary|PK/i.test(msg)) {
+                        notify.error('El archivo parece ser un archivo binario (.xlsx). Exporta a CSV (UTF-8) y vuelve a intentar.');
+                      } else {
+                        notify.error(`Error al parsear el CSV: ${msg}`);
+                      }
+                    }
+                    (e.target as HTMLInputElement).value = '';
+                  }}
+                />
+              </label>
+            </div>
+          )}
         </div>
       </div>
 
       <motion.div
-        key={loading ? 'loading' : 'content'}
+        key={loading ? 'loading' : canView ? 'content' : 'no-access'}
         initial={{ opacity: 0, y: loading ? 0 : 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.25 }}
         className="space-y-6"
       >
-        {loading ? (
+        {!canView ? (
+          // Pantalla de acceso denegado
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <HiExclamationTriangle className="w-24 h-24 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Acceso Denegado
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                No tienes permisos para acceder a la gestión de resultados.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {roleDescription}
+              </p>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner />
           </div>
@@ -701,7 +764,7 @@ const ResultadosPage: React.FC = () => {
               headquarterOptions={headquarterOptions}
               yearOptions={yearOptions}
             />
-            {/* Estadísticas */}
+            {/* Estadísticas 
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <HiSparkles className="w-5 h-5 text-yellow-500" />
@@ -709,7 +772,7 @@ const ResultadosPage: React.FC = () => {
                   {filteredResults.length} resultado(s) encontrado(s)
                 </span>
               </div>
-            </div>
+            </div>*/}
 
             {/* Controles de paginación - Arriba */}
             <div className="flex justify-between items-center mb-4">
@@ -738,6 +801,7 @@ const ResultadosPage: React.FC = () => {
               onDelete={handleDeleteResult}
               onView={handleViewResult}
               indicators={indicators}
+              canDelete={canDelete}
             />
 
             {/* Controles de paginación - Abajo */}
@@ -854,39 +918,102 @@ const ResultadosPage: React.FC = () => {
           setShowViewModal(false);
           setSelectedResult(null);
         }}
-        title="Ver Resultado"
+        title="Detalles del Resultado"
+        icon="📊"
+        onCloseLabel="Cerrar"
       >
         {selectedResult ? (
-          <div className="space-y-3">
-            <div>
-              <strong>Indicador:</strong> {selectedResult.indicatorName} ({selectedResult.indicatorCode})
+          <div className="space-y-5">
+            {/* Grid de 2 columnas - Principal */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Código */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Código:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {selectedResult.indicatorCode}
+                </p>
+              </div>
+
+              {/* Nombre del indicador */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Nombre:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold line-clamp-2">
+                  {selectedResult.indicatorName}
+                </p>
+              </div>
+
+              {/* Sede */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Sede:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {selectedResult.headquarterName}
+                </p>
+              </div>
+
+              {/* Año */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Año:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {selectedResult.year}
+                </p>
+              </div>
+
+              {/* Resultado */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Resultado:</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                    {selectedResult.calculatedValue?.toFixed(2) || '0.00'}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {selectedResult.measurementUnit}
+                  </p>
+                </div>
+              </div>
+
+              {/* Meta */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Meta:</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                    {(() => {
+                      const targFromResult = typeof selectedResult.target === 'number' ? selectedResult.target : Number(selectedResult.target ?? NaN);
+                      const indicatorObj = selectedResult.indicator && typeof selectedResult.indicator === 'object' ? (selectedResult.indicator as any) : undefined;
+                      const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? selectedResult.indicator)) : undefined;
+                      const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
+                      const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
+                      return (isNaN(targ) ? '—' : targ.toFixed(2));
+                    })()}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {selectedResult.measurementUnit}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mes */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Mes:</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 font-semibold">
+                  {monthToSpanish(selectedResult.month)}
+                </p>
+              </div>
+
+              {/* Período */}
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Período:</p>
+                <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                  {periodToSpanish(selectedResult.quarter || selectedResult.semester)}
+                </span>
+              </div>
             </div>
-            <div>
-              <strong>Sede:</strong> {selectedResult.headquarterName}
-            </div>
-            <div>
-              <strong>Resultado:</strong> {selectedResult.calculatedValue?.toFixed(2) || '0.00'} {selectedResult.measurementUnit}
-            </div>
-            <div>
-              <strong>Meta:</strong> {(() => {
-                const targFromResult = typeof selectedResult.target === 'number' ? selectedResult.target : Number(selectedResult.target ?? NaN);
-                const indicatorObj = selectedResult.indicator && typeof selectedResult.indicator === 'object' ? (selectedResult.indicator as any) : undefined;
-                const indicatorFromList = indicators && Array.isArray(indicators) ? indicators.find((i: any) => i.id === (indicatorObj?.id ?? selectedResult.indicator)) : undefined;
-                const targFromIndicator = indicatorObj?.target ?? indicatorFromList?.target;
-                const targ = !isNaN(Number(targFromResult)) && Number(targFromResult) !== 0 ? Number(targFromResult) : (targFromIndicator !== undefined ? Number(targFromIndicator) : NaN);
-                const unit = selectedResult.measurementUnit || indicatorObj?.measurementUnit || indicatorObj?.measurement_unit || indicatorFromList?.measurementUnit || indicatorFromList?.measurement_unit || '';
-                return (isNaN(targ) ? '—' : targ.toFixed(2)) + (unit ? ` ${unit}` : '');
-              })()}
-            </div>
-            <div>
-              <strong>Año:</strong> {selectedResult.year}
-            </div>
-            <div>
-              <strong>Observaciones:</strong> {('observations' in selectedResult && (selectedResult as any).observations) || '-'}
-            </div>
+
+            
           </div>
         ) : (
-          <div>No hay resultado seleccionado</div>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No hay resultado seleccionado
+          </div>
         )}
       </CrudModal>
 

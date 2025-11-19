@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
+import { calculateCompliance } from '../../utils/dataHelpers';
 
 // 🆕 Funciones de transformación para mostrar valores en español
 const transformMonthToSpanish = (month: string | number): string => {
@@ -136,6 +137,8 @@ export default function TimeSeriesChart({ data, loading }: Props) {
         quarter: item.quarter ? transformPeriodToSpanish(`Q${item.quarter}`) : 'N/A',
         semester: item.semester ? transformPeriodToSpanish(`S${item.semester}`) : 'N/A',
         year: item.year || new Date().getFullYear(),
+        // 🔑 Tendencia del indicador para cálculo de cumplimiento
+        trend: String(item.trend ?? '').toLowerCase() || 'increasing',
         // 🔑 Campos para ordenamiento cronológico
         sortYear: item.year || new Date().getFullYear(),
         sortMonth: item.month || 1,
@@ -188,9 +191,14 @@ export default function TimeSeriesChart({ data, loading }: Props) {
 
       const resultado = dataPoint.resultado || 0;
       const meta = dataPoint.meta || 0;
+      const trend = dataPoint.trend || 'increasing';
+      
+      // ✅ CORRECCIÓN: Usar calculateCompliance para cálculo basado en tendencia
+      const complianceResult = calculateCompliance(resultado, meta, trend);
+      const isCompliant = complianceResult.cumple;
+      
       const difference = (resultado - meta).toFixed(2);
       const percentage = meta !== 0 ? ((resultado / meta) * 100).toFixed(1) : 0;
-      const isCompliant = resultado >= meta;
 
       return (
         <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border-2 border-blue-500 shadow-xl max-w-sm">

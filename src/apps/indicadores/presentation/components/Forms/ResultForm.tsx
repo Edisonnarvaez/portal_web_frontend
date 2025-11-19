@@ -59,13 +59,22 @@ const ResultForm: React.FC<ResultFormProps> = ({
       // 🧹 Limpiar campos de período que no corresponden a la frecuencia
       if (indicator) {
         const newForm = { ...form };
-        if (indicator.measurementFrequency !== 'monthly') {
-          newForm.month = null;
-        }
-        if (indicator.measurementFrequency !== 'quarterly') {
+        if (indicator.measurementFrequency === 'monthly') {
+          // Para mensual: solo usamos mes
           newForm.quarter = null;
-        }
-        if (indicator.measurementFrequency !== 'semiannual') {
+          newForm.semester = null;
+        } else if (indicator.measurementFrequency === 'quarterly') {
+          // Para trimestral: solo usamos trimestre
+          newForm.month = null;
+          newForm.semester = null;
+        } else if (indicator.measurementFrequency === 'semiannual') {
+          // Para semestral: solo usamos semestre
+          newForm.month = null;
+          newForm.quarter = null;
+        } else if (indicator.measurementFrequency === 'annual') {
+          // Para anual: nada
+          newForm.month = null;
+          newForm.quarter = null;
           newForm.semester = null;
         }
         setForm(newForm);
@@ -74,6 +83,46 @@ const ResultForm: React.FC<ResultFormProps> = ({
       setSelectedIndicator(null);
     }
   }, [form.indicator, indicators]);
+
+  // 📅 Función para calcular el período automáticamente
+  const calculateAutoPeriod = (frequency: string, value?: number): { month?: number; quarter?: number; semester?: number } => {
+    const result: any = {};
+    
+    if (frequency === 'monthly' && value) {
+      // 1️⃣ MENSUAL: Se selecciona mes → calcula trimestre y semestre
+      // Ej: mes 2 → trimestre 1, semestre 1
+      result.month = value;
+      result.quarter = Math.ceil(value / 3);
+      result.semester = value <= 6 ? 1 : 2;
+    } else if (frequency === 'quarterly' && value) {
+      // 2️⃣ TRIMESTRAL: Se selecciona trimestre → calcula mes último del trimestre y semestre
+      // T1 → mes 3 (marzo), Sem 1
+      // T2 → mes 6 (junio), Sem 1
+      // T3 → mes 9 (septiembre), Sem 2
+      // T4 → mes 12 (diciembre), Sem 2
+      const lastMonthOfQuarter = value * 3;
+      result.month = lastMonthOfQuarter;
+      result.quarter = value;
+      result.semester = value <= 2 ? 1 : 2;
+    } else if (frequency === 'semiannual' && value) {
+      // 3️⃣ SEMESTRAL: Se selecciona semestre → calcula mes último del semestre y trimestre
+      // S1 → mes 6 (junio), T2
+      // S2 → mes 12 (diciembre), T4
+      const lastMonthOfSemester = value === 1 ? 6 : 12;
+      const quarterOfSemester = value === 1 ? 2 : 4;
+      result.month = lastMonthOfSemester;
+      result.quarter = quarterOfSemester;
+      result.semester = value;
+    } else if (frequency === 'annual') {
+      // 4️⃣ ANUAL: Todo en el final del año
+      // mes 12, trimestre 4, semestre 2
+      result.month = 12;
+      result.quarter = 4;
+      result.semester = 2;
+    }
+    
+    return result;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -88,12 +137,46 @@ const ResultForm: React.FC<ResultFormProps> = ({
       processedValue = parseFloat(value) || 0;
     }
     
-    setForm(prev => ({
-      ...prev,
+    // 🔄 Si cambió mes, trimestre o semestre, calcular automáticamente los otros períodos
+    let newForm = {
+      ...form,
       // TypeScript: index signature is fine since keys match FormState
       // @ts-ignore
       [name]: processedValue
-    }));
+    };
+
+    if (selectedIndicator) {
+      if (name === 'month' && selectedIndicator.measurementFrequency === 'monthly') {
+        // Para mensual: seleccionó mes → calcula trimestre y semestre
+        const monthVal = parseInt(value, 10);
+        if (!isNaN(monthVal)) {
+          const autoPeriod = calculateAutoPeriod('monthly', monthVal);
+          newForm = { ...newForm, ...autoPeriod };
+        }
+      } else if (name === 'quarter' && selectedIndicator.measurementFrequency === 'quarterly') {
+        // Para trimestral: seleccionó trimestre → calcula mes y semestre
+        const quarterVal = parseInt(value, 10);
+        if (!isNaN(quarterVal)) {
+          const autoPeriod = calculateAutoPeriod('quarterly', quarterVal);
+          newForm = { ...newForm, ...autoPeriod };
+        }
+      } else if (name === 'semester' && selectedIndicator.measurementFrequency === 'semiannual') {
+        // Para semestral: seleccionó semestre → calcula mes y trimestre
+        const semesterVal = parseInt(value, 10);
+        if (!isNaN(semesterVal)) {
+          const autoPeriod = calculateAutoPeriod('semiannual', semesterVal);
+          newForm = { ...newForm, ...autoPeriod };
+        }
+      } else if (selectedIndicator.measurementFrequency === 'annual' && (name === 'year' || name === 'indicator')) {
+        // Para anual: siempre configura mes 12, trimestre 4, semestre 2
+        if (name === 'indicator' || name === 'year') {
+          const autoPeriod = calculateAutoPeriod('annual');
+          newForm = { ...newForm, ...autoPeriod };
+        }
+      }
+    }
+
+    setForm(newForm);
 
     // 🧹 Limpiar error del campo
     if (errors[name]) {
@@ -112,10 +195,12 @@ const ResultForm: React.FC<ResultFormProps> = ({
       newErrors.indicator = 'Debe seleccionar un indicador';
     }
     
+    // ✅ Numerador PUEDE ser 0 (se permite valores >= 0)
     if (form.numerator === undefined || form.numerator < 0) {
       newErrors.numerator = 'El numerador no puede ser negativo';
     }
     
+    // 🚫 Denominador DEBE ser > 0 (no puede ser 0 ni negativo)
     if (!form.denominator || form.denominator <= 0) {
       newErrors.denominator = 'El denominador debe ser mayor que cero';
     }
@@ -165,98 +250,160 @@ const ResultForm: React.FC<ResultFormProps> = ({
     onSubmit(data);
   };
 
-  const renderPeriodFields = () => {
-  if (!selectedIndicator) return null;
+  const frequencyToSpanish = (frequency: string): string => {
+    const frequencyMap: { [key: string]: string } = {
+      'monthly': 'Mensual',
+      'quarterly': 'Trimestral',
+      'semiannual': 'Semestral',
+      'annual': 'Anual'
+    };
+    return frequencyMap[frequency.toLowerCase()] || frequency;
+  };
 
-  const { measurementFrequency } = selectedIndicator;
+  const renderPeriodFields = () => {
+    if (!selectedIndicator) return null;
+
+    const { measurementFrequency } = selectedIndicator;
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* 📅 Mes - Solo para frecuencia mensual */}
-        {measurementFrequency === 'monthly' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-              Mes *
-            </label>
-            <select
-              name="month"
-              value={form.month ?? ''}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.month ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
-            >
-              <option value="">Seleccione mes</option>
-              {MONTHS.map(month => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-            {errors.month && <p className="text-red-500 text-sm mt-1">{errors.month}</p>}
-          </div>
-        )}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">📅 Período de Medición</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 📅 MES - Solo para mensual */}
+          {measurementFrequency === 'monthly' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                📆 Mes *
+              </label>
+              <select
+                name="month"
+                value={form.month ?? ''}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.month ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+              >
+                <option value="">Seleccione mes</option>
+                {MONTHS.map(month => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+              {errors.month && <p className="text-red-500 text-sm mt-1">{errors.month}</p>}
+              {form.month && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                  ✓ <span>Trimestre {form.quarter} • Semestre {form.semester}</span>
+                </p>
+              )}
+            </div>
+          )}
 
-        {/* 📅 Trimestre - Solo para frecuencia trimestral */}
-        {measurementFrequency === 'quarterly' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-              Trimestre *
-            </label>
-            <select
-              name="quarter"
-              value={form.quarter ?? ''}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.quarter ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
-            >
-              <option value="">Seleccione trimestre</option>
-              {QUARTERS.map(quarter => (
-                <option key={quarter.value} value={quarter.value}>
-                  {quarter.label}
-                </option>
-              ))}
-            </select>
-            {errors.quarter && <p className="text-red-500 text-sm mt-1">{errors.quarter}</p>}
-          </div>
-        )}
+          {/* 📅 TRIMESTRE - Solo para trimestral */}
+          {measurementFrequency === 'quarterly' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                📊 Trimestre *
+              </label>
+              <select
+                name="quarter"
+                value={form.quarter ?? ''}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.quarter ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+              >
+                <option value="">Seleccione trimestre</option>
+                {QUARTERS.map(quarter => (
+                  <option key={quarter.value} value={quarter.value}>
+                    {quarter.label}
+                  </option>
+                ))}
+              </select>
+              {errors.quarter && <p className="text-red-500 text-sm mt-1">{errors.quarter}</p>}
+              {form.quarter && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                  ✓ <span>Mes {form.month} ({MONTHS.find(m => m.value === form.month)?.label}) • Semestre {form.semester}</span>
+                </p>
+              )}
+            </div>
+          )}
 
-        {/* 📅 Semestre - Solo para frecuencia semestral */}
-        {measurementFrequency === 'semiannual' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-              Semestre *
-            </label>
-            <select
-              name="semester"
-              value={form.semester ?? ''}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.semester ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
-            >
-              <option value="">Seleccione semestre</option>
-              {SEMESTERS.map(semester => (
-                <option key={semester.value} value={semester.value}>
-                  {semester.label}
-                </option>
-              ))}
-            </select>
-            {errors.semester && <p className="text-red-500 text-sm mt-1">{errors.semester}</p>}
-          </div>
-        )}
+          {/* 📅 SEMESTRE - Solo para semestral */}
+          {measurementFrequency === 'semiannual' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                📈 Semestre *
+              </label>
+              <select
+                name="semester"
+                value={form.semester ?? ''}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.semester ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+              >
+                <option value="">Seleccione semestre</option>
+                {SEMESTERS.map(semester => (
+                  <option key={semester.value} value={semester.value}>
+                    {semester.label}
+                  </option>
+                ))}
+              </select>
+              {errors.semester && <p className="text-red-500 text-sm mt-1">{errors.semester}</p>}
+              {form.semester && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                  ✓ <span>Mes {form.month} ({MONTHS.find(m => m.value === form.month)?.label}) • Trimestre {form.quarter}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {measurementFrequency === 'annual' && (
+            <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <span className="text-lg">📅</span>
+                <span><strong>Frecuencia Anual:</strong> Se registra automáticamente para diciembre (mes 12, trimestre 4, semestre 2)</span>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 📋 Información del Indicador */}
+      {selectedIndicator && (
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
+            <span>ℹ️</span> Información del Indicador
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="space-y-1">
+              <span className="text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Código</span>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedIndicator.code}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Frecuencia</span>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{frequencyToSpanish(selectedIndicator.measurementFrequency)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Nombre</span>
+              <p className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{selectedIndicator.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 🏢 Sede */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Sede *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>🏢</span> Sede
+            <span className="text-red-500">*</span>
           </label>
             <select
             name="headquarters"
@@ -278,8 +425,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 📊 Indicador */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Indicador *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>📊</span> Indicador
+            <span className="text-red-500">*</span>
           </label>
           <select
             name="indicator"
@@ -301,15 +449,16 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 🔢 Numerador */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Numerador *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>🔢</span> Numerador
+            <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
             name="numerator"
-            value={form.numerator || ''}
+            value={form.numerator !== undefined && form.numerator !== null ? form.numerator : ''}
             onChange={handleChange}
-            step="0.01"
+            step="0.0"
             min="0"
             placeholder="Ej: 85"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -321,16 +470,17 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 🔢 Denominador */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Denominador *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>➗</span> Denominador
+            <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
             name="denominator"
-            value={form.denominator || ''}
+            value={form.denominator !== undefined && form.denominator !== null ? form.denominator : ''}
             onChange={handleChange}
             step="0.01"
-            min="0.01"
+            min="0.0"
             placeholder="Ej: 100"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.denominator ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -341,8 +491,9 @@ const ResultForm: React.FC<ResultFormProps> = ({
 
         {/* 📅 Año */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Año *
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            <span>📅</span> Año
+            <span className="text-red-500">*</span>
           </label>
           <select
             name="year"
@@ -362,20 +513,6 @@ const ResultForm: React.FC<ResultFormProps> = ({
           {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
         </div>
 
-        {/* 🗓️ Mostrar información del indicador seleccionado */}
-        {selectedIndicator && (
-          <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
-              Información del Indicador
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-blue-800 dark:text-blue-300">
-              <div><strong>Código:</strong> {selectedIndicator.code}</div>
-              <div><strong>Frecuencia:</strong> {selectedIndicator.measurementFrequency}</div>
-              <div><strong>Nombre:</strong> {selectedIndicator.name}</div>
-            </div>
-          </div>
-        )}
-
         {/* 📅 Campos de período dinámicos */}
         {selectedIndicator && (
           <div className="md:col-span-2">
@@ -388,14 +525,23 @@ const ResultForm: React.FC<ResultFormProps> = ({
       </div>
 
       {/* 🔘 Botones */}
-      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-500 text-white rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
         >
-          {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
-          {result ? 'Actualizar' : 'Crear'} Resultado
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              <span>{result ? 'Actualizando...' : 'Guardando...'}</span>
+            </>
+          ) : (
+            <>
+              <span>{result ? '💾' : '➕'}</span>
+              <span>{result ? 'Actualizar Resultado' : 'Guardar Resultado'}</span>
+            </>
+          )}
         </button>
       </div>
     </form>

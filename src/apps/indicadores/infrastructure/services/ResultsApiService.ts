@@ -7,18 +7,9 @@ export class ResultsApiService {
   // Results endpoints
   async getResults(): Promise<Result[]> {
     try {
-      console.log('📍 [ResultsApiService] Calling getResults...');
-      // Prefer the paginated endpoint and return only the array for backward compatibility
       const paginated = await this.getPaginatedResults();
-      console.log('✅ [ResultsApiService] getResults returned:', paginated.results?.length ?? 0, 'items');
-      return paginated.results || [];
+        return paginated.results || [];
     } catch (error: any) {
-      console.error('❌ [ResultsApiService] Error fetching results (normalized):', {
-        message: error?.message,
-        status: error?.response?.status,
-        url: error?.config?.url,
-        data: error?.response?.data
-      });
       throw new Error('Error loading results');
     }
   }
@@ -29,16 +20,13 @@ export class ResultsApiService {
   async getPaginatedResults(params?: { page?: number; page_size?: number; indicator?: number; headquarters?: number; period_start?: string; period_end?: string }): Promise<{ count: number; next: string | null; previous: string | null; results: Result[] }> {
     try {
       const url = `${this.baseUrl}/results/`;
-      console.log('📍 [ResultsApiService.getPaginatedResults] Calling URL:', url, 'with params:', params);
       const startTime = performance.now();
       const response = await axiosInstance.get(url, { params });
       const duration = performance.now() - startTime;
-      console.log(`✅ [ResultsApiService.getPaginatedResults] Success (${duration.toFixed(2)}ms) - Status: ${response.status}`);
       
       const data = response.data;
 
       if (Array.isArray(data)) {
-        console.log('ℹ️ [ResultsApiService.getPaginatedResults] Response is an array, wrapping...');
         return { count: data.length, next: null, previous: null, results: data };
       }
 
@@ -48,23 +36,9 @@ export class ResultsApiService {
         previous: data.previous || null,
         results: Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []),
       };
-      
-      console.log('📦 [ResultsApiService.getPaginatedResults] Normalized response:', {
-        count: normalized.count,
-        hasNext: !!normalized.next,
-        hasPrevious: !!normalized.previous,
-        resultsCount: normalized.results.length
-      });
-      
+
       return normalized;
     } catch (error: any) {
-      console.error('❌ [ResultsApiService.getPaginatedResults] Error:', {
-        message: error?.message,
-        status: error?.response?.status,
-        statusText: error?.response?.statusText,
-        url: error?.config?.url,
-        data: error?.response?.data
-      });
       throw new Error('Error loading paginated results');
     }
   }
@@ -72,21 +46,8 @@ export class ResultsApiService {
   async getResultsWithDetails(): Promise<DetailedResult[]> {
     try {
       const url = `${this.baseUrl}/results/detailed/`;
-      console.log('🔍 [getResultsWithDetails] Fetching from URL:', url);
-      
       const response = await axiosInstance.get(url);
       const data = response.data;
-
-      console.log('📥 [getResultsWithDetails] RAW Response data:', {
-        type: typeof data,
-        isArray: Array.isArray(data),
-        hasResults: !!data?.results,
-        resultsCount: data?.results?.length,
-        keysInData: Object.keys(data || {}).slice(0, 10),
-        sampleItem: Array.isArray(data) ? data[0] : (data?.results ? data.results[0] : null)
-      });
-      
-      console.log('📥 [getResultsWithDetails] Full raw data (first 500 chars):', JSON.stringify(data).slice(0, 500));
 
       // Extract the results array from whatever structure it comes in
       let resultsArray: any[] = [];
@@ -99,7 +60,9 @@ export class ResultsApiService {
         return [];
       }
 
-      console.log('✅ [getResultsWithDetails] Got', resultsArray.length, 'raw items from endpoint');
+      // Log first item structure BEFORE enrichment
+      if (resultsArray.length > 0) {
+      }
 
       // Now, we need to check if items are already enriched or if they only have IDs
       // If they're not enriched, we need to fetch indicators/headquarters to enrich them
@@ -110,8 +73,6 @@ export class ResultsApiService {
       );
 
       if (needsEnrichment) {
-        console.log('⚠️ [getResultsWithDetails] Items are NOT enriched, fetching indicators/headquarters for enrichment...');
-        
         try {
           // Fetch indicators and headquarters in parallel for enrichment
           const [indicatorsResp, headquartersResp] = await Promise.all([
@@ -122,7 +83,8 @@ export class ResultsApiService {
           const indicators = Array.isArray(indicatorsResp.data) ? indicatorsResp.data : (indicatorsResp.data?.results || []);
           const headquarters = Array.isArray(headquartersResp.data) ? headquartersResp.data : (headquartersResp.data?.results || []);
 
-          console.log('✅ [getResultsWithDetails] Fetched', indicators.length, 'indicators and', headquarters.length, 'headquarters for enrichment');
+          if (indicators.length > 0) {
+          }
 
           // Build lookup maps
           const indicatorMap = new Map();
@@ -143,6 +105,27 @@ export class ResultsApiService {
             const indicatorObj = indicatorMap.get(indicatorId);
             const headquarterObj = headquarterMap.get(headquarterId);
 
+            // Enrich the indicator object itself with all fields
+            const enrichedIndicator = {
+              ...(typeof item.indicator === 'object' ? item.indicator : indicatorObj),
+              id: indicatorObj?.id,
+              name: indicatorObj?.name || indicatorObj?.nombre,
+              code: indicatorObj?.code || indicatorObj?.codigo,
+              measurementUnit: indicatorObj?.measurementUnit || indicatorObj?.measurement_unit,
+              measurementFrequency: indicatorObj?.measurementFrequency || indicatorObj?.measurement_frequency,
+              target: Number(indicatorObj?.target) || 0,
+              calculationMethod: indicatorObj?.calculationMethod || indicatorObj?.calculation_method || '',
+              description: indicatorObj?.description || '',
+              version: indicatorObj?.version || '',
+              numeratorResponsible: indicatorObj?.numeratorResponsible || indicatorObj?.numerator_responsible || '',
+              denominatorResponsible: indicatorObj?.denominatorResponsible || indicatorObj?.denominator_responsible || '',
+              numeratorDefinition: indicatorObj?.numerator || '', // Definición del numerador (TextField del modelo)
+              denominatorDefinition: indicatorObj?.denominator || '', // Definición del denominador (TextField del modelo)
+              numeratorDescription: indicatorObj?.numeratorDescription || indicatorObj?.numerator_description || '',
+              denominatorDescription: indicatorObj?.denominatorDescription || indicatorObj?.denominator_description || '',
+              trend: item.trend || indicatorObj?.trend || ''
+            };
+
             return {
               id: item.id,
               numerator: Number(item.numerator) || 0,
@@ -156,9 +139,9 @@ export class ResultsApiService {
               semester: item.semester,
               // Store both ID and object
               headquarters: typeof item.headquarters === 'object' ? item.headquarters : headquarterObj,
-              indicator: typeof item.indicator === 'object' ? item.indicator : indicatorObj,
+              indicator: enrichedIndicator,
               user: item.user,
-              // Enriched fields
+              // Enriched fields from indicator
               headquarterName: headquarterObj?.name || headquarterObj?.nombre || 'Sin sede',
               indicatorName: indicatorObj?.name || indicatorObj?.nombre || 'Sin nombre',
               indicatorCode: indicatorObj?.code || indicatorObj?.codigo || 'Sin código',
@@ -166,36 +149,127 @@ export class ResultsApiService {
               measurementFrequency: indicatorObj?.measurementFrequency || indicatorObj?.measurement_frequency || '',
               target: Number(indicatorObj?.target) || 0,
               calculationMethod: indicatorObj?.calculationMethod || indicatorObj?.calculation_method || '',
+              description: indicatorObj?.description || '',
+              version: indicatorObj?.version || '',
+              numeratorResponsible: indicatorObj?.numeratorResponsible || indicatorObj?.numerator_responsible || '',
+              denominatorResponsible: indicatorObj?.denominatorResponsible || indicatorObj?.denominator_responsible || '',
+              numeratorDefinition: indicatorObj?.numerator || '', // Definición del numerador (TextField del modelo)
+              denominatorDefinition: indicatorObj?.denominator || '', // Definición del denominador (TextField del modelo)
+              numeratorDescription: indicatorObj?.numeratorDescription || indicatorObj?.numerator_description || '',
+              denominatorDescription: indicatorObj?.denominatorDescription || indicatorObj?.denominator_description || '',
               trend: item.trend || indicatorObj?.trend || ''
             };
           });
 
-          console.log('✅ [getResultsWithDetails] Enriched', transformedResults.length, 'items');
-          console.log('🔎 First enriched item:', transformedResults[0]);
+          if (transformedResults.length > 0) {
+            const sourceIndicator = indicators.find((ind: any) => ind.id === (transformedResults[0].indicator?.id));
+          }
           return transformedResults;
 
         } catch (enrichError) {
-          console.error('❌ [getResultsWithDetails] Error enriching items:', enrichError);
           // Fallback: return items as-is without enrichment
           return resultsArray;
         }
       } else {
-        // Items are already enriched, just ensure they have the right fields
-        console.log('✅ [getResultsWithDetails] Items are already enriched from endpoint');
-        
-        const transformedResults = resultsArray.map((item: any) => ({
-          ...item,
-          headquarterName: item.headquarterName || item.headquarters?.name || 'Sin sede',
-          indicatorName: item.indicatorName || item.indicator?.name || 'Sin nombre',
-          indicatorCode: item.indicatorCode || item.indicator?.code || 'Sin código',
-          measurementUnit: item.measurementUnit || item.indicator?.measurementUnit || '',
-          measurementFrequency: item.measurementFrequency || item.indicator?.measurementFrequency || '',
-          target: Number(item.target) || 0,
-          trend: item.trend || item.indicator?.trend || ''
-        }));
+        // Items are already enriched from the endpoint, but may be missing detailed fields
+        // Check if the returned indicators have description/calculationMethod
+        const firstIndicator = resultsArray[0]?.indicator;
+        const hasDescriptionInResponse = 'description' in (firstIndicator || {}) && resultsArray[0].description !== undefined;
+        const hasCalcMethodInResponse = 'calculationMethod' in (firstIndicator || {}) && resultsArray[0].calculationMethod !== undefined;
 
-        console.log('✅ [getResultsWithDetails] Normalized', transformedResults.length, 'already-enriched items');
-        console.log('🔎 First normalized item:', transformedResults[0]);
+        // If the endpoint response doesn't have detailed indicator data, fetch it separately
+        if (!hasDescriptionInResponse || !hasCalcMethodInResponse) {
+
+          try {
+            // Fetch full indicators for enrichment
+            const indicatorsResp = await axiosInstance.get(`${this.baseUrl}/indicators/`);
+            const indicators = Array.isArray(indicatorsResp.data) ? indicatorsResp.data : (indicatorsResp.data?.results || []);
+            // Build lookup map
+            const indicatorMap = new Map();
+            indicators.forEach((ind: any) => {
+              indicatorMap.set(ind.id, ind);
+            });
+            
+            // Enrich with full indicator data
+            const transformedResults = resultsArray.map((item: any) => {
+              const indicatorId = typeof item.indicator === 'number' ? item.indicator : item.indicator?.id;
+              const fullIndicatorData = indicatorMap.get(indicatorId);
+
+              // Merge enriched indicator
+              const enrichedIndicator = {
+                ...item.indicator,
+                id: item.indicator?.id || indicatorId,
+                name: item.indicator?.name || fullIndicatorData?.name || fullIndicatorData?.nombre,
+                code: item.indicator?.code || fullIndicatorData?.code || fullIndicatorData?.codigo,
+                measurementFrequency: item.indicator?.measurementFrequency || fullIndicatorData?.measurementFrequency || fullIndicatorData?.measurement_frequency,
+                measurementUnit: item.indicator?.measurementUnit || fullIndicatorData?.measurementUnit || fullIndicatorData?.measurement_unit,
+                target: Number(item.indicator?.target ?? fullIndicatorData?.target ?? 0),
+                trend: item.indicator?.trend || fullIndicatorData?.trend,
+                description: fullIndicatorData?.description || item.description || '',
+                calculationMethod: fullIndicatorData?.calculationMethod || fullIndicatorData?.calculation_method || item.calculationMethod || '',
+                version: fullIndicatorData?.version || item.version || '',
+                numeratorResponsible: fullIndicatorData?.numeratorResponsible || fullIndicatorData?.numerator_responsible || item.numeratorResponsible || '',
+                denominatorResponsible: fullIndicatorData?.denominatorResponsible || fullIndicatorData?.denominator_responsible || item.denominatorResponsible || ''
+              };
+              
+              return {
+                ...item,
+                indicator: enrichedIndicator,
+                headquarterName: item.headquarterName || item.headquarters?.name || 'Sin sede',
+                indicatorName: item.indicatorName || item.indicator?.name || 'Sin nombre',
+                indicatorCode: item.indicatorCode || item.indicator?.code || 'Sin código',
+                measurementUnit: item.measurementUnit || item.indicator?.measurementUnit || fullIndicatorData?.measurementUnit || '',
+                measurementFrequency: item.measurementFrequency || item.indicator?.measurementFrequency || fullIndicatorData?.measurementFrequency || '',
+                target: Number(item.target ?? fullIndicatorData?.target ?? 0),
+                calculationMethod: fullIndicatorData?.calculationMethod || fullIndicatorData?.calculation_method || item.calculationMethod || '',
+                description: fullIndicatorData?.description || item.description || '',
+                version: fullIndicatorData?.version || item.version || '',
+                numeratorResponsible: fullIndicatorData?.numeratorResponsible || fullIndicatorData?.numerator_responsible || item.numeratorResponsible || '',
+                denominatorResponsible: fullIndicatorData?.denominatorResponsible || fullIndicatorData?.denominator_responsible || item.denominatorResponsible || '',
+                trend: item.trend || item.indicator?.trend || fullIndicatorData?.trend || ''
+              };
+            });
+
+            if (transformedResults.length > 0) {
+            }
+            return transformedResults;
+          } catch (enrichError) {
+            console.error('❌ Error fetching indicators for enrichment:', enrichError);
+            // Fallback to basic transformation without full details
+          }
+        }
+        
+        // Fallback: If endpoint has all data or enrichment failed, just do basic transformation
+        const transformedResults = resultsArray.map((item: any) => {
+          const enrichedIndicator = {
+            ...item.indicator,
+            description: item.description || item.indicator?.description || '',
+            calculationMethod: item.calculationMethod || item.indicator?.calculationMethod || item.indicator?.calculation_method || '',
+            version: item.version || item.indicator?.version || '',
+            numeratorResponsible: item.numeratorResponsible || item.indicator?.numeratorResponsible || item.indicator?.numerator_responsible || '',
+            denominatorResponsible: item.denominatorResponsible || item.indicator?.denominatorResponsible || item.indicator?.denominator_responsible || ''
+          };
+
+          return {
+            ...item,
+            indicator: enrichedIndicator,
+            headquarterName: item.headquarterName || item.headquarters?.name || 'Sin sede',
+            indicatorName: item.indicatorName || item.indicator?.name || 'Sin nombre',
+            indicatorCode: item.indicatorCode || item.indicator?.code || 'Sin código',
+            measurementUnit: item.measurementUnit || item.indicator?.measurementUnit || '',
+            measurementFrequency: item.measurementFrequency || item.indicator?.measurementFrequency || '',
+            target: Number(item.target) || 0,
+            calculationMethod: item.calculationMethod || item.indicator?.calculationMethod || item.indicator?.calculation_method || '',
+            description: item.description || item.indicator?.description || '',
+            version: item.version || item.indicator?.version || '',
+            numeratorResponsible: item.numeratorResponsible || item.indicator?.numeratorResponsible || item.indicator?.numerator_responsible || '',
+            denominatorResponsible: item.denominatorResponsible || item.indicator?.denominatorResponsible || item.indicator?.denominator_responsible || '',
+            trend: item.trend || item.indicator?.trend || ''
+          };
+        });
+
+        if (transformedResults.length > 0) {
+        }
         return transformedResults;
       }
     } catch (error) {
@@ -207,7 +281,6 @@ export class ResultsApiService {
   async getResultById(id: number): Promise<Result> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/results/${id}/`);
-      console.log('📥 Result obtained:', response.data);
       return response.data;
     } catch (error) {
       console.error(`❌ Error fetching result ${id}:`, error);
@@ -217,8 +290,6 @@ export class ResultsApiService {
 
   async createResult(result: CreateResultRequest): Promise<Result> {
     try {
-      console.log('📤 Creating result:', result);
-      
       // 🔧 Validar datos antes de enviar
       if (!result.headquarters || result.headquarters === 0) {
         throw new Error('Debe seleccionar una sede válida');
@@ -233,7 +304,6 @@ export class ResultsApiService {
       }
 
       const response = await axiosInstance.post(`${this.baseUrl}/results/`, result);
-      console.log('📥 Result created:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Error creating result:', error);
@@ -254,9 +324,7 @@ export class ResultsApiService {
 
   async updateResult(result: UpdateResultRequest): Promise<Result> {
     try {
-      console.log('📤 Updating result:', result);
       const response = await axiosInstance.put(`${this.baseUrl}/results/${result.id}/`, result);
-      console.log('📥 Result updated:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Error updating result:', error);
@@ -278,7 +346,6 @@ export class ResultsApiService {
   async deleteResult(id: number): Promise<void> {
     try {
       await axiosInstance.delete(`${this.baseUrl}/results/${id}/`);
-      console.log(`✅ Result ${id} deleted successfully`);
     } catch (error: any) {
       console.error(`❌ Error deleting result ${id}:`, error);
       throw new Error(`Error deleting result: ${error.response?.data?.detail || error.message}`);
@@ -288,8 +355,6 @@ export class ResultsApiService {
   async getResultsByIndicator(indicatorId: number): Promise<Result[]> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/results/?indicator=${indicatorId}`);
-      console.log('📥 Results by indicator obtained:', response.data);
-      
       if (Array.isArray(response.data)) {
         return response.data;
       } else if (response.data && Array.isArray(response.data.results)) {
@@ -306,8 +371,6 @@ export class ResultsApiService {
   async getResultsByHeadquarters(headquartersId: number): Promise<Result[]> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/results/?headquarters=${headquartersId}`);
-      console.log('📥 Results by headquarters obtained:', response.data);
-      
       if (Array.isArray(response.data)) {
         return response.data;
       } else if (response.data && Array.isArray(response.data.results)) {
@@ -325,17 +388,13 @@ export class ResultsApiService {
   async getIndicators(): Promise<Array<{id: number, name: string, code: string, measurementFrequency: string}>> {
     try {
       const url = `${this.baseUrl}/indicators/`;
-      console.log('📍 [ResultsApiService.getIndicators] Calling URL:', url);
       const startTime = performance.now();
       const response = await axiosInstance.get(url);
       const duration = performance.now() - startTime;
-      console.log(`✅ [ResultsApiService.getIndicators] Success (${duration.toFixed(2)}ms) - Status: ${response.status}`);
-      
       const indicators = Array.isArray(response.data) 
         ? response.data 
         : (response.data?.results || []);
       
-      console.log('📦 [ResultsApiService.getIndicators] Parsed:', indicators.length, 'indicators');
       
       return indicators.map((indicator: any) => ({
         id: indicator.id,
@@ -346,6 +405,16 @@ export class ResultsApiService {
         target: indicator.target ?? indicator.meta_target ?? null,
         measurementUnit: indicator.measurementUnit ?? indicator.measurement_unit ?? '',
         trend: indicator.trend ?? indicator.trend_type ?? undefined,
+        // Critical: include description and calculation method from backend
+        description: indicator.description ?? indicator.desc ?? '',
+        calculationMethod: indicator.calculationMethod ?? indicator.calculation_method ?? indicator.calc_method ?? '',
+        version: indicator.version ?? '',
+        numeratorResponsible: indicator.numeratorResponsible ?? indicator.numerator_responsible ?? '',
+        denominatorResponsible: indicator.denominatorResponsible ?? indicator.denominator_responsible ?? '',
+        numeratorDefinition: indicator.numerator ?? '',
+        denominatorDefinition: indicator.denominator ?? '',
+        numeratorDescription: indicator.numeratorDescription ?? '',
+        denominatorDescription: indicator.denominatorDescription ?? ''
       }));
     } catch (error: any) {
       console.error('❌ [ResultsApiService.getIndicators] Error:', {
@@ -362,18 +431,14 @@ export class ResultsApiService {
   async getHeadquarters(): Promise<Array<{id: number, name: string}>> {
     try {
       const url = '/companies/headquarters/';
-      console.log('📍 [ResultsApiService.getHeadquarters] Calling URL:', url);
       const startTime = performance.now();
       const response = await axiosInstance.get(url);
       const duration = performance.now() - startTime;
-      console.log(`✅ [ResultsApiService.getHeadquarters] Success (${duration.toFixed(2)}ms) - Status: ${response.status}`);
-      
+
       const headquarters = Array.isArray(response.data) 
         ? response.data 
         : (response.data?.results || []);
-      
-      console.log('📦 [ResultsApiService.getHeadquarters] Parsed:', headquarters.length, 'headquarters');
-      
+
       return headquarters.map((hq: any) => ({
         id: hq.id,
         name: hq.name
