@@ -73,17 +73,6 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
 
   // IMPORTANTE: Los hooks deben estar ANTES de cualquier early return
   const ranked = useMemo(() => {
-    // console.log('🔍 WorstIndicatorsChart - INICIO useMemo ranked. Data recibida:', {
-    //   length: data.length,
-    //   primero: data[0] ? {
-    //     id: (data[0] as any).id,
-    //     indicatorName: (data[0] as any).indicatorName,
-    //     headquarterName: (data[0] as any).headquarterName,
-    //     calculatedValue: (data[0] as any).calculatedValue,
-    //     target: (data[0] as any).target
-    //   } : null
-    // });
-
     const result = data
       .map((item, index) => {
         const calculatedValue = safeNumber(item.calculatedValue ?? item.calculated_value ?? item.value ?? 0);
@@ -106,8 +95,8 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
         // 📅 Obtener información del período para hacer el displayName único
         const monthName = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][(item.month || 1) - 1];
         const periodStr = item.month ? `${monthName}'${String(item.year || 2025).slice(-2)}` : 
-                         item.quarter ? `Q${item.quarter}` : 
-                         item.semester ? `S${item.semester}` : '';
+                          item.quarter ? `Q${item.quarter}` : 
+                          item.semester ? `S${item.semester}` : '';
         
         return {
           ...item,
@@ -136,25 +125,6 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
         _arrayIndex: arrayIndex,  // Este es el index en el array FINAL
         _uniqueTooltipKey: `${item._rechartsKey}-${arrayIndex}-${item.calculatedValue}` // key extra para Recharts
       }));
-
-    // console.log('🔍 WorstIndicatorsChart - RESULTADO ranked:', {
-    //   length: result.length,
-    //   items: result.map(r => ({
-    //     id: r.id,
-    //     name: r.name,
-    //     sede: r.sede,
-    //     displayName: r.displayName,
-    //     diferencia: r.diferencia,
-    //     _arrayIndex: r._arrayIndex,
-    //     _uniqueTooltipKey: r._uniqueTooltipKey,
-    //     calculatedValue: r.calculatedValue,
-    //     target: r.target,
-    //     trend: r.trend
-    //   }))
-    // });
-
-    // 🔍 CRÍTICO: Log del ARRAY COMPLETO en JSON
-    // console.log('🔍 ARRAY COMPLETO RANKED (JSON):', JSON.stringify(result, null, 2));
 
     return result;
   }, [data, top]);
@@ -213,20 +183,6 @@ export default function WorstIndicatorsChart({ data, loading, top = 5 }: Props) 
                 if (!chartItem) {
                   return null;
                 }
-
-                // 🔍 DEBUG: Ver exactamente qué recibimos de Recharts
-                // console.log('🔍 Tooltip INLINE - Datos del payload:', {
-                //   label,
-                //   _arrayIndex: chartItem._arrayIndex,
-                //   displayName: chartItem.displayName,
-                //   name: chartItem.name,
-                //   id: chartItem.id,
-                //   _rechartsKey: chartItem._rechartsKey,
-                //   _uniqueTooltipKey: chartItem._uniqueTooltipKey,
-                //   calculatedValue: chartItem.calculatedValue,
-                //   target: chartItem.target,
-                //   diferencia: chartItem.diferencia,
-                // });
 
                 const resultado = Number(chartItem.calculatedValue || 0);
                 const meta = Number(chartItem.target || 0);

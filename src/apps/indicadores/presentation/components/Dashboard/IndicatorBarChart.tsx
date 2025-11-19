@@ -276,59 +276,9 @@ export default function IndicatorBarChart({ data, loading }: Props) {
 
     // DEBUG: Mostrar datos procesados con cumplimiento basado en tendencia
     if (data.length > 0 && allChartData.length > 0) {
-        // console.log('📊 IndicatorBarChart - Datos Originales (primeros 3):', {
-        //     valores: data.slice(0, 3).map(d => ({
-        //         resultado: (d as any).calculatedValue ?? (d as any).calculated_value ?? (d as any).value,
-        //         meta: (d as any).target,
-        //         periodo: (d as any).period,
-        //         mes: (d as any).month,
-        //         año: (d as any).year,
-        //         tendencia: (d as any).trend
-        //     }))
-        // });
-        // console.log('📊 AllChartData Procesado (primeros 5) - CON CUMPLIMIENTO BASADO EN TENDENCIA:', allChartData.slice(0, 5).map(d => ({
-        //     resultado: d?.resultado ?? null,
-        //     meta: d?.meta ?? null,
-        //     cumplimiento: d?.cumplimiento ?? '❌ No especificado',
-        //     cumple: d?.cumple ?? false,
-        //     tendencia: d?.tendencia ?? 'No especificada',
-        //     regla: (d?.tendencia === 'creciente') ? 'resultado >= meta' : (d?.tendencia === 'decreciente') ? 'resultado <= meta' : 'no especificada'
-        // })));
-        
-        // 🆕 DEBUG: Mostrar ordenamiento cronológico
-        // console.log('📅 IndicatorBarChart - TOTAL AllChartData:', allChartData.length);
-        // console.log('📅 IndicatorBarChart - Ordenamiento Cronológico (primeros 10):', allChartData.slice(0, 10).map((d, idx) => ({
-        //     idx,
-        //     año: d?.sortYear ?? 'N/A',
-        //     mes: d?.sortMonth ?? 'N/A',
-        //     trimestre: d?.sortQuarter ?? 'N/A',
-        //     semestre: d?.sortSemester ?? 'N/A',
-        //     frecuencia: d?.frequency ?? 'N/A',
-        //     sede: d?.sedeDisplay ?? 'N/A',
-        //     resultado: d?.resultado ?? 'N/A'
-        // })));
     }
     // ✅ Usar directamente allChartData sin paginación
     const chartData = allChartData;
-
-    // DEBUG: Verificar que chartData se actualiza con los filtros
-    // console.log('🔄 IndicatorBarChart - ChartData recalculado:', {
-    //     totalItems: chartData.length,
-    //     primeraBarraLabel: chartData[0]?.sede || 'N/A',
-    //     primeraBarraResultado: chartData[0]?.resultado || 'N/A',
-    //     primeraBarraMeta: chartData[0]?.meta || 'N/A',
-    //     timestamp: new Date().toLocaleTimeString()
-    // });
-
-    // 🆕 DEBUG: Mostrar los PRIMEROS 10 items para ver si hay duplicados o agrupaciones
-    // console.log('📊 PRIMEROS 10 ITEMS DE CHARTDATA:', chartData.slice(0, 10).map((item, idx) => ({
-    //     idx,
-    //     sede: item?.sede ?? 'N/A',
-    //     resultado: item?.resultado ?? null,
-    //     meta: item?.meta ?? null,
-    //     mes: item?.mes ?? 'N/A',
-    //     periodo: item?.periodo ?? 'N/A'
-    // })));
 
     // Calcular altura dinámica del gráfico según cantidad de barras
     const chartHeight = Math.max(300, 280 + (chartData.length * 15));
@@ -336,8 +286,6 @@ export default function IndicatorBarChart({ data, loading }: Props) {
     // 🔑 Generar key única para forza a Recharts a rerender completamente cuando cambian los datos
     // Esto es importante para que el tooltip se sincronice con los datos nuevos al filtrar
     const chartKey = `chart-${chartData.length}-${chartData[0]?.sede || 'empty'}`;
-    
-    // console.log('🔑 ChartKey:', chartKey);
 
     // Componente personalizado del Tooltip con información detallada
     const CustomTooltip = ({ active, payload, label }: any) => {
@@ -347,21 +295,9 @@ export default function IndicatorBarChart({ data, loading }: Props) {
             const chartItem = payload[0]?.payload;
             
             if (!chartItem) {
-                //console.warn('⚠️ CustomTooltip: payload.payload es null/undefined');
+                console.warn('⚠️ CustomTooltip: payload.payload es null/undefined');
                 return null;
             }
-
-            // DEBUG: Mostrar qué datos recibimos de Recharts
-            // console.log('🔍 CustomTooltip - Datos de Recharts (payload[0].payload):', {
-            //     sede: chartItem.sede,
-            //     resultado: chartItem.resultado,
-            //     meta: chartItem.meta,
-            //     mes: chartItem.mes,
-            //     periodo: chartItem.periodo,
-            //     año: chartItem.año,
-            //     cumplimiento: chartItem.cumplimiento,
-            //     tendencia: chartItem.tendencia
-            // });
 
             // Los datos ya están procesados en allChartData, solo extraer directamente
             const resultado = chartItem.resultado || 0;

@@ -42,12 +42,12 @@ export default function IndicatorTable({ data, loading }: Props) {
     if (data.length === 0) return <p className="text-center">No hay datos para mostrar.</p>;
 
     console.log('🎯 [IndicatorTable] RECEIVED DATA:', {
-      dataLength: data.length,
-      firstItemFields: data.length > 0 ? Object.keys(data[0]) : [],
-      firstItemHasDescription: data.length > 0 ? 'description' in data[0] : false,
-      firstItemHasCalculationMethod: data.length > 0 ? 'calculationMethod' in data[0] : false,
-      firstItemDescription: data.length > 0 ? (data[0] as any).description : undefined,
-      firstItemCalculationMethod: data.length > 0 ? (data[0] as any).calculationMethod : undefined
+        dataLength: data.length,
+        firstItemFields: data.length > 0 ? Object.keys(data[0]) : [],
+        firstItemHasDescription: data.length > 0 ? 'description' in data[0] : false,
+        firstItemHasCalculationMethod: data.length > 0 ? 'calculationMethod' in data[0] : false,
+        firstItemDescription: data.length > 0 ? (data[0] as any).description : undefined,
+        firstItemCalculationMethod: data.length > 0 ? (data[0] as any).calculationMethod : undefined
     });
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -215,12 +215,12 @@ export default function IndicatorTable({ data, loading }: Props) {
                                         <button
                                             onClick={() => {
                                                 console.log('📋 [IndicatorTable] ITEM TO BE SENT TO MODAL:', {
-                                                  itemFields: Object.keys(item),
-                                                  hasDescription: 'description' in item,
-                                                  descriptionValue: (item as any).description,
-                                                  hasCalculationMethod: 'calculationMethod' in item,
-                                                  calculationMethodValue: (item as any).calculationMethod,
-                                                  indicatorFields: item.indicator ? Object.keys(item.indicator) : 'NO INDICATOR'
+                                                    itemFields: Object.keys(item),
+                                                    hasDescription: 'description' in item,
+                                                    descriptionValue: (item as any).description,
+                                                    hasCalculationMethod: 'calculationMethod' in item,
+                                                    calculationMethodValue: (item as any).calculationMethod,
+                                                    indicatorFields: item.indicator ? Object.keys(item.indicator) : 'NO INDICATOR'
                                                 });
                                                 setSelectedIndicator(item);
                                                 setModalOpen(true);

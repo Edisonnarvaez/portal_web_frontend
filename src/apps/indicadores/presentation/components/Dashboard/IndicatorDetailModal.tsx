@@ -213,30 +213,6 @@ export default function IndicatorDetailModal({ isOpen, onClose, indicator, resul
     trendVisual = cumple ? 'up' : 'down';
   }
 
-  // console.log('🔍 Debugging Modal - Final Data:', {
-  //   totalResults: results.length,
-  //   filteredResults: resultsForThisIndicator.length,
-  //   chartDataLength: chartData.length,
-  //   mostRecentPeriodo: chartData[0]?.periodo,
-  //   currentResult: {
-  //     id: currentResult?.id,
-  //     calculatedValue: currentResult?.calculatedValue,
-  //     target: currentResult?.target,
-  //     year: currentResult?.year,
-  //     month: currentResult?.month,
-  //     creationDate: currentResult?.creationDate,
-  //     updateDate: currentResult?.updateDate,
-  //   },
-  //   computedValues: {
-  //     currentValue,
-  //     target,
-  //     cumplimiento: `${cumplimiento}%`,
-  //     cumple,
-  //     indicatorTrend,
-  //     trendVisual,
-  //   },
-  // });
-
   const CustomTooltip = (props: any) => {
     const { active, payload } = props;
     if (active && payload && payload.length > 0) {

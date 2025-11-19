@@ -21,8 +21,6 @@ export const useResultsData = () => {
       setLoading(true);
       setError(null);
 
-      //console.log('🔄 Cargando datos paginados para dashboard...');
-
       const effectiveParams = { page: params?.page || 1, page_size: params?.page_size || DEFAULT_PAGE_SIZE, ...params };
       const paginatedRaw = await resultService.getPaginatedResults(effectiveParams as any);
 
@@ -36,9 +34,6 @@ export const useResultsData = () => {
       const count = (paginatedRaw && typeof (paginatedRaw as any).count === 'number') ? (paginatedRaw as any).count : resultsArr.length;
       const next = (paginatedRaw && (paginatedRaw as any).next) ? (paginatedRaw as any).next : null;
       const previous = (paginatedRaw && (paginatedRaw as any).previous) ? (paginatedRaw as any).previous : null;
-
-      //console.log('📊 Paginated results loaded:', count);
-      //console.log('📝 First result (if any):', resultsArr[0]);
 
       // Ensure indicators and headquarters are available to enrich the results with codes/names
       let indicatorsList: any[] = [];
@@ -97,14 +92,6 @@ export const useResultsData = () => {
 
         // DEBUG: Log enrichment for specific indicator
         if (indicatorId === 3 || (item.indicatorName && item.indicatorName.includes('caída'))) {
-          // console.log('🔍 [useResultsData] Enrichment for', item.indicatorName, ':', {
-          //   sourceDescription: item.description,
-          //   objDescription: indicatorObj?.description,
-          //   finalDescription: description,
-          //   sourceCalculationMethod: item.calculationMethod,
-          //   objCalculationMethod: indicatorObj?.calculationMethod,
-          //   finalCalculationMethod: calculationMethod
-          // });
         }
 
         // Prefer indicator's target (may be string) but normalize to number when possible

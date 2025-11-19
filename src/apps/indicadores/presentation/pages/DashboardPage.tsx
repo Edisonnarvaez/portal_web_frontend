@@ -24,12 +24,6 @@ export default function DashboardPage() {
         }
         //console.log('✅ Data cargada correctamente:', data.length, 'items');
         if (data.length > 0) {
-            // console.log('📌 Primer item:', data[0]);
-            // console.log('📌 Proceso en primer item:', {
-            //     'item.process': (data[0] as any).process,
-            //     'item.indicator.process': (data[0] as any).indicator?.process,
-            //     'indicador completo': (data[0] as any).indicator
-            // });
         }
         return data;
     }, [data]);
