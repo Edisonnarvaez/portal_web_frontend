@@ -149,12 +149,12 @@ export default function IndicatorTable({ data, loading }: Props) {
                     >
                         Exportar a Excel
                     </button>
-                    <button
+                    {/*<button
                         onClick={() => exportToPDF(processedData)}
                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                     >
                         Exportar a PDF
-                    </button>
+                    </button>*/}
                 </div>
                 
                 <div className="flex items-center gap-2">
