@@ -32,7 +32,7 @@ export class PermissionService {
       canDownloadByFormat: (filename: string) => {
         const ext = filename?.toLowerCase().split('.').pop();
 
-        if (['doc', 'docx', 'xls', 'xlsx'].includes(ext || '')) {
+        if (['doc', 'docx', 'xls', 'xlsx','xlsb','xlsm'].includes(ext || '')) {
           return true;
         }
 

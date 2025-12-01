@@ -321,7 +321,7 @@ console.log('Estado inicial del formulario:', {
                 type="file"
                 name="archivo_oficial"
                 onChange={handleFileChange}
-                accept=".doc,.docx,.pdf,.xls,.xlsx"
+                accept=".doc,.docx,.pdf,.xls,.xlsx,.xlsb,.xlsm"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-200"
                 {...(!isEdit && { required: true })}
               />
@@ -338,7 +338,7 @@ console.log('Estado inicial del formulario:', {
                 type="file"
                 name="archivo_editable"
                 onChange={handleFileChange}
-                accept=".doc,.docx,.xls,.xlsx"
+                accept=".doc,.docx,.xls,.xlsx,.xlsb,.xlsm"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 dark:file:bg-green-900 dark:file:text-green-200"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

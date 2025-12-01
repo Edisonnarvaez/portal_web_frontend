@@ -42,7 +42,7 @@ export class DocumentValidation {
 
     // Validar formatos de archivo
     if (files.archivo_oficial) {
-      const allowedFormats = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+      const allowedFormats = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'xlsb', 'xlsm'];
       const fileExtension = files.archivo_oficial.name.toLowerCase().split('.').pop();
       
       if (!allowedFormats.includes(fileExtension || '')) {
@@ -51,7 +51,7 @@ export class DocumentValidation {
     }
 
     if (files.archivo_editable) {
-      const allowedFormats = ['doc', 'docx', 'xls', 'xlsx'];
+      const allowedFormats = ['doc', 'docx', 'xls', 'xlsx', 'xlsb', 'xlsm'];
       const fileExtension = files.archivo_editable.name.toLowerCase().split('.').pop();
       
       if (!allowedFormats.includes(fileExtension || '')) {
