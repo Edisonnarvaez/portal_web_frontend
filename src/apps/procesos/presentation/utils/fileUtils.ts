@@ -19,14 +19,14 @@ export class FileUtils {
 
   static isViewableFile(filename: string): boolean {
     const ext = this.getFileExtension(filename);
-    return ['pdf', 'xls', 'xlsx', 'doc', 'docx'].includes(ext);
+    return ['pdf', 'xls', 'xlsx', 'xlsb', 'xlsm', 'doc', 'docx'].includes(ext);
   }
 
   static getFileTypeCategory(filename: string): 'pdf' | 'excel' | 'word' | 'other' {
     const ext = this.getFileExtension(filename);
     
     if (ext === 'pdf') return 'pdf';
-    if (['xls', 'xlsx'].includes(ext)) return 'excel';
+    if (['xls', 'xlsx', 'xlsb', 'xlsm'].includes(ext)) return 'excel';
     if (['doc', 'docx'].includes(ext)) return 'word';
     return 'other';
   }

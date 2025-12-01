@@ -93,9 +93,9 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
           },
         ]
       : []),
-    // Indicadores: cualquier rol en "auditorias" o "indicadores"
-    //...(hasAppAccess(roles, "indicadores")
-      //? [
+    // Indicadores: cualquier rol en "indicadores"
+    ...(hasAppAccess(roles, "indicadores")
+      ? [
     {
       to: "/dashboard",
       label: "Indicadores",
@@ -106,25 +106,23 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
           to: "/dashboard",
           label: "Dashboard",
           icon: <HiPresentationChartBar className="w-4 h-4" />,
+          requiredRole: ["user", "gestor", "admin"],
         },
-        ...(hasAppAccess(roles , "indicadores")
-          ? [
-            
-              {
-                to: "/indicators",
-                label: "Indicadores",
-                icon: <HiChartBar className="w-4 h-4" />,
-              },
-              {
-                to: "/results",
-                label: "Resultados",
-                icon: <HiTableCells className="w-4 h-4" />,
-              },
-            ]
-          : []),
+        {
+          to: "/indicators",
+          label: "Indicadores",
+          icon: <HiChartBar className="w-4 h-4" />,
+          requiredRole: ["gestor", "admin"],
+        },
+        {
+          to: "/results",
+          label: "Resultados",
+          icon: <HiTableCells className="w-4 h-4" />,
+          requiredRole: ["gestor", "admin"],
+        },
       ],
-    },//]
-      //: []),
+    },]
+      : []),
     // Procesos: cualquier rol en "procesos"
     ...(hasAppAccess(roles, "procesos")
       ? [
@@ -175,14 +173,11 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
     );
   };
 
-  const isSubmenuActive = (submenu: any[]) => {
-    return submenu.some((item) => location.pathname === item.to);
-  };
-
   const username =
     typeof user?.username === "string" ? user.username : "Usuario";
-  const role =
-    typeof user?.role === "string" ? user.role : user?.role?.name || "usuario";
+  
+  // Get first role from roles array (if exists)
+  const userRoleName = user?.roles?.[0]?.name || "usuario";
 
   return (
     <>
@@ -236,7 +231,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
                 {username}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
-                {role}
+                {userRoleName}
               </p>
             </div>
           </div>
@@ -244,11 +239,34 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
+            // Filtrar submenu según roles
+            const filteredSubmenu = item.submenu
+              ? item.submenu.filter((subItem: any) => {
+                  // Si no tiene requiredRole, mostrar siempre
+                  if (!subItem.requiredRole) return true;
+                  
+                  // Obtener rol del usuario desde roles array
+                  const userRole = user?.roles?.[0]?.name?.toLowerCase() || "";
+                  
+                  // Si requiredRole es un string
+                  if (typeof subItem.requiredRole === "string") {
+                    return userRole === subItem.requiredRole.toLowerCase();
+                  }
+                  
+                  // Si requiredRole es un array
+                  if (Array.isArray(subItem.requiredRole)) {
+                    return subItem.requiredRole.some((role: string) => userRole === role.toLowerCase());
+                  }
+                  
+                  return false;
+                })
+              : [];
+
             const isActive = location.pathname === item.to;
             const isSubmenuExpanded = expandedMenus.includes(item.to);
-            const hasActiveSubmenu = item.submenu
-              ? isSubmenuActive(item.submenu)
-              : false;
+            const hasActiveSubmenu = filteredSubmenu.some(
+              (subItem: any) => location.pathname === subItem.to
+            );
 
             return (
               <div key={item.to}>
@@ -299,7 +317,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
                   )}
                 </div>
 
-                {item.hasSubmenu && item.submenu && (
+                {item.hasSubmenu && (
                   <div
                     className={`
                       ml-6 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out
@@ -310,7 +328,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
                       }
                     `}
                   >
-                    {item.submenu.map((subItem) => {
+                    {filteredSubmenu.map((subItem: any) => {
                       const isSubActive = location.pathname === subItem.to;
                       return (
                         <Link

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   FaEye,
   FaDownload,
@@ -19,6 +18,23 @@ interface ActionButtonsProps {
   onDelete: (doc: Document) => void;
   loadingExcel: boolean;
 }
+
+// Helper function para obtener el nombre de archivo con extensión
+const getDownloadFilename = (
+  codigoDocumento: string,
+  archivoCompleto: string | null | undefined,
+  suffix: string
+): string => {
+  if (!archivoCompleto) return `${codigoDocumento}${suffix}`;
+  
+  // Extraer extensión del archivo
+  const extension = archivoCompleto.split('.').pop();
+  
+  // Retornar: codigo_documento + sufijo + extensión
+  return extension 
+    ? `${codigoDocumento}${suffix}.${extension}`
+    : `${codigoDocumento}${suffix}`;
+};
 
 export default function ActionButtons({
   document,
@@ -62,7 +78,7 @@ export default function ActionButtons({
       {/* Descargar documento oficial - Permisos específicos por formato */}
       {permissions.canDownloadByFormat(document.archivo_oficial || "") && (
         <button
-          onClick={() => onDownload(document, 'oficial', `${document.codigo_documento}_oficial`)}
+          onClick={() => onDownload(document, 'oficial', getDownloadFilename(document.codigo_documento, document.archivo_oficial, '_oficial'))}
           className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
           title="Descargar archivo oficial"
         >
@@ -90,9 +106,9 @@ export default function ActionButtons({
           )}
 
           {/* Descargar archivo editable - Solo Word/Excel y solo admin */}
-          {document.archivo_editable && ['doc', 'docx', 'xls', 'xlsx'].includes(document.archivo_editable.toLowerCase().split('.').pop() || '') && (
+          {document.archivo_editable && ['doc', 'docx', 'xls', 'xlsx','xlsb','xlsm'].includes(document.archivo_editable.toLowerCase().split('.').pop() || '') && (
             <button
-              onClick={() => onDownload(document, 'editable', `${document.codigo_documento}_editable`)}
+              onClick={() => onDownload(document, 'editable', getDownloadFilename(document.codigo_documento, document.archivo_editable, '_editable'))}
               className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
               title="Descargar archivo editable"
             >
