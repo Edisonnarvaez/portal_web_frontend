@@ -19,6 +19,8 @@ Las principales personalizaciones se  deben realizar en los siguientes archivos 
 5. se debe cambiar los accesos rapidos por los de la empresa apps/menu/presentation/components/AccesosRapidos.tsx linea 4- 36
 6. se debe cambiar los datos de la estructura organizacional por los de la empresa por los de la empresa apps/menu/presentation/components/EstructuraOrganizacional.tsx const organigramaData linea 5 y se debe cargar las imagenes de los organigramas en public/institucion/ con sus respectivas rutas 
 7. se debe cambiar los datos de documentos y recursos rspidos por los de la empresa apps/menu/presentation/components/DocumentosRecursosRapidos.tsx Documentos linea 5 
+8. se debe ajustar el .htacces para que funcione correctamente en el servidor de produccion con el dominio correspondiente 
+9. revisar que el .env este configurado correctamente apuntando a la ip del backend y el dominio del frontend respectivamente 
 
 
 
