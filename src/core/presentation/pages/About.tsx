@@ -84,15 +84,20 @@ const About: React.FC = () => {
       </motion.button>
 
       {/* Título principal */}
-      <motion.h1
+      <motion.div
         variants={sectionVariants}
-        className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300 mb-10 text-center"
-      >
-        Portal de Gestión Institucional{" "}
-        <span className="text-blue-500 dark:text-blue-400">
-          PILOT
-        </span>
-      </motion.h1>
+        className="flex flex-col items-center mb-10 text-center"
+        >
+        <img 
+          src="/logo_pilot.png" 
+          alt="Logo PILOT" 
+          className="h-10 sm:h-14 w-auto mb-3"
+        />
+        V 1.0.0
+        {/* <h1 className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300">
+          Portal de Gestión Institucional
+        </h1>*/}
+      </motion.div>
 
       {/* Sección: Descripción y contexto */}
       <motion.section
