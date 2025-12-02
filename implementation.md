@@ -12,6 +12,8 @@
 ## Personalizacion de aplicacion 
 
 Las principales personalizaciones se  deben realizar en los siguientes archivos :
-1. 
+1. se debe cambiar el logo de la carpeta public logo.png por el logo de la empresa 
+2. se debe 
+
 
 

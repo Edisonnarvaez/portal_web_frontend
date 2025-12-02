@@ -54,10 +54,17 @@ export default function ForgotPassword() {
             </p>
           </div>
 
-          <div className="hidden lg:block text-sm text-blue-200">
-            © {currentYear} PILOT. <br />
-            Todos los derechos reservados.
-          </div>
+          <div className="hidden lg:flex flex-row items-center text-sm text-blue-200">
+            <img 
+                src="/logo_pilot.png" 
+                alt="Logo PILOT" 
+                className="h-8 sm:h-10 w-auto"
+              />
+              <div>
+                © {currentYear} PILOT. <br />
+                Todos los derechos reservados.
+              </div>
+          </div>
         </div>
       </div>
 
