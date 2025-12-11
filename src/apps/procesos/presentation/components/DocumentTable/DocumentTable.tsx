@@ -53,23 +53,35 @@ export default function DocumentTable({
     }, {} as Record<string, number>);
   }, []);
 
-  // Ordenar documentos por proceso y luego por tipo (usando TIPOS_DOCUMENTO)
+  // Ordenar documentos por proceso y luego por tipo (usando TIPOS_DOCUMENTO) y codigo del documento
   const sortedDocuments = React.useMemo(() => {
-    return [...documents].sort((a, b) => {
-      const processA =
-        processes.find((p) => p.id === a.proceso)?.name.toLowerCase() || "";
-      const processB =
-        processes.find((p) => p.id === b.proceso)?.name.toLowerCase() || "";
+  return [...documents].sort((a, b) => {
+    // 1. ORDEN POR PROCESO
+    const processA =
+      processes.find((p) => p.id === a.proceso)?.name.toLowerCase() || "";
+    const processB =
+      processes.find((p) => p.id === b.proceso)?.name.toLowerCase() || "";
 
-      if (processA < processB) return -1;
-      if (processA > processB) return 1;
+    if (processA < processB) return -1;
+    if (processA > processB) return 1;
 
-      const tipoA = tipoOrden[a.tipo_documento] ?? Number.MAX_SAFE_INTEGER;
-      const tipoB = tipoOrden[b.tipo_documento] ?? Number.MAX_SAFE_INTEGER;
+    // 2. ORDEN POR TIPO DE DOCUMENTO
+    const tipoA = tipoOrden[a.tipo_documento] ?? Number.MAX_SAFE_INTEGER;
+    const tipoB = tipoOrden[b.tipo_documento] ?? Number.MAX_SAFE_INTEGER;
 
-      return tipoA - tipoB;
-    });
-  }, [documents, processes, tipoOrden]);
+    if (tipoA !== tipoB) return tipoA - tipoB;
+
+    // 3. ORDEN POR CÓDIGO DEL DOCUMENTO
+    const codigoA = a.codigo_documento?.toLowerCase?.() || "";
+    const codigoB = b.codigo_documento?.toLowerCase?.() || "";
+
+    if (codigoA < codigoB) return -1;
+    if (codigoA > codigoB) return 1;
+
+    return 0;
+  });
+}, [documents, processes, tipoOrden]);
+
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
