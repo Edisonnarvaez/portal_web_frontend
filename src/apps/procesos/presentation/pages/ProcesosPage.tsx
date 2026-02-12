@@ -7,6 +7,88 @@ import { useDocumentPermissions } from '../hooks/useDocumentPermissions';
 import { useDocumentFilters } from '../hooks/useDocumentFilters';
 import { useFileHandling } from '../hooks/useFileHandling';
 
+// Función auxiliar para procesar errores y generar mensajes específicos
+const getSpecificErrorMessage = (error: any, action: string, context?: string): string => {
+  // Errores HTTP del servidor - primero intentar obtener mensaje específico del backend
+  if (error.response?.data?.detail) {
+    const detail = error.response.data.detail;
+    // Si ya es un mensaje específico, usarlo directamente
+    if (typeof detail === 'string' && detail.length > 20) {
+      return detail;
+    }
+  }
+  
+  if (error.response?.data?.message) {
+    return error.response.data.message;
+  }
+
+  if (error.response?.data?.error) {
+    return error.response.data.error;
+  }
+
+  // Errores por código HTTP específico con mensajes más detallados
+  if (error.response?.status === 400) {
+    return `Solicitud inválida: Verifica que todos los datos sean correctos. ${error.response?.data?.detail || ''}`;
+  }
+
+  if (error.response?.status === 403) {
+    return `Acceso denegado: No tienes permisos para ${action}`;
+  }
+  
+  if (error.response?.status === 404) {
+    return `${context || 'El documento'} no fue encontrado. Puede haber sido eliminado.`;
+  }
+  
+  if (error.response?.status === 409) {
+    // Conflicto - generalmente es código duplicado
+    const detail = error.response?.data?.detail || '';
+    if (detail.includes('código') || detail.includes('codigo')) {
+      return `El código de documento ya existe: ${detail}. Usa un código único.`;
+    }
+    return `Conflicto: ${detail || 'El documento ya existe o ha sido modificado. Intenta recargar los datos.'}`;
+  }
+  
+  if (error.response?.status === 413) {
+    return `El archivo es demasiado grande. Tamaño máximo permitido: ${error.response?.data?.max_size || 'verificar en configuración'}`;
+  }
+  
+  if (error.response?.status === 422) {
+    const errors = error.response?.data?.errors || error.response?.data?.detail || {};
+    if (typeof errors === 'object') {
+      const errorList = Object.entries(errors)
+        .map(([field, msg]: any) => `${field}: ${msg}`)
+        .join(' | ');
+      return `Datos inválidos: ${errorList}`;
+    }
+    return `Datos incompletos o inválidos: ${errors}. Verifica que todos los campos requeridos estén completos.`;
+  }
+  
+  if (error.response?.status === 500) {
+    return `Error del servidor: La solicitud no pudo completarse. ${error.response?.data?.detail || 'Intenta nuevamente más tarde.'}`;
+  }
+
+  // Errores de validación o tipo de archivo
+  if (error.message?.includes('File type')) {
+    return `Tipo de archivo no válido. Verifica que sea un formato soportado (PDF, Excel, Word).`;
+  }
+
+  if (error.message?.includes('CORS')) {
+    return `Error de seguridad al acceder al archivo. Contacta al administrador.`;
+  }
+
+  if (error.message?.includes('Network')) {
+    return `Error de conexión: Verifica tu conexión a internet.`;
+  }
+
+  // Si es un error personalizado que ya tiene mensaje
+  if (error.message && !error.message.includes('Error al')) {
+    return error.message;
+  }
+
+  // Error genérico con acción para el usuario
+  return `Error al ${action}${context ? ` de ${context}` : ''}. Intenta nuevamente.`;
+};
+
 import DocumentTable from '../components/DocumentTable/DocumentTable';
 import DocumentFilters from '../components/DocumentFilters/DocumentFilters';
 import DocumentStats from '../components/DocumentFilters/DocumentStats';
@@ -40,6 +122,7 @@ export default function ProcesosPage() {
 
   const { filters, filteredDocuments, updateFilter, clearFilters } = useDocumentFilters(documents, processes, processTypes, permissions);
   const { handleDownload, handlePreview, processExcelFile } = useFileHandling();
+  const [zoomInstance, setZoomInstance] = useState<any>(null);
 
   // Estados para modales
   const [modals, setModals] = useState({
@@ -121,11 +204,13 @@ export default function ProcesosPage() {
   // Función para recargar los datos
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    setError(''); // Limpiar errores previos
     try {
       await Promise.all([fetchDocuments(), fetchProcesses()]);
       setMessage('Datos actualizados correctamente');
     } catch (error) {
-      setError('Error al actualizar los datos');
+      const errorMsg = getSpecificErrorMessage(error, 'actualizar los datos');
+      setError(`Error al recargar: ${errorMsg}`);
     } finally {
       setIsRefreshing(false);
     }
@@ -148,8 +233,10 @@ export default function ProcesosPage() {
 
   const handleViewDocument = async (document: Document, type: 'oficial' | 'editable' = 'oficial') => {
     const archivoUrl = type === 'oficial' ? document.archivo_oficial : document.archivo_editable;
+    
     if (!archivoUrl) {
-      setMessage("No hay archivo disponible para visualizar");
+      const tipoArchivo = type === 'oficial' ? 'oficial' : 'editable';
+      setError(`No hay versión ${tipoArchivo} disponible para este documento. Verifica que se haya cargado correctamente.`);
       return;
     }
 
@@ -166,17 +253,42 @@ export default function ProcesosPage() {
         await handleViewExcel(document, type);
       } else if (['doc', 'docx'].includes(fileType)) {
         await handleViewWord(document, type);
+      } else {
+        setError(`Tipo de archivo no soportado: .${fileType}. Solo se pueden visualizar archivos PDF, Excel y Word.`);
       }
-    } catch (error) {
-      setError('Error al cargar el archivo');
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setError(`El archivo no fue encontrado. El documento "${document.nombre_documento}" puede haber sido eliminado del servidor.`);
+      } else if (error.response?.status === 403) {
+        setError(`No tienes permisos para acceder a este documento.`);
+      } else if (error.message?.includes('Network')) {
+        setError(`Error de conexión al cargar el archivo. Verifica tu conexión a internet.`);
+      } else {
+        const errorMsg = getSpecificErrorMessage(error, 'cargar el archivo', document.nombre_documento);
+        setError(errorMsg);
+      }
     }
   };
 
   const handleViewExcel = async (document: Document, type: 'oficial' | 'editable') => {
     setLoadingExcel(true);
+    setError(''); // Limpiar errores previos
     try {
       const blob = await documentService.previewDocument(document.id, type);
+      
+      if (!blob || blob.size === 0) {
+        setError('El archivo Excel está vacío o no se pudo procesar correctamente.');
+        setLoadingExcel(false);
+        return;
+      }
+
       const { data, sheets } = await processExcelFile(blob);
+      
+      if (!sheets || sheets.length === 0) {
+        setError('El archivo Excel no contiene hojas válidas para mostrar.');
+        setLoadingExcel(false);
+        return;
+      }
 
       openModal('isExcelViewerOpen', {
         excelData: data,
@@ -185,8 +297,19 @@ export default function ProcesosPage() {
         currentExcelDocument: document,
         currentExcelType: type
       });
-    } catch (error) {
-      setError('Error al cargar el archivo Excel');
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setError(`El archivo Excel no fue encontrado. Verifica que el documento "${document.nombre_documento}" aún existe.`);
+      } else if (error.response?.status === 403) {
+        setError(`No tienes permisos para visualizar este archivo.`);
+      } else if (error.message?.includes('Invalid')) {
+        setError(`El archivo Excel no es válido o está corrupto. Intenta descargarlo y verificarlo localmente.`);
+      } else if (error.message?.includes('Network')) {
+        setError(`Error de conexión al cargar el archivo. Verifica tu conexión a internet.`);
+      } else {
+        const errorMsg = getSpecificErrorMessage(error, 'procesar el archivo Excel', document.nombre_documento);
+        setError(errorMsg);
+      }
     } finally {
       setLoadingExcel(false);
     }
@@ -205,6 +328,9 @@ export default function ProcesosPage() {
   const handleFormSubmit = async (formData: FormData) => {
     try {
       if (modals.isEditFormOpen && modalData.editingDocument) {
+        if (!modalData.editingDocument.id) {
+          throw new Error('ID de documento no válido');
+        }
         await updateDocument(modalData.editingDocument.id, formData);
         setMessage('Documento actualizado exitosamente');
       } else {
@@ -213,19 +339,79 @@ export default function ProcesosPage() {
       }
       closeAllModals();
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Error al guardar el documento');
+      let errorMsg = '';
+      
+      // Intenta extraer el mensaje más específico posible del error
+      if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error.response?.status === 403) {
+        errorMsg = 'No tienes permisos para realizar esta acción.';
+      } else if (error.response?.status === 409) {
+        errorMsg = `El código de documento ya existe. Por favor usa un código diferente.`;
+      } else if (error.response?.status === 413) {
+        errorMsg = 'El archivo es demasiado grande. Verifica el tamaño máximo permitido.';
+      } else if (error.response?.status === 422) {
+        // Extraer detalles de validación específicos
+        if (error.response?.data?.errors) {
+          const errors = error.response.data.errors;
+          const errorDetails = Object.entries(errors)
+            .map(([field, msg]: any) => `• ${field}: ${msg}`)
+            .join('\n');
+          errorMsg = `Errores en los datos:\n${errorDetails}`;
+        } else {
+          errorMsg = 'Datos incompletos o inválidos. Verifica que todos los campos requeridos estén completos.';
+        }
+      } else if (error.response?.status === 400) {
+        errorMsg = `Solicitud inválida: ${error.response?.data?.detail || 'Verifica los datos e intenta nuevamente.'}`;
+      } else if (error.response?.status === 500) {
+        errorMsg = `Error del servidor: ${error.response?.data?.detail || 'Intenta nuevamente más tarde.'}`;
+      } else if (error.message?.includes('Network')) {
+        errorMsg = 'Error de conexión. Verifica tu conexión a internet e intenta nuevamente.';
+      } else if (error.message) {
+        errorMsg = error.message;
+      } else {
+        const action = modals.isEditFormOpen ? 'actualizar' : 'crear';
+        errorMsg = `Error al ${action} el documento. Intenta nuevamente.`;
+      }
+      
+      // Lanzar el error para que sea capturado por el modal
+      throw new Error(errorMsg);
     }
   };
 
   const handleConfirmDelete = async () => {
-    if (!modalData.deletingDocument) return;
+    if (!modalData.deletingDocument) {
+      setError('No se especificó qué documento eliminar.');
+      return;
+    }
 
+    setError(''); // Limpiar errores previos
     try {
       await deleteDocument(modalData.deletingDocument.id);
-      setMessage('Documento eliminado exitosamente');
+      setMessage(`Documento "${modalData.deletingDocument.nombre_documento}" eliminado exitosamente`);
       closeAllModals();
-    } catch (error) {
-      setError('Error al eliminar el documento');
+    } catch (error: any) {
+      let errorMsg = '';
+      
+      if (error.response?.status === 403) {
+        errorMsg = 'No tienes permisos para eliminar este documento.';
+      } else if (error.response?.status === 404) {
+        errorMsg = `El documento "${modalData.deletingDocument.nombre_documento}" ya no existe. Puede haber sido eliminado por otro usuario.`;
+      } else if (error.response?.status === 409) {
+        errorMsg = 'No se puede eliminar este documento porque está siendo usado en otros procesos.';
+      } else if (error.response?.status === 422) {
+        errorMsg = 'El documento está en un estado que no permite su eliminación.';
+      } else if (error.message?.includes('Network')) {
+        errorMsg = 'Error de conexión. Verifica tu conexión a internet e intenta nuevamente.';
+      } else {
+        errorMsg = getSpecificErrorMessage(error, 'eliminar el documento', modalData.deletingDocument.nombre_documento);
+      }
+      
+      setError(errorMsg);
     }
   };
 
@@ -245,7 +431,7 @@ export default function ProcesosPage() {
       </div>
     );
   }
-
+  
   return (
     <div className="p-4 sm:p-8">
       {/* Header */}
@@ -386,25 +572,62 @@ export default function ProcesosPage() {
       )}
 
       {modals.isDocumentViewerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {modalData.currentDocumentTitle || "Vista previa del documento"}
-              </h3>
-              <button
-                onClick={() => closeModal('isDocumentViewerOpen')}
-                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
-              >
-                <FaTimes size={24} />
-              </button>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+      
+      {/* CABECERA (Se mantiene igual con los botones) */}
+      <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-4 flex-1 truncate">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {modalData.currentDocumentTitle || "Vista previa del documento"}
+          </h3>
+          
+          {zoomInstance && (
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-4 border border-gray-200 dark:border-gray-700">
+              <zoomInstance.ZoomOut>
+                {(props: any) => (
+                  <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                  </button>
+                )}
+              </zoomInstance.ZoomOut>
+              <div className="text-xs font-bold min-w-[50px] text-center text-gray-500 dark:text-gray-400 border-x border-gray-200 dark:border-gray-700 px-2">
+                <zoomInstance.CurrentScale>{(props: any) => <>{Math.round(props.scale * 100)}%</>}</zoomInstance.CurrentScale>
+              </div>
+              <zoomInstance.ZoomIn>
+                {(props: any) => (
+                  <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  </button>
+                )}
+              </zoomInstance.ZoomIn>
             </div>
-            <div className="flex-1 p-4 overflow-hidden">
-              <PdfViewer fileUrl={modalData.currentDocumentUrl} />
-            </div>
-          </div>
+          )}
         </div>
-      )}
+
+        <button
+          onClick={() => {
+            setZoomInstance(null);
+            closeModal('isDocumentViewerOpen');
+          }}
+          className="text-gray-400 hover:text-red-500 transition-colors ml-4"
+        >
+          <FaTimes size={24} />
+        </button>
+      </div>
+
+      {/* CONTENEDOR CON EL PADDING RECUPERADO */}
+      <div className="flex-1 p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
+        <div className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
+          <PdfViewer 
+            fileUrl={modalData.currentDocumentUrl} 
+            onPluginInit={(instance) => setZoomInstance(instance)}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       <ExcelViewer
         isOpen={modals.isExcelViewerOpen}

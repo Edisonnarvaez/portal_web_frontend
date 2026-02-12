@@ -34,10 +34,10 @@ export default function FormModal({
     activo: document?.activo ?? true,
     documento_padre: document?.documento_padre || null,
   });
-console.log('Estado inicial del formulario:', {
-  version: document?.version ?? 0,
-  versionType: typeof (document?.version ?? 0)
-});
+//console.log('Estado inicial del formulario:', {
+//  version: document?.version ?? 0,
+//  versionType: typeof (document?.version ?? 0)
+//});
   const [files, setFiles] = useState<{
     archivo_oficial: File | null;
     archivo_editable: File | null;
@@ -101,13 +101,6 @@ console.log('Estado inicial del formulario:', {
     try {
       const formData = new FormData();
 
-          // ✅ DEBUG: Ver el estado del formulario
-    //console.log('=== ESTADO DEL FORMULARIO ===');
-    //console.log('form.version:', form.version);
-    //console.log('typeof form.version:', typeof form.version);
-    //console.log('form completo:', form);
-
-
       if (isEdit && document) {
         // Para edición, solo agregar campos modificados
         const changedFields: Partial<Record<keyof Document, string | number | boolean | null>> = {};
@@ -136,13 +129,6 @@ console.log('Estado inicial del formulario:', {
           }
         });
       }
-          // ✅ DEBUG: Ver el FormData completo
-    //console.log('=== CONTENIDO DEL FORMDATA ===');
-    //for (let pair of formData.entries()) {
-    //  console.log(pair[0] + ': ' + pair[1]);
-   // }
-   // console.log('================================');
-//--------------------------------
 
       if (files.archivo_oficial) {
         formData.append('archivo_oficial', files.archivo_oficial);
@@ -153,7 +139,14 @@ console.log('Estado inicial del formulario:', {
 
       await onSubmit(formData);
     } catch (error: any) {
-      setFormError(error.response?.data?.detail || "Error al guardar el documento.");
+      // Capturar el error específico del mensaje
+      if (error.message) {
+        setFormError(error.message);
+      } else if (error.response?.data?.detail) {
+        setFormError(error.response.data.detail);
+      } else {
+        setFormError("Error al guardar el documento. Intenta nuevamente.");
+      }
     }
   };
 
@@ -183,8 +176,22 @@ console.log('Estado inicial del formulario:', {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {formError && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-600 dark:text-red-200">
-              {formError}
+            <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-md dark:bg-red-900/20 dark:border-red-400">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-red-500 dark:text-red-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-red-800 dark:text-red-200 mb-2">
+                    Error al guardar el documento
+                  </h3>
+                  <div className="text-sm text-red-700 dark:text-red-300 space-y-1 whitespace-pre-wrap break-words">
+                    {formError}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
