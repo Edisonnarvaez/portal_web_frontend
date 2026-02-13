@@ -84,14 +84,14 @@ export default function DocumentTable({
 
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <h2 className="px-6 py-4 text-center text-lg font-semibold text-gray-900 dark:text-gray-300 uppercase tracking-wider">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+      <h2 className="px-6 py-4 text-center text-lg font-semibold text-gray-900 dark:text-gray-300 uppercase tracking-wider flex-shrink-0">
         Listado Maestro de Documentos
       </h2>
 
-      <div className="overflow-x-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
+          <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-normal break-words max-w-[200px]">Documento</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Proceso</th>
@@ -124,7 +124,7 @@ export default function DocumentTable({
       </div>
 
       {documents.length === 0 && (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
           <FaFileAlt className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-lg font-medium">No se encontraron documentos</p>
           <p className="text-sm">{getEmptyMessage()}</p>

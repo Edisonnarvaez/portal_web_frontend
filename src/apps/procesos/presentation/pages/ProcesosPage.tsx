@@ -518,17 +518,19 @@ export default function ProcesosPage() {
       />
 
       {/* Tabla */}
-      <DocumentTable
-        documents={filteredDocuments}
-        processes={processes}
-        permissions={permissions}
-        onView={handleView}
-        onViewDocument={handleViewDocument}
-        onDownload={handleDownload}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        loadingExcel={loadingExcel}
-      />
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col max-h-[calc(100vh-450px)]">
+        <DocumentTable
+          documents={filteredDocuments}
+          processes={processes}
+          permissions={permissions}
+          onView={handleView}
+          onViewDocument={handleViewDocument}
+          onDownload={handleDownload}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          loadingExcel={loadingExcel}
+        />
+      </div>
 
       {/* Modales */}
       {modals.isFormOpen && (
