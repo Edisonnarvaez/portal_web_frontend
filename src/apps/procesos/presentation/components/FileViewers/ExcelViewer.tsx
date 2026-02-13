@@ -31,26 +31,76 @@ export default function ExcelViewerStandalone({
     });
   };
 
-  // Obtener estilo de celda
+  // Obtener estilo de celda con mayor fidelidad
   const getCellStyle = (row: number, col: number): React.CSSProperties => {
     const cellKey = XLSX.utils.encode_cell({ r: row, c: col });
     const cellStyle = styles[currentSheet]?.[cellKey];
     
-    const style: React.CSSProperties = {};
+    const style: React.CSSProperties = {
+      textAlign: 'left',
+      verticalAlign: 'middle',
+      padding: '6px 8px'
+    };
     
     if (cellStyle) {
+      // Color de fondo
       if (cellStyle.fill?.fgColor?.rgb) {
         const color = cellStyle.fill.fgColor.rgb;
-        style.backgroundColor = `#${color.substring(2)}`;
-        style.color = '#ffffff';
-        style.fontWeight = 'bold';
+        const bgColor = `#${color.substring(2)}`;
+        style.backgroundColor = bgColor;
+        // Determinar color de texto automáticamente basado en contraste
+        const rgb = parseInt(color.substring(2), 16);
+        const r = (rgb >> 16) & 255;
+        const g = (rgb >> 8) & 255;
+        const b = rgb & 255;
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        style.color = brightness > 128 ? '#000000' : '#ffffff';
       }
+      
+      // Fuente: Bold, Italic, Color
       if (cellStyle.font?.bold) {
         style.fontWeight = 'bold';
+      }
+      if (cellStyle.font?.italic) {
+        style.fontStyle = 'italic';
       }
       if (cellStyle.font?.color?.rgb) {
         const color = cellStyle.font.color.rgb;
         style.color = `#${color.substring(2)}`;
+      }
+      if (cellStyle.font?.size) {
+        style.fontSize = `${cellStyle.font.size}px`;
+      }
+      
+      // Alineación horizontal
+      if (cellStyle.alignment?.horizontal) {
+        const align = cellStyle.alignment.horizontal;
+        if (align === 'center') style.textAlign = 'center';
+        else if (align === 'right') style.textAlign = 'right';
+        else if (align === 'left') style.textAlign = 'left';
+      }
+      
+      // Alineación vertical
+      if (cellStyle.alignment?.vertical) {
+        const vAlign = cellStyle.alignment.vertical;
+        if (vAlign === 'top') style.verticalAlign = 'top';
+        else if (vAlign === 'bottom') style.verticalAlign = 'bottom';
+        else if (vAlign === 'center') style.verticalAlign = 'middle';
+      }
+      
+      // Bordes
+      const borderStyle = '1px solid';
+      const borderColor = '#d1d5db';
+      if (cellStyle.border) {
+        if (cellStyle.border.left) style.borderLeft = `${borderStyle} ${borderColor}`;
+        if (cellStyle.border.right) style.borderRight = `${borderStyle} ${borderColor}`;
+        if (cellStyle.border.top) style.borderTop = `${borderStyle} ${borderColor}`;
+        if (cellStyle.border.bottom) style.borderBottom = `${borderStyle} ${borderColor}`;
+      }
+      
+      // Subrayado
+      if (cellStyle.font?.underline) {
+        style.textDecoration = 'underline';
       }
     }
     
@@ -145,16 +195,17 @@ export default function ExcelViewerStandalone({
                   {row.map((cell, colIndex) => {
                     const actualRowIndex = rowIndex + 1;
                     const cellStyle = getCellStyle(actualRowIndex, colIndex);
+                    const cellValue = cell !== undefined && cell !== null ? String(cell) : '-';
                     
                     return (
                       <td
                         key={`${rowIndex}-${colIndex}`}
-                        className="px-3 py-2 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 min-w-[100px]"
-                        title={String(cell || '')}
+                        className="px-3 py-2 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 min-w-[100px] text-xs"
+                        title={cellValue}
                         style={cellStyle}
                       >
-                        <div className="truncate max-w-[150px] text-xs">
-                          {cell !== undefined && cell !== null ? String(cell) : '-'}
+                        <div className="truncate max-w-[150px]">
+                          {cellValue}
                         </div>
                       </td>
                     );
@@ -180,7 +231,7 @@ export default function ExcelViewerStandalone({
 
       {/* Info Message */}
       <div className="text-xs text-slate-500 dark:text-slate-400 px-4 py-3 bg-slate-100 dark:bg-slate-700/20 rounded-lg border border-slate-200 dark:border-slate-600">
-        <strong>💡 Vista previa:</strong> Esta es una miniatura visual de tu archivo Excel. Descárgalo para ver el contenido completo con todos los estilos y formatos.
+        <strong>💡 Vista previa optimizada:</strong> Se muestran los datos con estilos, colores, alineación y formatos del archivo original. Descárgalo para ver el contenido completo, incluidas todas las columnas y filas.
       </div>
     </div>
   );

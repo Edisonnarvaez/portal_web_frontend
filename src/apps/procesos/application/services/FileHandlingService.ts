@@ -9,7 +9,7 @@ import {
 export class FileHandlingService {
     static async processExcelFile(blob: Blob): Promise<{ data: { [key: string]: any[][] }, sheets: string[], merged: { [key: string]: string[] }, styles: any }> {
         const arrayBuffer = await blob.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
         const sheets: string[] = workbook.SheetNames;
         const data: { [key: string]: any[][] } = {};
         const merged: { [key: string]: string[] } = {};
@@ -28,13 +28,44 @@ export class FileHandlingService {
                 merged[sheetName] = [];
             }
             
-            // Capturar estilos básicos
+            // Capturar estilos extendidos
             styles[sheetName] = {};
             for (let key in worksheet) {
                 if (key[0] !== '!') {
                     const cell = worksheet[key];
                     if (cell.s) {
-                        styles[sheetName][key] = cell.s;
+                        // Crear objeto de estilo mejorado
+                        const cellStyleObj: any = {
+                            fill: cell.s.fill || null,
+                            font: cell.s.font || null,
+                            alignment: cell.s.alignment || null,
+                            border: cell.s.border || null,
+                            numFmt: cell.s.numFmt || null
+                        };
+                        
+                        // Sí hay información de fuente, aseguar que tenemos todos los detalles
+                        if (cell.s.font) {
+                            cellStyleObj.font = {
+                                bold: cell.s.font.bold || false,
+                                italic: cell.s.font.italic || false,
+                                color: cell.s.font.color || null,
+                                size: cell.s.font.sz || 11,
+                                underline: cell.s.font.underline || false,
+                                ...cell.s.font
+                            };
+                        }
+                        
+                        // Asegurar información de alineación
+                        if (cell.s.alignment) {
+                            cellStyleObj.alignment = {
+                                horizontal: cell.s.alignment.horizontal || 'left',
+                                vertical: cell.s.alignment.vertical || 'middle',
+                                wrapText: cell.s.alignment.wrapText || false,
+                                ...cell.s.alignment
+                            };
+                        }
+                        
+                        styles[sheetName][key] = cellStyleObj;
                     }
                 }
             }
