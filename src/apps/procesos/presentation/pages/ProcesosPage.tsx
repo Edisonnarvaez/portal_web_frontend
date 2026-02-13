@@ -148,8 +148,11 @@ export default function ProcesosPage() {
     currentSheet: '',
     currentExcelDocument: null as Document | null,
     currentExcelType: null as 'oficial' | 'editable' | null,
+    excelMerged: {} as { [key: string]: string[] },
+    excelStyles: {} as any,
     currentWordDocument: null as Document | null,
-    currentWordType: null as 'oficial' | 'editable' | null
+    currentWordType: null as 'oficial' | 'editable' | null,
+    wordBlob: undefined as Blob | undefined
   });
 
   const [loadingExcel, setLoadingExcel] = useState(false);
@@ -197,8 +200,11 @@ export default function ProcesosPage() {
       currentSheet: '',
       currentExcelDocument: null,
       currentExcelType: null,
+      excelMerged: {},
+      excelStyles: {},
       currentWordDocument: null,
-      currentWordType: null
+      currentWordType: null,
+      wordBlob: undefined
     });
   };
 
@@ -283,7 +289,7 @@ export default function ProcesosPage() {
         return;
       }
 
-      const { data, sheets } = await processExcelFile(blob);
+      const { data, sheets, merged, styles } = await processExcelFile(blob);
 
       if (!sheets || sheets.length === 0) {
         setError('El archivo Excel no contiene hojas válidas para mostrar.');
@@ -296,7 +302,9 @@ export default function ProcesosPage() {
         excelSheets: sheets,
         currentSheet: sheets[0],
         currentExcelDocument: document,
-        currentExcelType: type
+        currentExcelType: type,
+        excelMerged: merged,
+        excelStyles: styles
       });
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -317,13 +325,39 @@ export default function ProcesosPage() {
   };
 
   const handleViewWord = async (document: Document, type: 'oficial' | 'editable') => {
-    const title = `${document.codigo_documento} v${document.version} - ${document.nombre_documento}`;
+    setLoadingExcel(true);
+    setError(''); // Limpiar errores previos
+    try {
+      const blob = await documentService.previewDocument(document.id, type);
 
-    openModal('isWordViewerOpen', {
-      currentDocumentTitle: title,
-      currentWordDocument: document,
-      currentWordType: type
-    });
+      if (!blob || blob.size === 0) {
+        setError('El archivo Word está vacío o no se pudo procesar correctamente.');
+        setLoadingExcel(false);
+        return;
+      }
+
+      const title = `${document.codigo_documento} v${document.version} - ${document.nombre_documento}`;
+
+      openModal('isWordViewerOpen', {
+        currentDocumentTitle: title,
+        currentWordDocument: document,
+        currentWordType: type,
+        wordBlob: blob
+      });
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setError(`El archivo Word no fue encontrado. Verifica que el documento "${document.nombre_documento}" aún existe.`);
+      } else if (error.response?.status === 403) {
+        setError(`No tienes permisos para visualizar este archivo.`);
+      } else if (error.message?.includes('Network')) {
+        setError(`Error de conexión al cargar el archivo. Verifica tu conexión a internet.`);
+      } else {
+        const errorMsg = getSpecificErrorMessage(error, 'procesar el archivo Word', document.nombre_documento);
+        setError(errorMsg);
+      }
+    } finally {
+      setLoadingExcel(false);
+    }
   };
 
   const handleFormSubmit = async (formData: FormData) => {
@@ -644,6 +678,8 @@ export default function ProcesosPage() {
         currentSheet={modalData.currentSheet}
         currentExcelDocument={modalData.currentExcelDocument}
         currentExcelType={modalData.currentExcelType}
+        excelMerged={modalData.excelMerged}
+        excelStyles={modalData.excelStyles}
         onSheetChange={(sheet) => setModalData(prev => ({ ...prev, currentSheet: sheet }))}
         onDownload={handleDownload}
         onClose={() => closeModal('isExcelViewerOpen')}
@@ -654,6 +690,7 @@ export default function ProcesosPage() {
         currentDocumentTitle={modalData.currentDocumentTitle}
         currentWordDocument={modalData.currentWordDocument}
         currentWordType={modalData.currentWordType}
+        wordBlob={modalData.wordBlob}
         onDownload={handleDownload}
         onClose={() => closeModal('isWordViewerOpen')}
       />

@@ -7,18 +7,40 @@ import {
 } from 'react-icons/fa';
 
 export class FileHandlingService {
-    static async processExcelFile(blob: Blob): Promise<{ data: { [key: string]: any[][] }, sheets: string[] }> {
+    static async processExcelFile(blob: Blob): Promise<{ data: { [key: string]: any[][] }, sheets: string[], merged: { [key: string]: string[] }, styles: any }> {
         const arrayBuffer = await blob.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const sheets: string[] = workbook.SheetNames;
         const data: { [key: string]: any[][] } = {};
+        const merged: { [key: string]: string[] } = {};
+        const styles: any = {};
 
         sheets.forEach(sheetName => {
             const worksheet = workbook.Sheets[sheetName];
             data[sheetName] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // Capturar celdas fusionadas
+            if (worksheet['!merges']) {
+                merged[sheetName] = worksheet['!merges'].map((merge: any) => 
+                    `${XLSX.utils.encode_col(merge.s.c)}${merge.s.r}:${XLSX.utils.encode_col(merge.e.c)}${merge.e.r}`
+                );
+            } else {
+                merged[sheetName] = [];
+            }
+            
+            // Capturar estilos básicos
+            styles[sheetName] = {};
+            for (let key in worksheet) {
+                if (key[0] !== '!') {
+                    const cell = worksheet[key];
+                    if (cell.s) {
+                        styles[sheetName][key] = cell.s;
+                    }
+                }
+            }
         });
 
-        return { data, sheets };
+        return { data, sheets, merged, styles };
     }
 
     static getFileIcon(filename: string): { Component: any, className: string } {
