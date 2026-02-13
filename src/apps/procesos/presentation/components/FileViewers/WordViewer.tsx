@@ -24,20 +24,129 @@ export default function WordViewerStandalone({
             arrayBuffer
           });
           
-          // Aplicar estilos CSS adicionales al HTML
+          // CSS avanzado para máxima fidelidad con Office
           const styledHtml = `
             <style>
-              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-              h1 { font-size: 2em; margin: 0.67em 0; font-weight: bold; }
-              h2 { font-size: 1.5em; margin: 0.75em 0; font-weight: bold; }
-              h3 { font-size: 1.25em; margin: 0.83em 0; font-weight: bold; }
-              p { margin: 0.5em 0; line-height: 1.5; }
-              img { max-width: 100%; height: auto; margin: 0.5em 0; }
-              table { border-collapse: collapse; margin: 1em 0; width: 100%; }
-              th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-              th { background-color: #f5f5f5; font-weight: bold; }
-              strong { font-weight: bold; }
-              em { font-style: italic; }
+              /* Fuente por defecto - Calibri es la fuente de Word */
+              body { 
+                font-family: 'Calibri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 11pt;
+                line-height: 1.15;
+                color: #000000;
+              }
+              
+              /* Párrafos normales */
+              p { 
+                margin: 0 0 6pt 0;
+                line-height: 1.15;
+                text-align: justify;
+              }
+              
+              /* Encabezados estilo Office */
+              h1 { 
+                font-size: 28pt;
+                margin: 12pt 0 6pt 0;
+                font-weight: bold;
+                color: #2c3e50;
+                line-height: 1.15;
+              }
+              h2 { 
+                font-size: 20pt;
+                margin: 10pt 0 6pt 0;
+                font-weight: bold;
+                color: #34495e;
+                line-height: 1.15;
+              }
+              h3 { 
+                font-size: 14pt;
+                margin: 8pt 0 6pt 0;
+                font-weight: bold;
+                color: #5d6d7b;
+                line-height: 1.15;
+              }
+              h4 {
+                font-size: 12pt;
+                margin: 6pt 0 4pt 0;
+                font-weight: bold;
+                line-height: 1.15;
+              }
+              
+              /* Listas */
+              ul, ol {
+                margin: 6pt 0;
+                padding-left: 2.5em;
+              }
+              li {
+                margin: 2pt 0;
+                line-height: 1.15;
+              }
+              
+              /* Tablas estilo Office */
+              table {
+                border-collapse: collapse;
+                margin: 12pt 0;
+                width: 100%;
+                border: 1px solid #c5c5c5;
+                font-size: 11pt;
+              }
+              th {
+                background-color: #4472c4;
+                color: white;
+                border: 1px solid #4472c4;
+                padding: 6pt 8pt;
+                text-align: left;
+                font-weight: bold;
+                line-height: 1.15;
+              }
+              td {
+                border: 1px solid #c5c5c5;
+                padding: 6pt 8pt;
+                line-height: 1.15;
+              }
+              tr:nth-child(even) {
+                background-color: #f2f2f2;
+              }
+              
+              /* Formatos de texto */
+              strong, b { font-weight: bold; }
+              em, i { font-style: italic; }
+              u { text-decoration: underline; }
+              del, s { text-decoration: line-through; }
+              sup { vertical-align: super; font-size: 0.8em; }
+              sub { vertical-align: sub; font-size: 0.8em; }
+              
+              /* Imágenes con sombra sutil */
+              img {
+                max-width: 100%;
+                height: auto;
+                margin: 8pt 0;
+                border: 1px solid #d0d0d0;
+                border-radius: 3px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              
+              /* Citas en bloque */
+              blockquote {
+                border-left: 4px solid #4472c4;
+                padding-left: 12pt;
+                margin: 6pt 0;
+                color: #666666;
+                font-style: italic;
+              }
+              
+              /* Código */
+              code, pre {
+                font-family: 'Courier New', Courier, monospace;
+                background-color: #f5f5f5;
+                padding: 2pt 4pt;
+                border-radius: 3px;
+                font-size: 10pt;
+              }
+              
+              pre {
+                padding: 8pt;
+                overflow-x: auto;
+              }
             </style>
             ${result.value}
           `;
@@ -112,13 +221,13 @@ export default function WordViewerStandalone({
 
       {/* Document Preview */}
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-300 dark:border-slate-600 overflow-hidden shadow-lg">
+        {/* Documento estilo Office - con márgenes y fondo blanco */}
         <div 
-          className="flex-1 overflow-y-auto p-8 bg-white dark:bg-slate-950"
+          className="flex-1 overflow-y-auto p-12 bg-white dark:bg-slate-960"
           dangerouslySetInnerHTML={{ __html: htmlContent }}
           style={{
             fontSize: '14px',
-            lineHeight: '1.5',
-            color: '#1f2937'
+            lineHeight: '1.5'
           }}
         />
       </div>

@@ -11,6 +11,39 @@ interface ExcelViewerStandaloneProps {
     styles?: any;
 }
 
+// Function to format numbers like Excel does
+const formatCellValue = (value: any, cellStyle: any): string => {
+  if (value === null || value === undefined) return '-';
+  
+  const stringValue = String(value);
+  const numFmt = cellStyle?.numFmt;
+  
+  // Try to parse as number
+  const numValue = parseFloat(stringValue);
+  
+  if (!isNaN(numValue) && numFmt) {
+    // Format percentages
+    if (numFmt.includes('%')) {
+      return (numValue * 100).toFixed(2) + '%';
+    }
+    // Format currency
+    if (numFmt.includes('$') || numFmt.includes('€') || numFmt.includes('£')) {
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 2
+      }).format(numValue);
+    }
+    // Format with decimals
+    if (numFmt.includes('.') || numFmt.includes('0')) {
+      const decimals = (numFmt.match(/0/g) || []).length - 1;
+      return numValue.toFixed(Math.max(2, decimals));
+    }
+  }
+  
+  return stringValue;
+};
+
 export default function ExcelViewerStandalone({
   data,
   sheets,
@@ -31,7 +64,7 @@ export default function ExcelViewerStandalone({
     });
   };
 
-  // Obtener estilo de celda con mayor fidelidad
+  // Obtener estilo de celda con mayor fidelidad estilo Office
   const getCellStyle = (row: number, col: number): React.CSSProperties => {
     const cellKey = XLSX.utils.encode_cell({ r: row, c: col });
     const cellStyle = styles[currentSheet]?.[cellKey];
@@ -194,18 +227,20 @@ export default function ExcelViewerStandalone({
                 >
                   {row.map((cell, colIndex) => {
                     const actualRowIndex = rowIndex + 1;
+                    const cellKey = XLSX.utils.encode_cell({ r: actualRowIndex, c: colIndex });
                     const cellStyle = getCellStyle(actualRowIndex, colIndex);
-                    const cellValue = cell !== undefined && cell !== null ? String(cell) : '-';
+                    const cellStyleObj = styles[currentSheet]?.[cellKey];
+                    const formattedValue = formatCellValue(cell, cellStyleObj);
                     
                     return (
                       <td
                         key={`${rowIndex}-${colIndex}`}
-                        className="px-3 py-2 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 min-w-[100px] text-xs"
-                        title={cellValue}
+                        className="px-3 py-2 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 min-w-[100px] text-xs font-500"
+                        title={formattedValue}
                         style={cellStyle}
                       >
                         <div className="truncate max-w-[150px]">
-                          {cellValue}
+                          {formattedValue}
                         </div>
                       </td>
                     );
