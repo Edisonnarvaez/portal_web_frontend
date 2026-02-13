@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HiGift, HiMagnifyingGlass, HiPlus, HiPencil, HiTrash, HiUser, HiCalendarDays, HiSparkles, HiCake, HiHeart } from "react-icons/hi2";
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import { MenuRepository } from "../../infrastructure/repositories/MenuRepository";
 import { FelicitacionCrudService } from "../../application/services/FelicitacionCrudService";
 import { FuncionarioService } from "../../application/services/FuncionarioService";
@@ -136,45 +137,7 @@ export default function FelicitacionesPage() {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen relative overflow-hidden">
-                {/* Fondo decorativo */}
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-white to-rose-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"></div>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-pink-400/10 to-rose-400/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-yellow-400/10 to-pink-400/10 rounded-full blur-3xl"></div>
-                
-                <div className="relative p-6">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="animate-pulse space-y-6">
-                            {/* Header skeleton */}
-                            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                                    <div className="space-y-2">
-                                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-80"></div>
-                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-96"></div>
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                                    <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                                    <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                                </div>
-                                
-                                <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                            </div>
-                            
-                            {/* Cards skeleton */}
-                            <div className="space-y-4">
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="h-32 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/50"></div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Cargando felicitaciones..." />;
     }
 
     if (error) {

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { HiOutlineDocumentText, HiRefresh } from 'react-icons/hi';
 import { FaUpload, FaTimes } from 'react-icons/fa';
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 
 import { useDocumentCRUD } from '../hooks/useDocumentCRUD';
 import { useDocumentPermissions } from '../hooks/useDocumentPermissions';
@@ -17,7 +18,7 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
       return detail;
     }
   }
-  
+
   if (error.response?.data?.message) {
     return error.response.data.message;
   }
@@ -34,11 +35,11 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
   if (error.response?.status === 403) {
     return `Acceso denegado: No tienes permisos para ${action}`;
   }
-  
+
   if (error.response?.status === 404) {
     return `${context || 'El documento'} no fue encontrado. Puede haber sido eliminado.`;
   }
-  
+
   if (error.response?.status === 409) {
     // Conflicto - generalmente es código duplicado
     const detail = error.response?.data?.detail || '';
@@ -47,11 +48,11 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
     }
     return `Conflicto: ${detail || 'El documento ya existe o ha sido modificado. Intenta recargar los datos.'}`;
   }
-  
+
   if (error.response?.status === 413) {
     return `El archivo es demasiado grande. Tamaño máximo permitido: ${error.response?.data?.max_size || 'verificar en configuración'}`;
   }
-  
+
   if (error.response?.status === 422) {
     const errors = error.response?.data?.errors || error.response?.data?.detail || {};
     if (typeof errors === 'object') {
@@ -62,7 +63,7 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
     }
     return `Datos incompletos o inválidos: ${errors}. Verifica que todos los campos requeridos estén completos.`;
   }
-  
+
   if (error.response?.status === 500) {
     return `Error del servidor: La solicitud no pudo completarse. ${error.response?.data?.detail || 'Intenta nuevamente más tarde.'}`;
   }
@@ -147,8 +148,11 @@ export default function ProcesosPage() {
     currentSheet: '',
     currentExcelDocument: null as Document | null,
     currentExcelType: null as 'oficial' | 'editable' | null,
+    excelMerged: {} as { [key: string]: string[] },
+    excelStyles: {} as any,
     currentWordDocument: null as Document | null,
-    currentWordType: null as 'oficial' | 'editable' | null
+    currentWordType: null as 'oficial' | 'editable' | null,
+    wordBlob: undefined as Blob | undefined
   });
 
   const [loadingExcel, setLoadingExcel] = useState(false);
@@ -196,8 +200,11 @@ export default function ProcesosPage() {
       currentSheet: '',
       currentExcelDocument: null,
       currentExcelType: null,
+      excelMerged: {},
+      excelStyles: {},
       currentWordDocument: null,
-      currentWordType: null
+      currentWordType: null,
+      wordBlob: undefined
     });
   };
 
@@ -233,7 +240,7 @@ export default function ProcesosPage() {
 
   const handleViewDocument = async (document: Document, type: 'oficial' | 'editable' = 'oficial') => {
     const archivoUrl = type === 'oficial' ? document.archivo_oficial : document.archivo_editable;
-    
+
     if (!archivoUrl) {
       const tipoArchivo = type === 'oficial' ? 'oficial' : 'editable';
       setError(`No hay versión ${tipoArchivo} disponible para este documento. Verifica que se haya cargado correctamente.`);
@@ -275,15 +282,15 @@ export default function ProcesosPage() {
     setError(''); // Limpiar errores previos
     try {
       const blob = await documentService.previewDocument(document.id, type);
-      
+
       if (!blob || blob.size === 0) {
         setError('El archivo Excel está vacío o no se pudo procesar correctamente.');
         setLoadingExcel(false);
         return;
       }
 
-      const { data, sheets } = await processExcelFile(blob);
-      
+      const { data, sheets, merged, styles } = await processExcelFile(blob);
+
       if (!sheets || sheets.length === 0) {
         setError('El archivo Excel no contiene hojas válidas para mostrar.');
         setLoadingExcel(false);
@@ -295,7 +302,9 @@ export default function ProcesosPage() {
         excelSheets: sheets,
         currentSheet: sheets[0],
         currentExcelDocument: document,
-        currentExcelType: type
+        currentExcelType: type,
+        excelMerged: merged,
+        excelStyles: styles
       });
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -316,13 +325,39 @@ export default function ProcesosPage() {
   };
 
   const handleViewWord = async (document: Document, type: 'oficial' | 'editable') => {
-    const title = `${document.codigo_documento} v${document.version} - ${document.nombre_documento}`;
+    setLoadingExcel(true);
+    setError(''); // Limpiar errores previos
+    try {
+      const blob = await documentService.previewDocument(document.id, type);
 
-    openModal('isWordViewerOpen', {
-      currentDocumentTitle: title,
-      currentWordDocument: document,
-      currentWordType: type
-    });
+      if (!blob || blob.size === 0) {
+        setError('El archivo Word está vacío o no se pudo procesar correctamente.');
+        setLoadingExcel(false);
+        return;
+      }
+
+      const title = `${document.codigo_documento} v${document.version} - ${document.nombre_documento}`;
+
+      openModal('isWordViewerOpen', {
+        currentDocumentTitle: title,
+        currentWordDocument: document,
+        currentWordType: type,
+        wordBlob: blob
+      });
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setError(`El archivo Word no fue encontrado. Verifica que el documento "${document.nombre_documento}" aún existe.`);
+      } else if (error.response?.status === 403) {
+        setError(`No tienes permisos para visualizar este archivo.`);
+      } else if (error.message?.includes('Network')) {
+        setError(`Error de conexión al cargar el archivo. Verifica tu conexión a internet.`);
+      } else {
+        const errorMsg = getSpecificErrorMessage(error, 'procesar el archivo Word', document.nombre_documento);
+        setError(errorMsg);
+      }
+    } finally {
+      setLoadingExcel(false);
+    }
   };
 
   const handleFormSubmit = async (formData: FormData) => {
@@ -340,7 +375,7 @@ export default function ProcesosPage() {
       closeAllModals();
     } catch (error: any) {
       let errorMsg = '';
-      
+
       // Intenta extraer el mensaje más específico posible del error
       if (error.response?.data?.detail) {
         errorMsg = error.response.data.detail;
@@ -377,7 +412,7 @@ export default function ProcesosPage() {
         const action = modals.isEditFormOpen ? 'actualizar' : 'crear';
         errorMsg = `Error al ${action} el documento. Intenta nuevamente.`;
       }
-      
+
       // Lanzar el error para que sea capturado por el modal
       throw new Error(errorMsg);
     }
@@ -396,7 +431,7 @@ export default function ProcesosPage() {
       closeAllModals();
     } catch (error: any) {
       let errorMsg = '';
-      
+
       if (error.response?.status === 403) {
         errorMsg = 'No tienes permisos para eliminar este documento.';
       } else if (error.response?.status === 404) {
@@ -410,39 +445,38 @@ export default function ProcesosPage() {
       } else {
         errorMsg = getSpecificErrorMessage(error, 'eliminar el documento', modalData.deletingDocument.nombre_documento);
       }
-      
+
       setError(errorMsg);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingScreen message="Cargando documentos..." />;
   }
 
   // Usar crudError en lugar de error para el error del hook
   if (crudError) {
     return (
-      <div className="text-center py-8 text-red-600 dark:text-red-400">
-        {crudError}
+      <div className="text-center py-8 text-red-600 dark:text-red-400 flex items-center justify-center h-screen">
+        <div>
+          <p className="text-lg font-semibold mb-2">Error al cargar</p>
+          <p>{crudError}</p>
+        </div>
       </div>
     );
   }
-  
+
   return (
-    <div className="p-4 sm:p-8">
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <div className="flex items-center mb-4 sm:mb-0">
-          <HiOutlineDocumentText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-3 sm:px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center mb-2 sm:mb-0">
+          <HiOutlineDocumentText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
               Sistema de Gestion Institucional
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               {permissions.isAdmin ? 'Gestión completa de documentos del sistema de calidad' :
                 permissions.isGestor ? 'Consulta y descarga de documentos del sistema de calidad' :
                   'Consulta de documentos del sistema de calidad'}
@@ -457,19 +491,19 @@ export default function ProcesosPage() {
             onClick={handleRefresh}
             disabled={isRefreshing}
             className={`
-    group px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 justify-center
-    ${isRefreshing
+      group px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-2 justify-center text-sm
+      ${isRefreshing
                 ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 active:scale-95'
               }
-  `}
+    `}
             title="Actualizar datos"
           >
             <HiRefresh
-              size={16}
+              size={14}
               className={`transition-transform duration-300 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`}
             />
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline text-xs">
               {isRefreshing ? 'Actualizando...' : 'Actualizar'}
             </span>
           </button>
@@ -478,57 +512,66 @@ export default function ProcesosPage() {
           {permissions.canManage && (
             <button
               onClick={() => openModal('isFormOpen')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 justify-center"
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 justify-center text-sm"
             >
-              <FaUpload size={16} />
-              Subir Documento
+              <FaUpload size={14} />
+              Subir
             </button>
           )}
         </div>
       </div>
 
-      {/* Mensajes */}
-      {message && (
-        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg dark:bg-green-900 dark:border-green-600 dark:text-green-200">
-          {message}
+      {/* Contenido principal - flex sin scroll */}
+      <div className="flex-1 flex flex-col overflow-hidden px-3 sm:px-4 pt-2 pb-2 gap-1">
+        {/* Mensajes */}
+        {message && (
+          <div className="p-2 bg-green-100 border border-green-400 text-green-700 rounded text-sm dark:bg-green-900 dark:border-green-600 dark:text-green-200">
+            {message}
+          </div>
+        )}
+
+        {error && (
+          <div className="p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900 dark:border-red-600 dark:text-red-200">
+            {error}
+          </div>
+        )}
+
+        {/* Filtros */}
+        <div className="flex-shrink-0">
+          <DocumentFilters
+            filters={filters}
+            processes={processes}
+            processTypes={processTypes}
+            permissions={permissions}
+            onUpdateFilter={updateFilter}
+            onClearFilters={clearFilters}
+          />
         </div>
-      )}
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-600 dark:text-red-200">
-          {error}
+        {/* Estadísticas */}
+        <div className="flex-shrink-0">
+          <DocumentStats
+            documents={documents}
+            filteredDocuments={filteredDocuments}
+            permissions={permissions}
+          />
         </div>
-      )}
 
-      {/* Filtros */}
-      <DocumentFilters
-        filters={filters}
-        processes={processes}
-        processTypes={processTypes}
-        permissions={permissions}
-        onUpdateFilter={updateFilter}
-        onClearFilters={clearFilters}
-      />
-
-      {/* Estadísticas */}
-      <DocumentStats
-        documents={documents}
-        filteredDocuments={filteredDocuments}
-        permissions={permissions}
-      />
-
-      {/* Tabla */}
-      <DocumentTable
-        documents={filteredDocuments}
-        processes={processes}
-        permissions={permissions}
-        onView={handleView}
-        onViewDocument={handleViewDocument}
-        onDownload={handleDownload}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        loadingExcel={loadingExcel}
-      />
+        {/* Tabla - toma el espacio restante */}
+        <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
+          <DocumentTable
+            documents={filteredDocuments}
+            processes={processes}
+            permissions={permissions}
+            onView={handleView}
+            onViewDocument={handleViewDocument}
+            onDownload={handleDownload}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            loadingExcel={loadingExcel}
+          />
+        </div>
+      </div>
 
       {/* Modales */}
       {modals.isFormOpen && (
@@ -572,62 +615,62 @@ export default function ProcesosPage() {
       )}
 
       {modals.isDocumentViewerOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
-      
-      {/* CABECERA (Se mantiene igual con los botones) */}
-      <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-4 flex-1 truncate">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-            {modalData.currentDocumentTitle || "Vista previa del documento"}
-          </h3>
-          
-          {zoomInstance && (
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-4 border border-gray-200 dark:border-gray-700">
-              <zoomInstance.ZoomOut>
-                {(props: any) => (
-                  <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                  </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+
+            {/* CABECERA (Se mantiene igual con los botones) */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-4 flex-1 truncate">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {modalData.currentDocumentTitle || "Vista previa del documento"}
+                </h3>
+
+                {zoomInstance && (
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-4 border border-gray-200 dark:border-gray-700">
+                    <zoomInstance.ZoomOut>
+                      {(props: any) => (
+                        <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                        </button>
+                      )}
+                    </zoomInstance.ZoomOut>
+                    <div className="text-xs font-bold min-w-[50px] text-center text-gray-500 dark:text-gray-400 border-x border-gray-200 dark:border-gray-700 px-2">
+                      <zoomInstance.CurrentScale>{(props: any) => <>{Math.round(props.scale * 100)}%</>}</zoomInstance.CurrentScale>
+                    </div>
+                    <zoomInstance.ZoomIn>
+                      {(props: any) => (
+                        <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        </button>
+                      )}
+                    </zoomInstance.ZoomIn>
+                  </div>
                 )}
-              </zoomInstance.ZoomOut>
-              <div className="text-xs font-bold min-w-[50px] text-center text-gray-500 dark:text-gray-400 border-x border-gray-200 dark:border-gray-700 px-2">
-                <zoomInstance.CurrentScale>{(props: any) => <>{Math.round(props.scale * 100)}%</>}</zoomInstance.CurrentScale>
               </div>
-              <zoomInstance.ZoomIn>
-                {(props: any) => (
-                  <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                  </button>
-                )}
-              </zoomInstance.ZoomIn>
+
+              <button
+                onClick={() => {
+                  setZoomInstance(null);
+                  closeModal('isDocumentViewerOpen');
+                }}
+                className="text-gray-400 hover:text-red-500 transition-colors ml-4"
+              >
+                <FaTimes size={24} />
+              </button>
             </div>
-          )}
-        </div>
 
-        <button
-          onClick={() => {
-            setZoomInstance(null);
-            closeModal('isDocumentViewerOpen');
-          }}
-          className="text-gray-400 hover:text-red-500 transition-colors ml-4"
-        >
-          <FaTimes size={24} />
-        </button>
-      </div>
-
-      {/* CONTENEDOR CON EL PADDING RECUPERADO */}
-      <div className="flex-1 p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
-        <div className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
-          <PdfViewer 
-            fileUrl={modalData.currentDocumentUrl} 
-            onPluginInit={(instance) => setZoomInstance(instance)}
-          />
+            {/* CONTENEDOR CON EL PADDING RECUPERADO */}
+            <div className="flex-1 p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
+              <div className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
+                <PdfViewer
+                  fileUrl={modalData.currentDocumentUrl}
+                  onPluginInit={(instance) => setZoomInstance(instance)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       <ExcelViewer
         isOpen={modals.isExcelViewerOpen}
@@ -636,6 +679,8 @@ export default function ProcesosPage() {
         currentSheet={modalData.currentSheet}
         currentExcelDocument={modalData.currentExcelDocument}
         currentExcelType={modalData.currentExcelType}
+        excelMerged={modalData.excelMerged}
+        excelStyles={modalData.excelStyles}
         onSheetChange={(sheet) => setModalData(prev => ({ ...prev, currentSheet: sheet }))}
         onDownload={handleDownload}
         onClose={() => closeModal('isExcelViewerOpen')}
@@ -646,6 +691,7 @@ export default function ProcesosPage() {
         currentDocumentTitle={modalData.currentDocumentTitle}
         currentWordDocument={modalData.currentWordDocument}
         currentWordType={modalData.currentWordType}
+        wordBlob={modalData.wordBlob}
         onDownload={handleDownload}
         onClose={() => closeModal('isWordViewerOpen')}
       />

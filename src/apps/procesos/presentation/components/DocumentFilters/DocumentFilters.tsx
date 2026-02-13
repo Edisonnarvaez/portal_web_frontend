@@ -39,7 +39,7 @@ export default function DocumentFilters({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-2 mb-1">
       <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${permissions.isAdmin ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         <select
           value={filters.selectedTipoProceso}

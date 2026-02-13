@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
+import LoadingScreen from "../../../../shared/components/LoadingScreen";
 
 interface Company {
     id: number;
@@ -81,11 +82,7 @@ export default function InformacionEmpresa() {
     };
 
     if (loading) {
-        return (
-            <div className="text-center text-blue-600 dark:text-blue-300 py-8">
-                Cargando información de la empresa...
-            </div>
-        );
+        return <LoadingScreen message="Cargando información de la empresa..." />;
     }
 
     return (

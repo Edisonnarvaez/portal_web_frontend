@@ -93,7 +93,7 @@ const About: React.FC = () => {
           alt="Logo PILOT" 
           className="h-10 sm:h-14 w-auto mb-3"
         />
-        V 1.0.0
+        V 1.0.1
         {/* <h1 className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300">
           Portal de Gestión Institucional
         </h1>*/}

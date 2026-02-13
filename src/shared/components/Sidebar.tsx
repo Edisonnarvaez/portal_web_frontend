@@ -123,6 +123,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
       ],
     },]
       : []),
+
     // Procesos: cualquier rol en "procesos"
     ...(hasAppAccess(roles, "procesos")
       ? [
@@ -130,6 +131,21 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
             to: "/procesos",
             label: "Procesos",
             icon: <HiDocumentText className="w-5 h-5" />,
+            hasSubmenu: true,
+            submenu: [
+              {
+                to: "/procesos/dashboard",
+                label: "Dashboard",
+                icon: <HiPresentationChartBar className="w-4 h-4" />,
+                requiredRole: ["gestor", "admin"],
+              },
+              {
+                to: "/procesos",
+                label: "Gestión de Documentos",
+                icon: <HiDocumentText className="w-4 h-4" />,
+                requiredRole: ["gestor", "admin"],
+              },
+            ],
           },
         ]
       : []),

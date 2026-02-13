@@ -3,6 +3,7 @@ import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
 import { useAuthContext } from "../../../auth/presentation/context/AuthContext";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
+import LoadingScreen from "../../../../shared/components/LoadingScreen";
 
 interface Company {
     id: number;
@@ -248,12 +249,7 @@ export default function TiposProceso() {
     };
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-blue-600 dark:text-blue-300">Cargando tipos de proceso...</span>
-            </div>
-        );
+        return <LoadingScreen message="Cargando tipos de proceso..." />;
     }
 
     if (error) {

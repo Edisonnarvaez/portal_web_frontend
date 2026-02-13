@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import {
   HiTableCells,
   HiPlus,
@@ -44,12 +45,6 @@ const periodToSpanish = (period: string | number | null | undefined): string => 
 };
 
 // Componentes auxiliares reutilizables
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center py-12">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-  </div>
-);
-
 const CrudModal = ({ isOpen, onClose, title, children, icon, onCloseLabel = "Cerrar" }: any) => {
   if (!isOpen) return null;
   return (
@@ -741,9 +736,7 @@ const ResultadosPage: React.FC = () => {
             </div>
           </div>
         ) : loading ? (
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner />
-          </div>
+          <LoadingScreen message="Cargando resultados..." />
         ) : (
           <>
             {/* Métricas del dashboard */}

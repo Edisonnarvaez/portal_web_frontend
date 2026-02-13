@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useResultsData } from "../hooks/useResultsData";
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 // using native selects for dashboard filters
 import { formatIndicatorLabel } from '../utils/dataHelpers';
 import IndicatorBarChart from "../components/Dashboard/IndicatorBarChart";
@@ -122,14 +123,7 @@ export default function DashboardPage() {
 
     // 🔧 CORREGIR: Mejorar spinner de carga
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="flex flex-col items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                    <p className="text-gray-600 dark:text-gray-400">Cargando datos del dashboard...</p>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Cargando datos del dashboard..." />;
     }
 
     // 🔧 CORREGIR: Mostrar mensaje cuando no hay datos

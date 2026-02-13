@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
+import LoadingScreen from "../../../../shared/components/LoadingScreen";
 import { FaEdit } from "react-icons/fa";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 
@@ -203,7 +204,7 @@ export default function SedesEmpresa() {
     setIsModalOpen(true);
   };
 
-  if (loading) return <div className="text-center py-8 text-blue-600 dark:text-blue-300">Cargando sedes...</div>;
+  if (loading) return <LoadingScreen message="Cargando sedes..." />;
   if (error) return <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>;
 
   return (

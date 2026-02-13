@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import {
   HiChartBar,
   HiPlus,
@@ -38,12 +39,6 @@ const trendToSpanish = (trend: string | undefined): string => {
 };
 
 // Componentes auxiliares
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center py-12">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  </div>
-);
-
 const CrudModal = ({ isOpen, onClose, title, children }: any) => {
   if (!isOpen) return null;
   return (
@@ -458,15 +453,7 @@ const IndicadoresPage: React.FC = () => {
             </div>
           </motion.div>
         ) : loading ? (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex justify-center items-center h-64"
-          >
-            <LoadingSpinner />
-          </motion.div>
+          <LoadingScreen message="Cargando indicadores..." />
         ) : (
           <motion.div
             key="content"
