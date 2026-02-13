@@ -17,7 +17,7 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
       return detail;
     }
   }
-  
+
   if (error.response?.data?.message) {
     return error.response.data.message;
   }
@@ -34,11 +34,11 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
   if (error.response?.status === 403) {
     return `Acceso denegado: No tienes permisos para ${action}`;
   }
-  
+
   if (error.response?.status === 404) {
     return `${context || 'El documento'} no fue encontrado. Puede haber sido eliminado.`;
   }
-  
+
   if (error.response?.status === 409) {
     // Conflicto - generalmente es código duplicado
     const detail = error.response?.data?.detail || '';
@@ -47,11 +47,11 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
     }
     return `Conflicto: ${detail || 'El documento ya existe o ha sido modificado. Intenta recargar los datos.'}`;
   }
-  
+
   if (error.response?.status === 413) {
     return `El archivo es demasiado grande. Tamaño máximo permitido: ${error.response?.data?.max_size || 'verificar en configuración'}`;
   }
-  
+
   if (error.response?.status === 422) {
     const errors = error.response?.data?.errors || error.response?.data?.detail || {};
     if (typeof errors === 'object') {
@@ -62,7 +62,7 @@ const getSpecificErrorMessage = (error: any, action: string, context?: string): 
     }
     return `Datos incompletos o inválidos: ${errors}. Verifica que todos los campos requeridos estén completos.`;
   }
-  
+
   if (error.response?.status === 500) {
     return `Error del servidor: La solicitud no pudo completarse. ${error.response?.data?.detail || 'Intenta nuevamente más tarde.'}`;
   }
@@ -233,7 +233,7 @@ export default function ProcesosPage() {
 
   const handleViewDocument = async (document: Document, type: 'oficial' | 'editable' = 'oficial') => {
     const archivoUrl = type === 'oficial' ? document.archivo_oficial : document.archivo_editable;
-    
+
     if (!archivoUrl) {
       const tipoArchivo = type === 'oficial' ? 'oficial' : 'editable';
       setError(`No hay versión ${tipoArchivo} disponible para este documento. Verifica que se haya cargado correctamente.`);
@@ -275,7 +275,7 @@ export default function ProcesosPage() {
     setError(''); // Limpiar errores previos
     try {
       const blob = await documentService.previewDocument(document.id, type);
-      
+
       if (!blob || blob.size === 0) {
         setError('El archivo Excel está vacío o no se pudo procesar correctamente.');
         setLoadingExcel(false);
@@ -283,7 +283,7 @@ export default function ProcesosPage() {
       }
 
       const { data, sheets } = await processExcelFile(blob);
-      
+
       if (!sheets || sheets.length === 0) {
         setError('El archivo Excel no contiene hojas válidas para mostrar.');
         setLoadingExcel(false);
@@ -340,7 +340,7 @@ export default function ProcesosPage() {
       closeAllModals();
     } catch (error: any) {
       let errorMsg = '';
-      
+
       // Intenta extraer el mensaje más específico posible del error
       if (error.response?.data?.detail) {
         errorMsg = error.response.data.detail;
@@ -377,7 +377,7 @@ export default function ProcesosPage() {
         const action = modals.isEditFormOpen ? 'actualizar' : 'crear';
         errorMsg = `Error al ${action} el documento. Intenta nuevamente.`;
       }
-      
+
       // Lanzar el error para que sea capturado por el modal
       throw new Error(errorMsg);
     }
@@ -396,7 +396,7 @@ export default function ProcesosPage() {
       closeAllModals();
     } catch (error: any) {
       let errorMsg = '';
-      
+
       if (error.response?.status === 403) {
         errorMsg = 'No tienes permisos para eliminar este documento.';
       } else if (error.response?.status === 404) {
@@ -410,7 +410,7 @@ export default function ProcesosPage() {
       } else {
         errorMsg = getSpecificErrorMessage(error, 'eliminar el documento', modalData.deletingDocument.nombre_documento);
       }
-      
+
       setError(errorMsg);
     }
   };
@@ -431,7 +431,7 @@ export default function ProcesosPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="p-4 sm:p-8">
       {/* Header */}
@@ -572,62 +572,62 @@ export default function ProcesosPage() {
       )}
 
       {modals.isDocumentViewerOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
-      
-      {/* CABECERA (Se mantiene igual con los botones) */}
-      <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-4 flex-1 truncate">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-            {modalData.currentDocumentTitle || "Vista previa del documento"}
-          </h3>
-          
-          {zoomInstance && (
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-4 border border-gray-200 dark:border-gray-700">
-              <zoomInstance.ZoomOut>
-                {(props: any) => (
-                  <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                  </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+
+            {/* CABECERA (Se mantiene igual con los botones) */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-4 flex-1 truncate">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {modalData.currentDocumentTitle || "Vista previa del documento"}
+                </h3>
+
+                {zoomInstance && (
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-4 border border-gray-200 dark:border-gray-700">
+                    <zoomInstance.ZoomOut>
+                      {(props: any) => (
+                        <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                        </button>
+                      )}
+                    </zoomInstance.ZoomOut>
+                    <div className="text-xs font-bold min-w-[50px] text-center text-gray-500 dark:text-gray-400 border-x border-gray-200 dark:border-gray-700 px-2">
+                      <zoomInstance.CurrentScale>{(props: any) => <>{Math.round(props.scale * 100)}%</>}</zoomInstance.CurrentScale>
+                    </div>
+                    <zoomInstance.ZoomIn>
+                      {(props: any) => (
+                        <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        </button>
+                      )}
+                    </zoomInstance.ZoomIn>
+                  </div>
                 )}
-              </zoomInstance.ZoomOut>
-              <div className="text-xs font-bold min-w-[50px] text-center text-gray-500 dark:text-gray-400 border-x border-gray-200 dark:border-gray-700 px-2">
-                <zoomInstance.CurrentScale>{(props: any) => <>{Math.round(props.scale * 100)}%</>}</zoomInstance.CurrentScale>
               </div>
-              <zoomInstance.ZoomIn>
-                {(props: any) => (
-                  <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                  </button>
-                )}
-              </zoomInstance.ZoomIn>
+
+              <button
+                onClick={() => {
+                  setZoomInstance(null);
+                  closeModal('isDocumentViewerOpen');
+                }}
+                className="text-gray-400 hover:text-red-500 transition-colors ml-4"
+              >
+                <FaTimes size={24} />
+              </button>
             </div>
-          )}
-        </div>
 
-        <button
-          onClick={() => {
-            setZoomInstance(null);
-            closeModal('isDocumentViewerOpen');
-          }}
-          className="text-gray-400 hover:text-red-500 transition-colors ml-4"
-        >
-          <FaTimes size={24} />
-        </button>
-      </div>
-
-      {/* CONTENEDOR CON EL PADDING RECUPERADO */}
-      <div className="flex-1 p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
-        <div className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
-          <PdfViewer 
-            fileUrl={modalData.currentDocumentUrl} 
-            onPluginInit={(instance) => setZoomInstance(instance)}
-          />
+            {/* CONTENEDOR CON EL PADDING RECUPERADO */}
+            <div className="flex-1 p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
+              <div className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
+                <PdfViewer
+                  fileUrl={modalData.currentDocumentUrl}
+                  onPluginInit={(instance) => setZoomInstance(instance)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       <ExcelViewer
         isOpen={modals.isExcelViewerOpen}
