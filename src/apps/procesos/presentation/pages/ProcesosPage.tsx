@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { HiOutlineDocumentText, HiRefresh } from 'react-icons/hi';
 import { FaUpload, FaTimes } from 'react-icons/fa';
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 
 import { useDocumentCRUD } from '../hooks/useDocumentCRUD';
 import { useDocumentPermissions } from '../hooks/useDocumentPermissions';
@@ -416,18 +417,17 @@ export default function ProcesosPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingScreen message="Cargando documentos..." />;
   }
 
   // Usar crudError en lugar de error para el error del hook
   if (crudError) {
     return (
-      <div className="text-center py-8 text-red-600 dark:text-red-400">
-        {crudError}
+      <div className="text-center py-8 text-red-600 dark:text-red-400 flex items-center justify-center h-screen">
+        <div>
+          <p className="text-lg font-semibold mb-2">Error al cargar</p>
+          <p>{crudError}</p>
+        </div>
       </div>
     );
   }

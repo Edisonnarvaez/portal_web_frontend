@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HiUsers, HiPhone, HiUserCircle, HiPlus, HiPencil, HiTrash, HiStar, HiGift, HiMagnifyingGlass, HiSparkles, HiAcademicCap } from "react-icons/hi2";
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import { HiOfficeBuilding, HiMail } from "react-icons/hi";
 import { FuncionarioService } from "../../application/services/FuncionarioService";
 import { FuncionarioCrudService } from "../../application/services/FuncionarioCrudService";
@@ -316,46 +317,7 @@ export default function FuncionariosPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen relative overflow-hidden">
-        {/* Fondo decorativo */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
-        
-        <div className="relative p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="animate-pulse space-y-6">
-              {/* Header skeleton */}
-              <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                  <div className="space-y-2">
-                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-80"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-96"></div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                </div>
-                
-                <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
-              
-              {/* Grid skeleton */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="h-80 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/50"></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Cargando funcionarios..." />;
   }
 
   if (error) {

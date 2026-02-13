@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
+import LoadingScreen from "../../../../shared/components/LoadingScreen";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 
@@ -181,7 +182,7 @@ export default function AreasEmpresa() {
     setIsModalOpen(true);
   };
 
-  if (loading) return <div className="text-center py-8 text-blue-600 dark:text-blue-300">Cargando áreas...</div>;
+  if (loading) return <LoadingScreen message="Cargando áreas..." />;
   if (error) return <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>;
 
   return (
