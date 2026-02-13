@@ -467,76 +467,77 @@ export default function ProcesosPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
-          <div className="flex items-center mb-3 sm:mb-0">
-            <HiOutlineDocumentText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                Sistema de Gestion Institucional
-              </h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {permissions.isAdmin ? 'Gestión completa de documentos del sistema de calidad' :
-                  permissions.isGestor ? 'Consulta y descarga de documentos del sistema de calidad' :
-                    'Consulta de documentos del sistema de calidad'}
-              </p>
-            </div>
-          </div>
-
-          {/* Botones de acción */}
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            {/* Botón de recarga - visible para todos los roles */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className={`
-      group px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-2 justify-center text-sm
-      ${isRefreshing
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 active:scale-95'
-                }
-    `}
-              title="Actualizar datos"
-            >
-              <HiRefresh
-                size={14}
-                className={`transition-transform duration-300 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`}
-              />
-              <span className="hidden sm:inline text-xs">
-                {isRefreshing ? 'Actualizando...' : 'Actualizar'}
-              </span>
-            </button>
-
-            {/* Botón subir documento - solo para admin */}
-            {permissions.canManage && (
-              <button
-                onClick={() => openModal('isFormOpen')}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 justify-center text-sm"
-              >
-                <FaUpload size={14} />
-                Subir
-              </button>
-            )}
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-3 sm:px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center mb-2 sm:mb-0">
+          <HiOutlineDocumentText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
+          <div>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              Sistema de Gestion Institucional
+            </h1>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {permissions.isAdmin ? 'Gestión completa de documentos del sistema de calidad' :
+                permissions.isGestor ? 'Consulta y descarga de documentos del sistema de calidad' :
+                  'Consulta de documentos del sistema de calidad'}
+            </p>
           </div>
         </div>
 
+        {/* Botones de acción */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {/* Botón de recarga - visible para todos los roles */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`
+      group px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-2 justify-center text-sm
+      ${isRefreshing
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 active:scale-95'
+              }
+    `}
+            title="Actualizar datos"
+          >
+            <HiRefresh
+              size={14}
+              className={`transition-transform duration-300 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`}
+            />
+            <span className="hidden sm:inline text-xs">
+              {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+            </span>
+          </button>
+
+          {/* Botón subir documento - solo para admin */}
+          {permissions.canManage && (
+            <button
+              onClick={() => openModal('isFormOpen')}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 justify-center text-sm"
+            >
+              <FaUpload size={14} />
+              Subir
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Contenido principal - flex sin scroll */}
+      <div className="flex-1 flex flex-col overflow-hidden px-3 sm:px-4 pt-2 pb-2 gap-1">
         {/* Mensajes */}
         {message && (
-          <div className="mb-2 p-2 bg-green-100 border border-green-400 text-green-700 rounded text-sm dark:bg-green-900 dark:border-green-600 dark:text-green-200">
+          <div className="p-2 bg-green-100 border border-green-400 text-green-700 rounded text-sm dark:bg-green-900 dark:border-green-600 dark:text-green-200">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="mb-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900 dark:border-red-600 dark:text-red-200">
+          <div className="p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900 dark:border-red-600 dark:text-red-200">
             {error}
           </div>
         )}
 
         {/* Filtros */}
-        <div className="mb-2">
+        <div className="flex-shrink-0">
           <DocumentFilters
             filters={filters}
             processes={processes}
@@ -548,7 +549,7 @@ export default function ProcesosPage() {
         </div>
 
         {/* Estadísticas */}
-        <div className="mb-2">
+        <div className="flex-shrink-0">
           <DocumentStats
             documents={documents}
             filteredDocuments={filteredDocuments}
@@ -556,8 +557,8 @@ export default function ProcesosPage() {
           />
         </div>
 
-        {/* Tabla - contenedor de altura fija */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col h-[calc(100vh-450px)] sm:h-[calc(100vh-400px)]">
+        {/* Tabla - toma el espacio restante */}
+        <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
           <DocumentTable
             documents={filteredDocuments}
             processes={processes}
