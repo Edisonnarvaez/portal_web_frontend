@@ -1,0 +1,94 @@
+import React from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
+import type { DocumentsByMonth } from '../../utils/reportUtils';
+
+interface MonthlyChartProps {
+  data: DocumentsByMonth[];
+}
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+export default function MonthlyChart({ data }: MonthlyChartProps) {
+  if (data.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+        <p className="text-gray-500 dark:text-gray-400">No hay datos disponibles para este período</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        📊 Documentos por Mes
+      </h3>
+      <ResponsiveContainer width="100%" height={400}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#e5e7eb"
+          />
+          <XAxis
+            dataKey="month"
+            angle={-45}
+            textAnchor="end"
+            height={100}
+            tick={{ fontSize: 12, fill: '#6b7280' }}
+          />
+          <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#1f2937',
+              border: '1px solid #4b5563',
+              borderRadius: '8px',
+              color: '#f3f4f6'
+            }}
+            formatter={(value) => [`${value} documentos`, 'Cantidad']}
+            labelStyle={{ color: '#f3f4f6' }}
+          />
+          <Legend
+            wrapperStyle={{ fontSize: 12 }}
+            iconType="square"
+          />
+          <Bar dataKey="count" fill="#3b82f6" name="Documentos Creados" radius={[8, 8, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+
+      {/* Resumen de datos */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Total de Meses</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{data.length}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Total de Documentos</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {data.reduce((sum, item) => sum + item.count, 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Promedio por Mes</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {Math.round(data.reduce((sum, item) => sum + item.count, 0) / data.length)}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

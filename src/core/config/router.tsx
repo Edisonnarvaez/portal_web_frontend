@@ -6,7 +6,6 @@ import MainLayout from "../presentation/layouts/MainLayout";
 import MenuPage from "../../apps/menu/presentation/pages/MenuPage";
 import ProfilePage from "../../apps/auth/presentation/pages/ProfilePage";
 import AuditoriasPage from "../../apps/auditorias/presentation/pages/AuditoriasPage";
-import ProcesosPage from "../../apps/procesos/presentation/pages/ProcesosPage";
 import AdministracionPage from "../../apps/administracion/presentation/pages/AdministracionPage";
 import NoticiasPage from "../../apps/menu/presentation/pages/NoticiasPage";
 import EventosPage from "../../apps/menu/presentation/pages/EventosPage";
@@ -16,6 +15,7 @@ import FelicitacionesPage from "../../apps/menu/presentation/pages/Felicitacione
 import DashboardPage from "../../apps/indicadores/presentation/pages/DashboardPage";
 import IndicadoresPage from "../../apps/indicadores/presentation/pages/IndicadoresPage";
 import ResultadosPage from "../../apps/indicadores/presentation/pages/ResultadosPage";
+import ProcesosRoutes from "../../apps/procesos/routes";
 import About from "../../core/presentation/pages/About";
 
 export default function AppRouter() {
@@ -52,7 +52,7 @@ export default function AppRouter() {
         { path: "dashboard", element: <DashboardPage /> },
         { path: "indicators", element: <IndicadoresPage /> },
         { path: "results", element: <ResultadosPage /> },
-        { path: "procesos", element: <ProcesosPage /> },
+        { path: "procesos/*", element: <ProcesosRoutes /> },
         { path: "administracion", element: <AdministracionPage /> },
         { path: "acerca_de", element: <About /> },
       ],
