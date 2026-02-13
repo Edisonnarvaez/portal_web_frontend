@@ -216,7 +216,7 @@ export default function WordViewerStandalone({
             {documentTitle}
           </h3>
         </div>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">Vista previa de alta fidelidad</p>
+        
       </div>
 
       {/* Document Preview */}
@@ -234,7 +234,7 @@ export default function WordViewerStandalone({
 
       {/* Info Message */}
       <div className="text-xs text-slate-500 dark:text-slate-400 px-4 py-3 bg-slate-100 dark:bg-slate-700/20 rounded-lg border border-slate-200 dark:border-slate-600">
-        <strong>ℹ️ Vista previa:</strong> Se ha optimizado para mostrar el contenido lo más fiel posible al documento original, incluyendo imágenes y estilos de formato.
+        <strong>ℹ️ Vista previa:</strong> Se muestra una previsualizacion del contenido del documento, Se recomienda descargar para verlo en su formato completo.
       </div>
     </div>
   );

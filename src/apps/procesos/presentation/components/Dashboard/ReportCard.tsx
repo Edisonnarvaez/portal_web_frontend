@@ -31,19 +31,11 @@ export default function ReportCard({ statistics }: ReportCardProps) {
             color: 'bg-yellow-100 dark:bg-yellow-900',
             textColor: 'text-yellow-600 dark:text-yellow-300',
             borderColor: 'border-l-4 border-yellow-500'
-        },
-        {
-            label: 'Documentos Archivados',
-            value: statistics.archivados,
-            icon: HiArchiveBoxXMark,
-            color: 'bg-gray-100 dark:bg-gray-700',
-            textColor: 'text-gray-600 dark:text-gray-300',
-            borderColor: 'border-l-4 border-gray-500'
         }
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
             {stats.map((stat) => {
                 const Icon = stat.icon;
                 return (

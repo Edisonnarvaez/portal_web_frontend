@@ -266,7 +266,7 @@ export default function ExcelViewerStandalone({
 
       {/* Info Message */}
       <div className="text-xs text-slate-500 dark:text-slate-400 px-4 py-3 bg-slate-100 dark:bg-slate-700/20 rounded-lg border border-slate-200 dark:border-slate-600">
-        <strong>💡 Vista previa optimizada:</strong> Se muestran los datos con estilos, colores, alineación y formatos del archivo original. Descárgalo para ver el contenido completo, incluidas todas las columnas y filas.
+        <strong>💡 Vista previa optimizada:</strong> Se muestra una previsualizacion del documento. Se recomienda descargarlo para ver el contenido completo, incluidas todas las columnas y filas.
       </div>
     </div>
   );
