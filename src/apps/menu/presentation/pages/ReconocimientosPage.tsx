@@ -176,29 +176,29 @@ export default function ReconocimientosPage() {
             <div className="fixed bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-orange-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
             <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-yellow-400/5 to-orange-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '4s' }}></div>
             
-            <div className="relative z-10 p-6">
-                <div className="max-w-7xl mx-auto space-y-8">
+            <div className="relative z-10 p-3 sm:p-3 md:p-4">
+                <div className="max-w-7xl mx-auto space-y-2 sm:space-y-3 md:space-y-4">
                     {/* Header moderno */}
                     <div className="relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/50 to-orange-100/50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-3xl transition-all duration-500 group-hover:from-yellow-200/50 group-hover:to-orange-200/50 dark:group-hover:from-yellow-800/30 dark:group-hover:to-orange-800/30"></div>
                         
-                        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8 transition-all duration-300 hover:shadow-2xl">
+                        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-3 sm:p-3 md:p-4 transition-all duration-300 hover:shadow-2xl">
                             {/* Header principal */}
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-6">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3 md:mb-4">
+                                <div className="flex items-center gap-3 sm:gap-4 md:gap-4">
                                     <div className="relative">
-                                        <div className="p-4 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-3xl shadow-xl">
-                                            <HiStar className="w-10 h-10 text-white" />
+                                        <div className="p-2.5 sm:p-3 md:p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl sm:rounded-2xl md:rounded-2xl shadow-lg">
+                                            <HiStar className="w-6 h-6 sm:w-6 md:w-7 lg:w-7 text-white" />
                                         </div>
                                         <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-400 rounded-full animate-bounce flex items-center justify-center">
                                             <HiSparkles className="w-3 h-3 text-orange-800" />
                                         </div>
                                     </div>
                                     <div>
-                                        <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-900 via-orange-800 to-yellow-700 dark:from-yellow-100 dark:via-orange-200 dark:to-yellow-300 bg-clip-text text-transparent mb-2">
+                                        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold bg-gradient-to-r from-yellow-900 via-orange-800 to-yellow-700 dark:from-yellow-100 dark:via-orange-200 dark:to-yellow-300 bg-clip-text text-transparent mb-1 sm:mb-1.5">
                                             Gestión de Reconocimientos
                                         </h1>
-                                        <p className="text-lg text-gray-600 dark:text-gray-400">
+                                        <p className="text-xs sm:text-xs md:text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
                                             Celebra y reconoce los logros excepcionales de nuestro equipo
                                         </p>
                                     </div>

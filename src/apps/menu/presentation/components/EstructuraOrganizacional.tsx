@@ -164,34 +164,34 @@ export default function EstructuraOrganizacional() {
   const areaStyles = getAreaStyles(currentOrganigrama.area);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className={`${areaStyles.headerBg} px-6 py-4 border-b border-gray-200 dark:border-gray-600`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 ${areaStyles.iconBg} rounded-lg`}>
-              <HiOutlinePhoto className={`w-6 h-6 ${areaStyles.iconColor}`} />
+      <div className={`${areaStyles.headerBg} px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600`}>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3 sm:gap-4">
+          <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className={`p-2 ${areaStyles.iconBg} rounded-lg flex-shrink-0`}>
+              <HiOutlinePhoto className={`w-5 h-5 sm:w-6 sm:h-6 ${areaStyles.iconColor}`} />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight line-clamp-1">
                 {currentOrganigrama.name}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                 {currentOrganigrama.description}
               </p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <span className={`px-2 py-1 text-xs font-medium ${areaStyles.badge} rounded-full`}>
                   {currentOrganigrama.area}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {currentIndex + 1} de {organigramaData.length}
+                  {currentIndex + 1}/{organigramaData.length}
                 </span>
               </div>
             </div>
           </div>
           
           {/* Controles de navegación y zoom */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Controles de navegación */}
             <div className="flex items-center gap-1 mr-3">
               <button
@@ -214,18 +214,18 @@ export default function EstructuraOrganizacional() {
             {isImageLoaded && !imageError && (
               <button
                 onClick={toggleZoom}
-                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm"
                 title={isZoomed ? "Zoom normal" : "Ampliar imagen"}
               >
                 {isZoomed ? (
                   <>
                     <HiMagnifyingGlassMinus className="w-4 h-4" />
-                    <span className="text-sm font-medium hidden sm:inline">Reducir</span>
+                    <span className="text-xs sm:text-sm font-medium hidden sm:inline">Reducir</span>
                   </>
                 ) : (
                   <>
                     <HiMagnifyingGlassPlus className="w-4 h-4" />
-                    <span className="text-sm font-medium hidden sm:inline">Ampliar</span>
+                    <span className="text-xs sm:text-sm font-medium hidden sm:inline">Ampliar</span>
                   </>
                 )}
               </button>
@@ -234,7 +234,7 @@ export default function EstructuraOrganizacional() {
         </div>
 
         {/* Navegador de miniaturas */}
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+        <div className="mt-3 sm:mt-4 flex gap-2 overflow-x-auto pb-2">
           {organigramaData.map((item, index) => {
             const itemStyles = getAreaStyles(item.area);
             return (
@@ -242,7 +242,7 @@ export default function EstructuraOrganizacional() {
                 key={item.id}
                 onClick={() => goToSlide(index)}
                 className={`
-                  flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
+                  flex-shrink-0 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-medium transition-all duration-200
                   ${index === currentIndex
                     ? `${itemStyles.activeButton} shadow-md`
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
@@ -250,9 +250,9 @@ export default function EstructuraOrganizacional() {
                 `}
                 title={item.description}
               >
-                <div className="text-center">
-                  <div className="font-medium">{item.name}</div>
-                  <div className="text-xs opacity-75">{item.area}</div>
+                <div className="text-center whitespace-nowrap">
+                  <div className="text-xs sm:text-sm font-medium line-clamp-1">{item.name}</div>
+                  <div className="text-xs opacity-75 hidden sm:block">{item.area}</div>
                 </div>
               </button>
             );

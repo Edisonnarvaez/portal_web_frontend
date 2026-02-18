@@ -5,6 +5,7 @@ import type { Process } from "../../../domain/entities/Process";
 import type { DocumentPermissions } from "../../../application/services/PermissionService";
 import { PermissionService } from "../../../application/services/PermissionService";
 import DocumentRow from "./DocumentRow";
+import DocumentCards from "./DocumentCards";
 import { TIPOS_DOCUMENTO } from "../../../domain/types"; // importa tu archivo index.ts
 
 interface DocumentTableProps {
@@ -89,42 +90,69 @@ export default function DocumentTable({
         Listado Maestro de Documentos
       </h2>
 
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
-            <tr>
-              <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-normal break-words max-w-[200px]">Documento</th>
-              <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Proceso</th>
-              <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
-              <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Versión</th>
-              {permissions.isAdmin && (
-                <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
-              )}
-              <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Archivos</th>
-              <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {sortedDocuments.map((document) => (
-              <DocumentRow
-                key={document.id}
-                document={document}
-                processes={processes}
-                permissions={permissions}
-                onView={onView}
-                onViewDocument={onViewDocument}
-                onDownload={onDownload}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                loadingExcel={loadingExcel}
-              />
-            ))}
-          </tbody>
-        </table>
+      {/* Vista mobile - Cards */}
+      <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+        <DocumentCards
+          documents={sortedDocuments}
+          processes={processes}
+          permissions={permissions}
+          onView={onView}
+          onViewDocument={onViewDocument}
+          onDownload={onDownload}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          loadingExcel={loadingExcel}
+        />
       </div>
 
+      {/* Vista desktop - Tabla */}
+      <div className="hidden md:flex flex-col h-full overflow-hidden">
+        <div className="flex-1 document-scroll">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
+                <tr>
+                  <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-normal break-words max-w-[200px]">Documento</th>
+                  <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Proceso</th>
+                  <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
+                  <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Versión</th>
+                  {permissions.isAdmin && (
+                    <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
+                  )}
+                  <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Archivos</th>
+                  <th scope="col" className="px-6 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {sortedDocuments.map((document) => (
+                  <DocumentRow
+                    key={document.id}
+                    document={document}
+                    processes={processes}
+                    permissions={permissions}
+                    onView={onView}
+                    onViewDocument={onViewDocument}
+                    onDownload={onDownload}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    loadingExcel={loadingExcel}
+                  />
+                ))}
+            </tbody>
+          </table>
+
+          {sortedDocuments.length === 0 && (
+            <div className="flex-1 flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800">
+              <FaFileAlt className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-sm font-medium">No se encontraron documentos</p>
+              <p className="text-xs">{getEmptyMessage()}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mensaje vacío para móvil */}
       {documents.length === 0 && (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+        <div className="md:hidden flex flex-col items-center justify-center h-full text-center py-8 text-gray-500 dark:text-gray-400">
           <FaFileAlt className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-sm font-medium">No se encontraron documentos</p>
           <p className="text-xs">{getEmptyMessage()}</p>

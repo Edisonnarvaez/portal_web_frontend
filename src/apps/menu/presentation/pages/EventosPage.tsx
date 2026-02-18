@@ -234,21 +234,21 @@ export default function EventosPage() {
         <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tr from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
         
-        <div className="relative p-6">
+        <div className="relative p-4 sm:p-6 md:p-8">
           <div className="max-w-4xl mx-auto">
             <Link
               to="/eventos"
-              className="group inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 mb-6 font-medium transition-colors"
+              className="group inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 mb-4 sm:mb-6 font-medium transition-colors"
             >
               <HiArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-3" />
               Volver a eventos
             </Link>
 
             <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
-              <div className="p-8">
-                <div className="flex items-start gap-6 mb-8">
-                  <div className={`flex-shrink-0 p-4 rounded-2xl shadow-lg ${colors.iconBg}`}>
-                    <HiCalendarDays className="w-8 h-8 text-white" />
+              <div className="p-4 sm:p-6 md:p-8">
+                <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-6 mb-4 sm:mb-8">
+                  <div className={`flex-shrink-0 p-3 sm:p-4 rounded-2xl shadow-lg ${colors.iconBg}`}>
+                    <HiCalendarDays className="w-6 h-6 sm:w-7 md:w-8 text-white" />
                   </div>
                   
                   <div className="flex-1">
@@ -276,14 +276,14 @@ export default function EventosPage() {
                       </span>
                     </div>
                     
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                       {eventoDetalle.titulo}
                     </h1>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-purple-50 dark:bg-purple-900/30 rounded-2xl p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-8">
+                  <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg sm:rounded-xl md:rounded-2xl p-3 sm:p-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
                         <HiCalendarDays className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -348,7 +348,7 @@ export default function EventosPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 mb-8">
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                     Detalles del evento
                   </h3>
@@ -390,20 +390,20 @@ export default function EventosPage() {
       
       <div className="relative p-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+          <div className="mb-2 sm:mb-3 md:mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3 md:mb-4">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-4">
               <div className="relative">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg">
-                  <HiCalendarDays className="w-7 h-7 text-white" />
+                <div className="p-2.5 sm:p-3 md:p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl md:rounded-2xl shadow-lg">
+                  <HiCalendarDays className="w-6 h-6 sm:w-6 md:w-7 text-white" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-pink-400 rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                   Eventos y Actividades
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 text-lg">
+                <p className="text-xs sm:text-sm md:text-sm text-gray-600 dark:text-gray-400">
                   Mantente informado sobre las próximas actividades institucionales
                 </p>
               </div>
@@ -421,47 +421,47 @@ export default function EventosPage() {
           </div>
 
           {/* Estadísticas */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-2xl p-4 shadow-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5 md:gap-3 mb-2 sm:mb-3 md:mb-4">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-lg sm:rounded-lg md:rounded-lg p-2.5 sm:p-3 md:p-4 shadow-lg">
               <div className="flex items-center">
-                <HiCalendarDays className="w-8 h-8 text-purple-600 dark:text-purple-400 mr-3" />
+                <HiCalendarDays className="w-5 h-5 sm:w-5 md:w-6 text-purple-600 dark:text-purple-400 mr-2 sm:mr-2.5" />
                 <div>
-                  <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Total Eventos</p>
-                  <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{eventos.length}</p>
+                  <p className="text-xs sm:text-xs md:text-sm text-purple-600 dark:text-purple-400 font-medium">Eventos</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">{eventos.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-2xl p-4 shadow-lg">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-lg sm:rounded-lg md:rounded-lg p-2.5 sm:p-3 md:p-4 shadow-lg">
               <div className="flex items-center">
-                <HiStar className="w-8 h-8 text-amber-600 dark:text-amber-400 mr-3" />
+                <HiStar className="w-5 h-5 sm:w-5 md:w-6 text-amber-600 dark:text-amber-400 mr-2 sm:mr-2.5" />
                 <div>
-                  <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">Importantes</p>
-                  <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
+                  <p className="text-xs sm:text-xs md:text-sm text-amber-600 dark:text-amber-400 font-medium">Importantes</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-amber-700 dark:text-amber-300">
                     {eventos.filter(e => e.importante).length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-2xl p-4 shadow-lg">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-lg sm:rounded-lg md:rounded-lg p-2.5 sm:p-3 md:p-4 shadow-lg">
               <div className="flex items-center">
-                <HiGlobeAlt className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
+                <HiGlobeAlt className="w-5 h-5 sm:w-5 md:w-6 text-blue-600 dark:text-blue-400 mr-2 sm:mr-2.5" />
                 <div>
-                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Virtuales</p>
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  <p className="text-xs sm:text-xs md:text-sm text-blue-600 dark:text-blue-400 font-medium">Virtuales</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-300">
                     {eventos.filter(e => e.es_virtual).length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-2xl p-4 shadow-lg">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-lg sm:rounded-lg md:rounded-lg p-2.5 sm:p-3 md:p-4 shadow-lg">
               <div className="flex items-center">
-                <HiMapPin className="w-8 h-8 text-green-600 dark:text-green-400 mr-3" />
+                <HiMapPin className="w-5 h-5 sm:w-5 md:w-6 text-green-600 dark:text-green-400 mr-2 sm:mr-2.5" />
                 <div>
-                  <p className="text-sm text-green-600 dark:text-green-400 font-medium">Presenciales</p>
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                  <p className="text-xs sm:text-xs md:text-sm text-green-600 dark:text-green-400 font-medium">Presenciales</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">
                     {eventos.filter(e => !e.es_virtual).length}
                   </p>
                 </div>
@@ -470,8 +470,8 @@ export default function EventosPage() {
           </div>
 
           {/* Filtros */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg sm:rounded-xl md:rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50 p-2.5 sm:p-2.5 md:p-3">
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
               <div className="flex-1 relative">
                 <HiMagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                 <input
@@ -479,7 +479,7 @@ export default function EventosPage() {
                   placeholder="Buscar eventos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-3 w-full border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-purple-500 dark:focus:border-purple-400 transition-colors"
+                  className="pl-10 pr-4 py-2 sm:py-3 w-full border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-purple-500 dark:focus:border-purple-400 transition-colors"
                 />
               </div>
 
@@ -532,7 +532,7 @@ export default function EventosPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
             {filteredEventos.map((evento) => {
               const daysUntil = getDaysUntilEvent(evento.fecha);
               const colors = getEventColor(evento.importante, daysUntil);

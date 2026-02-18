@@ -16,10 +16,10 @@ const DOCUMENTOS = [
   },
   {
     id: 2,
-    nombre: "FR-DIR-002",
+    nombre: "Acta de reunión",
     url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
-    descripcion: "Acta de reunión",
+    descripcion: "FR-DIR-002 Acta de reunión",
     actualizado: "2025-01-30",
     tamano: "133 KB",
     popular: false,
@@ -27,10 +27,10 @@ const DOCUMENTOS = [
   },
   {
     id: 3,
-    nombre: "FR-GDC-003",
+    nombre: "Acciones  de mejoramiento",
     url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
-    descripcion: "Acciones  de mejoramiento",
+    descripcion: "FR-GDC-003 Acciones  de mejoramiento",
     actualizado: "2025-02-06",
     tamano: "70 KB",
     popular: false,
@@ -38,10 +38,10 @@ const DOCUMENTOS = [
   },
   {
     id: 4,
-    nombre: "FR-GFR-001",
+    nombre: "Solicitud de viáticos",
     url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
-    descripcion: "Solicitud de viáticos individuales  y/o gastos aprobados a contratistas",
+    descripcion: "FR-GFR-001 Solicitud de viáticos individuales  y/o gastos aprobados a contratistas",
     actualizado: "2025-03-05",
     tamano: "149 KB",
     popular: false,
@@ -49,10 +49,10 @@ const DOCUMENTOS = [
   },
   {
     id: 5,
-    nombre: "FR-GFR-002",
+    nombre: "legalización de viáticos",
     url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
-    descripcion: "Legalización de viáticos y/o gastos aprobados a contratistas",
+    descripcion: "FR-GFR-002 Legalización de viáticos y/o gastos aprobados a contratistas",
     actualizado: "2025-03-06",
     tamano: "64 KB",
     popular: false,
@@ -60,10 +60,10 @@ const DOCUMENTOS = [
   },
   {
     id: 6,
-    nombre: "FR-GTH-002",
+    nombre: "Lista de asistencia",
     url: "https://drive.google.com/file/d/1Yi2HHQeGlBWh9Dr05yt_HnqnctWKtTWu/view?usp=sharing",
     tipo: "formato",
-    descripcion: "Lista de asistencia",
+    descripcion: "FR-GTH-002 Lista de asistencia",
     actualizado: "2025-01-30",
     tamano: "137 KB",
     popular: false,
@@ -192,25 +192,25 @@ export default function DocumentosRecursosRapidos() {
   });
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
       {/* Fondo decorativo suave */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-3xl"></div>
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-300/5 to-purple-300/5 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-300/5 to-blue-300/5 rounded-full blur-3xl"></div>
       
-      <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8">
+      <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-4 sm:p-6 md:p-8">
         {/* Header suave */}
         
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8">
           
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-700 via-gray-700 to-slate-600 dark:from-slate-200 dark:via-gray-200 dark:to-slate-300 bg-clip-text text-transparent mb-2">
-            Documentos y Recursos Rapidos
+          <h2 className="text-lg sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-700 via-gray-700 to-slate-600 dark:from-slate-200 dark:via-gray-200 dark:to-slate-300 bg-clip-text text-transparent mb-1 sm:mb-2">
+            Documentos y Recursos Rápidos
           </h2>
           
         </div>
 
         {/* Barra de búsqueda y filtros */}
-        <div className="mb-8 space-y-4">
+        <div className="mb-4 sm:mb-6 md:mb-8 space-y-2 sm:space-y-3">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <HiDocumentText className="h-5 w-5 text-gray-400 dark:text-gray-500" />
@@ -220,17 +220,17 @@ export default function DocumentosRecursosRapidos() {
               placeholder="Buscar documentos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 focus:border-slate-400 dark:focus:border-slate-500 transition-all duration-300 shadow-sm"
+              className="block w-full pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 focus:border-slate-400 dark:focus:border-slate-500 transition-all duration-300 shadow-sm"
             />
           </div>
 
           {/* Filtros por categoría */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {categorias.map(categoria => (
               <button
                 key={categoria}
                 onClick={() => setSelectedCategory(categoria)}
-                className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${
                   selectedCategory === categoria
                     ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md hover:shadow-lg'
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -243,22 +243,22 @@ export default function DocumentosRecursosRapidos() {
         </div>
 
         {/* Grid de documentos mejorado */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4  gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 lg:gap-4">
           {filteredDocuments.map((doc) => (
             <div
               key={doc.id}
               className={`
-                group relative overflow-hidden rounded-xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer
-                bg-gradient-to-br ${getTipoBgColor(doc.tipo)} shadow
-                min-h-[180px] max-h-[220px] flex flex-col
+                group relative overflow-hidden rounded-lg sm:rounded-xl border transition-all duration-300 hover:shadow-md sm:hover:shadow-lg hover:scale-[1.01] cursor-pointer
+                bg-gradient-to-br ${getTipoBgColor(doc.tipo)} shadow-sm sm:shadow
+                min-h-[140px] sm:min-h-[160px] md:min-h-[180px] flex flex-col
               `}
             >
               {/* Badge de popular */}
               {doc.popular && (
-                <div className="absolute top-2 right-2 z-10">
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-semibold rounded-full shadow-sm animate-pulse">
+                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-10">
+                  <div className="flex items-center gap-0.5 sm:gap-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-semibold rounded-full shadow-sm animate-pulse">
                     <HiSparkles className="w-3 h-3" />
-                    Popular
+                    <span className="hidden sm:inline">Popular</span>
                   </div>
                 </div>
               )}
@@ -266,31 +266,31 @@ export default function DocumentosRecursosRapidos() {
               {/* Línea de acento superior */}
               <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${getTipoColor(doc.tipo)} opacity-80`}></div>
 
-              <div className="relative p-4 flex-1 flex flex-col">
+              <div className="relative p-3 sm:p-4 flex-1 flex flex-col">
                 {/* Icono y categoría */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`p-2 rounded-lg shadow bg-gradient-to-br ${getTipoColor(doc.tipo)}`}>
+                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                  <div className={`p-1.5 sm:p-2 rounded-lg shadow bg-gradient-to-br ${getTipoColor(doc.tipo)}`}>
                     {getIcon(doc.tipo, doc.popular)}
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-gradient-to-r ${getTipoColor(doc.tipo)} text-white shadow-sm`}>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-gradient-to-r ${getTipoColor(doc.tipo)} text-white shadow-sm line-clamp-1`}>
                     {doc.categoria}
                   </span>
                 </div>
 
                 {/* Título */}
-                <h3 className={`text-base font-bold mb-1 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors duration-300 line-clamp-1 ${getTipoTextColor(doc.tipo)}`}>
+                <h3 className={`text-sm sm:text-base font-bold mb-0.5 sm:mb-1 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors duration-300 line-clamp-1 ${getTipoTextColor(doc.tipo)}`}>
                   {doc.nombre}
                 </h3>
 
-                {/* Descripción */}
-                <p className="text-gray-600 dark:text-gray-400 text-xs mb-2 line-clamp-2 leading-snug">
+                {/* Descripción - oculta en mobile */}
+                <p className="hidden sm:block text-gray-600 dark:text-gray-400 text-xs mb-1.5 sm:mb-2 line-clamp-2 leading-snug">
                   {doc.descripcion}
                 </p>
 
-                {/* Información adicional */}
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  <span><HiCalendarDays className="inline w-4 h-4 mr-1" />{formatDisplayDate(doc.actualizado)}</span>
-                  <span><HiDocumentText className="inline w-4 h-4 mr-1" />{doc.tamano}</span>
+                {/* Información adicional - compacta en mobile */}
+                <div className="hidden sm:flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  <span className="line-clamp-1"><HiCalendarDays className="inline w-3 h-3 mr-1" />{formatDisplayDate(doc.actualizado)}</span>
+                  <span><HiDocumentText className="inline w-3 h-3 mr-1" />{doc.tamano}</span>
                 </div>
 
                 {/* Botón de acción */}
@@ -300,12 +300,12 @@ export default function DocumentosRecursosRapidos() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`
-                      flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow hover:shadow-md
-                      bg-gradient-to-r ${getTipoColor(doc.tipo)} text-white hover:opacity-90 text-xs
+                      flex-1 flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow hover:shadow-md
+                      bg-gradient-to-r ${getTipoColor(doc.tipo)} text-white hover:opacity-90 text-xs sm:text-sm
                     `}
                   >
                     <HiEye className="w-4 h-4" />
-                    Ver
+                    <span>Ver</span>
                   </a>
                 </div>
               </div>
@@ -315,14 +315,14 @@ export default function DocumentosRecursosRapidos() {
 
         {/* Mensaje cuando no hay resultados */}
         {filteredDocuments.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <HiDocumentText className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+          <div className="text-center py-8 sm:py-12">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gray-100 dark:bg-gray-800 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+              <HiDocumentText className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
               No se encontraron documentos
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 font-medium">
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 font-medium">
               Intenta ajustar los filtros de búsqueda o la categoría seleccionada
             </p>
           </div>

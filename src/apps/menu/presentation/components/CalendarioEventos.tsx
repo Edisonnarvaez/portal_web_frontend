@@ -134,9 +134,9 @@ export default function CalendarioEventos() {
       <div className="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl group-hover:from-purple-400/20 group-hover:to-pink-400/20 transition-all duration-500"></div>
       <div className="absolute bottom-0 right-0 w-48 h-48 bg-gradient-to-tr from-blue-400/10 to-purple-400/10 rounded-full blur-3xl group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-500"></div>
       
-      <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+      <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-4 sm:p-6 md:p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
         {/* Header mejorado */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg">
@@ -145,10 +145,10 @@ export default function CalendarioEventos() {
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-pink-400 rounded-full animate-pulse"></div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                 Próximos Eventos
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                 No te pierdas las actividades programadas
               </p>
             </div>
@@ -156,7 +156,7 @@ export default function CalendarioEventos() {
           
           <Link
             to="/eventos"
-            className="group/btn flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            className="group/btn flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap"
           >
             Ver todos
             <HiArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
@@ -176,7 +176,7 @@ export default function CalendarioEventos() {
             </p>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-3 sm:space-y-4 md:space-y-5">
             {eventos.map((evento, index) => {
               const daysUntil = getDaysUntilEvent(evento.fecha);
               const colors = getEventColor(evento.importante, daysUntil);
@@ -185,52 +185,53 @@ export default function CalendarioEventos() {
                 <div
                   key={evento.id}
                   className={`
-                    group/card relative overflow-hidden rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer
+                    group/card relative overflow-hidden rounded-lg sm:rounded-2xl border-2 transition-all duration-300 hover:shadow-md sm:hover:shadow-xl hover:scale-[1.01] sm:hover:scale-[1.02] cursor-pointer
                     bg-gradient-to-br ${colors.bg}
                   `}
                 >
                   {/* Línea de acento lateral */}
-                  <div className={`absolute left-0 top-0 w-1 h-full ${colors.accent} transition-all duration-300 group-hover/card:w-2`}></div>
+                  <div className={`absolute left-0 top-0 h-full w-0.5 sm:w-1 ${colors.accent} transition-all duration-300 group-hover/card:w-1 sm:group-hover/card:w-2`}></div>
                   
                   {/* Efecto de brillo en hover */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 transform -skew-x-12"></div>
                   
-                  <div className="relative p-6">
-                    <div className="flex items-start gap-4">
+                  <div className="relative p-3 sm:p-4 md:p-6">
+                    <div className="flex items-start gap-2 sm:gap-4">
                       {/* Icono mejorado con gradiente */}
                       <div className={`
-                        flex-shrink-0 p-3 rounded-xl shadow-lg
+                        flex-shrink-0 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-md sm:shadow-lg
                         ${colors.iconBg}
                       `}>
-                        <HiCalendarDays className="w-6 h-6 text-white" />
+                        <HiCalendarDays className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         {/* Tags de estado mejorados */}
-                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
                           {evento.importante && (
-                            <span className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-md animate-pulse">
-                              <HiStar className="w-3 h-3" />
-                              IMPORTANTE
+                            <span className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-md animate-pulse">
+                              <HiStar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <span className="hidden sm:inline">IMPORTANTE</span>
                             </span>
                           )}
                           
                           {daysUntil <= 1 && (
-                            <span className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full shadow-md animate-bounce">
-                              <HiFire className="w-3 h-3" />
+                            <span className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full shadow-md animate-bounce">
+                              <HiFire className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                               {daysUntil === 0 ? 'HOY' : 'MAÑANA'}
                             </span>
                           )}
                           
                           {daysUntil > 1 && daysUntil <= 7 && (
-                            <span className="flex items-center gap-1 px-3 py-1 text-xs font-medium bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full shadow-sm">
-                              <HiSparkles className="w-3 h-3" />
-                              En {daysUntil} días
+                            <span className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full shadow-sm">
+                              <HiSparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <span className="hidden sm:inline">En {daysUntil} días</span>
+                              <span className="sm:hidden">{daysUntil}d</span>
                             </span>
                           )}
                           
                           <span className={`
-                            px-3 py-1 text-xs font-medium rounded-full shadow-sm
+                            px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium rounded-full shadow-sm
                             ${evento.es_virtual 
                               ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
                               : 'bg-gradient-to-r from-green-500 to-green-600 text-white'
@@ -241,53 +242,54 @@ export default function CalendarioEventos() {
                         </div>
                         
                         {/* Título mejorado */}
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2 group-hover/card:text-purple-600 dark:group-hover/card:text-purple-400 transition-colors duration-300">
+                        <h3 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 line-clamp-2 group-hover/card:text-purple-600 dark:group-hover/card:text-purple-400 transition-colors duration-300">
                           {evento.titulo}
                         </h3>
                         
                         {/* Descripción */}
-                        <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 leading-relaxed">
+                        <p className="hidden sm:block text-gray-600 dark:text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm line-clamp-2 leading-relaxed">
                           {evento.detalles}
                         </p>
                         
                         {/* Información del evento mejorada */}
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div className="p-1.5 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                              <HiCalendarDays className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            <div className="p-1 sm:p-1.5 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                              <HiCalendarDays className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
                             </div>
-                            <span className="font-medium">{formatFecha(evento.fecha)}</span>
+                            <span className="font-medium text-xs sm:text-sm">{formatFecha(evento.fecha)}</span>
                           </div>
                           
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                              <HiClock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            <div className="p-1 sm:p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                              <HiClock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <span className="font-medium">{formatHora(evento.hora)}</span>
+                            <span className="font-medium text-xs sm:text-sm">{formatHora(evento.hora)}</span>
                           </div>
                           
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 col-span-2 lg:col-span-1">
-                            <div className={`p-1.5 rounded-lg ${evento.es_virtual ? 'bg-green-100 dark:bg-green-900/50' : 'bg-orange-100 dark:bg-orange-900/50'}`}>
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 col-span-2 lg:col-span-1">
+                            <div className={`p-1 sm:p-1.5 rounded-lg ${evento.es_virtual ? 'bg-green-100 dark:bg-green-900/50' : 'bg-orange-100 dark:bg-orange-900/50'}`}>
                               {evento.es_virtual ? (
-                                <HiGlobeAlt className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                <HiGlobeAlt className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" />
                               ) : (
-                                <HiMapPin className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                                <HiMapPin className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
                               )}
                             </div>
-                            <span className="font-medium truncate">
+                            <span className="font-medium text-xs sm:text-sm truncate">
                               {evento.es_virtual ? 'Virtual' : (evento.lugar || 'Presencial')}
                             </span>
                           </div>
                         </div>
                         
                         {/* Footer mejorado */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <Link
                             to={`/eventos/${evento.id}`}
-                            className="group/link flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors duration-300"
+                            className="group/link flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors duration-300"
                           >
-                            Ver detalles
-                            <HiArrowRight className="w-3 h-3 group-hover/link:translate-x-1 transition-transform duration-300" />
+                            <span className="hidden sm:inline">Ver detalles</span>
+                            <span className="sm:hidden">Ver</span>
+                            <HiArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover/link:translate-x-1 transition-transform duration-300" />
                           </Link>
                           
                           {evento.enlace && (
@@ -295,7 +297,7 @@ export default function CalendarioEventos() {
                               href={evento.enlace}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-300 underline decoration-dotted"
+                              className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-300 underline decoration-dotted"
                             >
                               {evento.es_virtual ? 'Unirse' : 'Más info'}
                             </a>

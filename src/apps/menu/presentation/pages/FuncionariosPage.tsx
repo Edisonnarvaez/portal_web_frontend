@@ -349,29 +349,29 @@ export default function FuncionariosPage() {
       <div className="fixed bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-400/10 to-blue-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-green-400/5 to-blue-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '4s' }}></div>
       
-      <div className="relative z-10 p-6">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <div className="relative z-10 p-4 sm:p-5 md:p-6 lg:p-6">
+        <div className="max-w-7xl mx-auto space-y-2 sm:space-y-3 md:space-y-4">
           {/* Header moderno */}
           <div className="relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-indigo-100/50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-3xl transition-all duration-500 group-hover:from-blue-200/50 group-hover:to-indigo-200/50 dark:group-hover:from-blue-800/30 dark:group-hover:to-indigo-800/30"></div>
             
-            <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8 transition-all duration-300 hover:shadow-2xl">
+            <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-4 sm:p-5 md:p-6 lg:p-6 transition-all duration-300 hover:shadow-2xl">
               {/* Header principal */}
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3 md:mb-4">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-3">
                   <div className="relative">
-                    <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-xl">
-                      <HiUsers className="w-10 h-10 text-white" />
+                    <div className="p-2.5 sm:p-3 md:p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl md:rounded-2xl shadow-lg">
+                      <HiUsers className="w-6 h-6 sm:w-6 md:w-7 lg:w-7 text-white" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full animate-bounce flex items-center justify-center">
                       <HiSparkles className="w-3 h-3 text-green-800" />
                     </div>
                   </div>
                   <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-900 via-indigo-800 to-blue-700 dark:from-blue-100 dark:via-indigo-200 dark:to-blue-300 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold bg-gradient-to-r from-blue-900 via-indigo-800 to-blue-700 dark:from-blue-100 dark:via-indigo-200 dark:to-blue-300 bg-clip-text text-transparent mb-1 sm:mb-1.5">
                       Directorio de Funcionarios
                     </h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-400">
+                    <p className="text-xs sm:text-xs md:text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
                       Encuentra la información de contacto de todos los miembros del equipo
                     </p>
                   </div>
@@ -402,42 +402,42 @@ export default function FuncionariosPage() {
               </div>
 
               {/* Estadísticas mejoradas */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/30 border-2 border-blue-200/50 dark:border-blue-700/50 p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-5">
+                <div className="group relative overflow-hidden rounded-lg sm:rounded-lg md:rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/30 border-2 border-blue-200/50 dark:border-blue-700/50 p-2.5 sm:p-3 md:p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center">
-                    <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg mr-4">
-                      <HiUsers className="w-8 h-8 text-white" />
+                    <div className="p-1.5 sm:p-2 md:p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md mr-2 sm:mr-3">
+                      <HiUsers className="w-5 h-5 sm:w-5 md:w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold mb-1">Total Funcionarios</p>
-                      <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{funcionarios.length}</p>
+                      <p className="text-xs sm:text-xs md:text-sm text-blue-600 dark:text-blue-400 font-semibold mb-0.5">Total</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-300">{funcionarios.length}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/30 border-2 border-green-200/50 dark:border-green-700/50 p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
+                <div className="group relative overflow-hidden rounded-lg sm:rounded-lg md:rounded-xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/30 border-2 border-green-200/50 dark:border-green-700/50 p-2.5 sm:p-3 md:p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-400/5 to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center">
-                    <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg mr-4">
-                      <HiOfficeBuilding className="w-8 h-8 text-white" />
+                    <div className="p-1.5 sm:p-2 md:p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md mr-2 sm:mr-3">
+                      <HiOfficeBuilding className="w-5 h-5 sm:w-5 md:w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-green-600 dark:text-green-400 font-semibold mb-1">Sedes Activas</p>
-                      <p className="text-3xl font-bold text-green-700 dark:text-green-300">{sedesUnicas.length}</p>
+                      <p className="text-xs sm:text-xs md:text-sm text-green-600 dark:text-green-400 font-semibold mb-0.5">Sedes</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{sedesUnicas.length}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/30 border-2 border-purple-200/50 dark:border-purple-700/50 p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
+                <div className="group relative overflow-hidden rounded-lg sm:rounded-lg md:rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/30 border-2 border-purple-200/50 dark:border-purple-700/50 p-2.5 sm:p-3 md:p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center">
-                    <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg mr-4">
-                      <HiAcademicCap className="w-8 h-8 text-white" />
+                    <div className="p-1.5 sm:p-2 md:p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md mr-2 sm:mr-3">
+                      <HiAcademicCap className="w-5 h-5 sm:w-5 md:w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-purple-600 dark:text-purple-400 font-semibold mb-1">Cargos Diferentes</p>
-                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{cargos.length}</p>
+                      <p className="text-xs sm:text-xs md:text-sm text-purple-600 dark:text-purple-400 font-semibold mb-0.5">Cargos</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">{cargos.length}</p>
                     </div>
                   </div>
                 </div>
@@ -445,24 +445,24 @@ export default function FuncionariosPage() {
 
               {/* Filtros mejorados */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl"></div>
-                <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-600/50 p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg sm:rounded-xl md:rounded-xl"></div>
+                <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl md:rounded-xl border border-gray-200/50 dark:border-gray-600/50 p-3 sm:p-3 md:p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5 md:gap-3">
                     <div className="relative">
-                      <HiMagnifyingGlass className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+                      <HiMagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                       <input
                         type="text"
-                        placeholder="Buscar funcionarios..."
+                        placeholder="Buscar..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-12 pr-6 py-3 w-full border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300"
+                        className="pl-9 pr-3 py-2 w-full border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300 text-sm"
                       />
                     </div>
 
                     <select
                       value={selectedSede}
                       onChange={(e) => setSelectedSede(parseInt(e.target.value) || 0)}
-                      className="px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300"
+                      className="px-3 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300 text-sm"
                     >
                       <option value={0}>Todas las sedes</option>
                       {sedesUnicas.map(sede => (
@@ -475,7 +475,7 @@ export default function FuncionariosPage() {
                     <select
                       value={selectedCargo}
                       onChange={(e) => setSelectedCargo(e.target.value)}
-                      className="px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300"
+                      className="px-3 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300 text-sm"
                     >
                       <option value="">Todos los cargos</option>
                       {cargos.map(cargo => (
@@ -485,7 +485,7 @@ export default function FuncionariosPage() {
 
                     <button
                       onClick={clearFilters}
-                      className="px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md"
+                      className="px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md text-sm"
                     >
                       Limpiar filtros
                     </button>
@@ -516,7 +516,7 @@ export default function FuncionariosPage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5 md:gap-3">
               {filteredFuncionarios.map((funcionario) => {
                 const photoUrl = getProfilePicUrl(funcionario.foto);
                 
@@ -531,9 +531,9 @@ export default function FuncionariosPage() {
                     {/* Línea de acento superior */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     
-                    <div className="relative p-4">
+                    <div className="relative p-3">
                       {/* Header compacto */}
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-2 mb-2">
                         {/* Foto más pequeña */}
                         <div className="relative flex-shrink-0">
                           {photoUrl ? (
@@ -557,17 +557,17 @@ export default function FuncionariosPage() {
 
                         {/* Información básica */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                             {funcionario.nombres} {funcionario.apellidos}
                           </h3>
-                          <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-md">
+                          <span className="inline-block px-1.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-md">
                             {funcionario.cargo}
                           </span>
                         </div>
                       </div>
 
                       {/* Información de contacto compacta */}
-                      <div className="space-y-2 text-xs">
+                      <div className="space-y-1.5 text-xs">
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                           <HiOfficeBuilding className="w-3 h-3 text-blue-500 flex-shrink-0" />
                           <span className="truncate">{funcionario.sede.name}</span>
@@ -591,11 +591,11 @@ export default function FuncionariosPage() {
 
                       {/* Botones de acción compactos */}
                       {(permissions.canEdit || permissions.canDelete) && (
-                        <div className="flex gap-1 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex gap-0.5 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                           {permissions.canEdit && (
                             <button
                               onClick={() => openEditModal(funcionario)}
-                              className="group/edit flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
+                              className="group/edit flex-1 flex items-center justify-center gap-0.5 px-1 py-1 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 text-xs"
                               title="Editar funcionario"
                             >
                               <HiPencil className="w-3 h-3 group-hover/edit:rotate-12 transition-transform duration-300" />
@@ -606,7 +606,7 @@ export default function FuncionariosPage() {
                           {permissions.canDelete && (
                             <button
                               onClick={() => openDeleteModal(funcionario)}
-                              className="group/delete flex items-center justify-center px-2 py-1.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
+                              className="group/delete flex items-center justify-center px-0.5 py-1 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 text-xs"
                               title="Eliminar funcionario"
                             >
                               <HiTrash className="w-3 h-3 group-hover/delete:scale-110 transition-transform duration-300" />
@@ -617,30 +617,28 @@ export default function FuncionariosPage() {
 
                       {/* Botones de reconocimiento y felicitación */}
                       {permissions.canCreate && (
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex gap-0.5 mt-2">
                           <button
                             onClick={() => openCreateReconocimientoModal(funcionario)}
-                            className="group/star flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
+                            className="group/star flex-1 flex items-center justify-center gap-0.5 px-1 py-1 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 text-xs"
                             title="Crear reconocimiento"
                           >
                             <HiStar className="w-3 h-3 group-hover/star:rotate-12 transition-transform duration-300" />
-                            <span className="text-xs">Reconocer</span>
+                            <span>Reconocer</span>
                           </button>
                           
                           <button
                             onClick={() => handleFelicitacionAction(funcionario)}
-                            className={`group/gift flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ${
+                            className={`group/gift flex-1 flex items-center justify-center gap-0.5 px-1 py-1 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 text-xs font-medium ${
                               funcionarioTieneFelicitacion(funcionario)
-                                ? 'bg-blue-500 hover:bg-blue-600'
-                                : 'bg-gray-400 cursor-not-allowed'
+                                ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                : 'bg-gray-400 cursor-not-allowed text-gray-200'
                             }`}
                             title={getFelicitacionButtonTitle(funcionario)}
                             disabled={!funcionarioTieneFelicitacion(funcionario)}
                           >
-                            
-                            <HiGift className="w-4 h-4 group-hover/gift:scale-110 transition-transform duration-300" />
-                                Felicitar
-
+                            <HiGift className="w-3 h-3 group-hover/gift:scale-110 transition-transform duration-300" />
+                            <span>Felicitar</span>
                           </button>
                         </div>
                       )}

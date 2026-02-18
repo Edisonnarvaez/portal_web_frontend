@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { HiOutlineDocumentText, HiRefresh } from 'react-icons/hi';
 import { FaUpload, FaTimes } from 'react-icons/fa';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
@@ -117,8 +117,7 @@ export default function ProcesosPage() {
     deleteDocument,
     documentService,
     fetchDocuments,
-    fetchProcesses,
-    fetchProcessTypes
+    fetchProcesses
   } = useDocumentCRUD();
 
   const { filters, filteredDocuments, updateFilter, clearFilters } = useDocumentFilters(documents, processes, processTypes, permissions);
@@ -469,14 +468,14 @@ export default function ProcesosPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-3 sm:px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center mb-2 sm:mb-0">
-          <HiOutlineDocumentText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-3 sm:px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 gap-2">
+        <div className="flex items-center mb-2 sm:mb-0 min-w-0">
+          <HiOutlineDocumentText className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
               Sistema de Gestion Institucional
             </h1>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-gray-600 dark:text-gray-400 hidden sm:block">
               {permissions.isAdmin ? 'Gestión completa de documentos del sistema de calidad' :
                 permissions.isGestor ? 'Consulta y descarga de documentos del sistema de calidad' :
                   'Consulta de documentos del sistema de calidad'}
@@ -485,23 +484,23 @@ export default function ProcesosPage() {
         </div>
 
         {/* Botones de acción */}
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto">
           {/* Botón de recarga - visible para todos los roles */}
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className={`
-      group px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-2 justify-center text-sm
-      ${isRefreshing
+              group px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 justify-center text-xs sm:text-sm flex-1 sm:flex-none
+              ${isRefreshing
                 ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 active:scale-95'
               }
-    `}
+            `}
             title="Actualizar datos"
           >
             <HiRefresh
               size={14}
-              className={`transition-transform duration-300 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`}
+              className={`transition-transform duration-300 flex-shrink-0 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`}
             />
             <span className="hidden sm:inline text-xs">
               {isRefreshing ? 'Actualizando...' : 'Actualizar'}
@@ -512,10 +511,10 @@ export default function ProcesosPage() {
           {permissions.canManage && (
             <button
               onClick={() => openModal('isFormOpen')}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 justify-center text-sm"
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1 sm:gap-2 justify-center text-xs sm:text-sm flex-1 sm:flex-none"
             >
               <FaUpload size={14} />
-              Subir
+              <span className="hidden sm:inline">Subir</span>
             </button>
           )}
         </div>
@@ -525,19 +524,21 @@ export default function ProcesosPage() {
       <div className="flex-1 flex flex-col overflow-hidden px-3 sm:px-4 pt-2 pb-2 gap-1">
         {/* Mensajes */}
         {message && (
-          <div className="p-2 bg-green-100 border border-green-400 text-green-700 rounded text-sm dark:bg-green-900 dark:border-green-600 dark:text-green-200">
-            {message}
+          <div className="p-2 bg-green-100 border border-green-400 text-green-700 rounded text-xs sm:text-sm dark:bg-green-900 dark:border-green-600 dark:text-green-200 flex items-center justify-between">
+            <span>{message}</span>
+            <button onClick={() => setMessage('')} className="ml-2 text-green-700 dark:text-green-200 hover:text-green-900">×</button>
           </div>
         )}
 
         {error && (
-          <div className="p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900 dark:border-red-600 dark:text-red-200">
-            {error}
+          <div className="p-2 bg-red-100 border border-red-400 text-red-700 rounded text-xs sm:text-sm dark:bg-red-900 dark:border-red-600 dark:text-red-200 flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError('')} className="ml-2 text-red-700 dark:text-red-200 hover:text-red-900">×</button>
           </div>
         )}
 
         {/* Filtros */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 overflow-x-auto">
           <DocumentFilters
             filters={filters}
             processes={processes}
@@ -548,8 +549,8 @@ export default function ProcesosPage() {
           />
         </div>
 
-        {/* Estadísticas */}
-        <div className="flex-shrink-0">
+        {/* Estadísticas - Ocultar en móvil para ahorrar espacio */}
+        <div className="flex-shrink-0 hidden sm:block">
           <DocumentStats
             documents={documents}
             filteredDocuments={filteredDocuments}
@@ -615,22 +616,22 @@ export default function ProcesosPage() {
       )}
 
       {modals.isDocumentViewerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-2 sm:p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full h-[90vh] sm:h-[90vh] sm:max-w-7xl flex flex-col overflow-hidden">
 
             {/* CABECERA (Se mantiene igual con los botones) */}
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-4 flex-1 truncate">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+            <div className="flex justify-between items-center p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
                   {modalData.currentDocumentTitle || "Vista previa del documento"}
                 </h3>
 
                 {zoomInstance && (
-                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-4 border border-gray-200 dark:border-gray-700">
+                  <div className="hidden sm:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <zoomInstance.ZoomOut>
                       {(props: any) => (
-                        <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                        <button onClick={props.onClick} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
                         </button>
                       )}
                     </zoomInstance.ZoomOut>
@@ -639,8 +640,8 @@ export default function ProcesosPage() {
                     </div>
                     <zoomInstance.ZoomIn>
                       {(props: any) => (
-                        <button onClick={props.onClick} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        <button onClick={props.onClick} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         </button>
                       )}
                     </zoomInstance.ZoomIn>
@@ -653,14 +654,14 @@ export default function ProcesosPage() {
                   setZoomInstance(null);
                   closeModal('isDocumentViewerOpen');
                 }}
-                className="text-gray-400 hover:text-red-500 transition-colors ml-4"
+                className="text-gray-400 hover:text-red-500 transition-colors ml-2 flex-shrink-0"
               >
-                <FaTimes size={24} />
+                <FaTimes size={20} />
               </button>
             </div>
 
             {/* CONTENEDOR CON EL PADDING RECUPERADO */}
-            <div className="flex-1 p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
+            <div className="flex-1 p-2 sm:p-4 bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
               <div className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
                 <PdfViewer
                   fileUrl={modalData.currentDocumentUrl}
