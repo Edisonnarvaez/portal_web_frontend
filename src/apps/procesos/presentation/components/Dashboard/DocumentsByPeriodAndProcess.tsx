@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     BarChart,
     Bar,
@@ -189,12 +188,12 @@ export default function DocumentsByPeriodAndProcess({
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${percentageNum > 30
-                                                        ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                                                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                                                         : percentageNum > 15
                                                             ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                                                            : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                                            : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
                                                     }`}>
-                                                    {percentageNum > 30 ? '⚠️ Alto' : percentageNum > 15 ? '⚡ Medio' : '✅ Bajo'}
+                                                    {percentageNum > 30 ? '✅ Alto' : percentageNum > 15 ? '⚡ Medio' : '⚠️ Bajo'}
                                                 </span>
                                             </td>
                                         </tr>

@@ -85,6 +85,71 @@ html {
   line-height: 1.4;
 }
 
+/* Scrollbars para documentos y tablas - SIEMPRE VISIBLES Y FUNCIONALES */
+.document-scroll {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #9CA3AF #F3F4F6;
+  
+  /* Usar auto para que aparezcan solo cuando sea necesario */
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.dark .document-scroll {
+  scrollbar-color: #6B7280 #1F2937;
+}
+
+/* Chrome, Safari, Edge - Scrollbar track y thumb */
+.document-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+/* Track - el fondo del scrollbar */
+.document-scroll::-webkit-scrollbar-track {
+  background-color: #F3F4F6;
+  border-radius: 15px;
+  margin: 5px;
+}
+
+.dark .document-scroll::-webkit-scrollbar-track {
+  background-color: #1F2937;
+}
+
+/* Thumb - la parte que se arrastra del scrollbar */
+.document-scroll::-webkit-scrollbar-thumb {
+  background-color: #9CA3AF;
+  border-radius: 15px;
+  border: 2px solid #F3F4F6;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.document-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #6B7280;
+  border-color: #E5E7EB;
+}
+
+.dark .document-scroll::-webkit-scrollbar-thumb {
+  background-color: #6B7280;
+  border-color: #1F2937;
+}
+
+.dark .document-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #9CA3AF;
+  border-color: #374151;
+}
+
+/* Corner - donde se cruzan scrolls */
+.document-scroll::-webkit-scrollbar-corner {
+  background-color: #F3F4F6;
+}
+
+.dark .document-scroll::-webkit-scrollbar-corner {
+  background-color: #1F2937;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .Toastify__toast {
