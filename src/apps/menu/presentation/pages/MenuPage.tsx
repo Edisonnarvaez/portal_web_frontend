@@ -14,15 +14,15 @@ export default function MenuPage() {
   const { user } = useAuthContext();
 
   return (
-    <div className="space-y-8 w-full h-full">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8 w-full h-full">
       <Bienvenida />
       <MisionVisionValores />
       <AccesosRapidos />
-      {/* <NoticiasComunicados /> */}
-      {/* <CalendarioEventos /> */}
+      <NoticiasComunicados />
+      <CalendarioEventos />
       <EstructuraOrganizacional />
       <DocumentosRecursosRapidos />
-      {/* <ReconocimientosCumpleanios /> */}
+      <ReconocimientosCumpleanios />
       <SoporteContacto />
     </div>
   );

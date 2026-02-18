@@ -87,13 +87,13 @@ export default function MisionVisionValores() {
   const [active, setActive] = useState(0);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
-      <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-4 sm:p-6">
+      <div className="flex gap-3 sm:gap-4 border-b border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto pb-2">
         {tabs.map((tab, idx) => (
           <button
             key={tab.label}
             onClick={() => setActive(idx)}
-            className={`flex items-center pb-2 px-3 font-semibold text-blue-700 dark:text-blue-300 border-b-2 transition-all
+            className={`flex items-center pb-2 px-2 sm:px-3 font-semibold text-sm sm:text-base text-blue-700 dark:text-blue-300 border-b-2 transition-all whitespace-nowrap
               ${active === idx ? "border-blue-700 dark:border-blue-300 bg-blue-50 dark:bg-blue-950 rounded-t-md" : "border-transparent"}
               hover:bg-blue-100 dark:hover:bg-blue-900`}
             style={{ outline: "none" }}

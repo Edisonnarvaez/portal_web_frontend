@@ -73,12 +73,12 @@ export default function NoticiasComunicados() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
         
-        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8">
+        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-4 sm:p-6 md:p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-            <div className="space-y-4">
+            <div className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4 sm:mb-6"></div>
+            <div className="space-y-3 sm:space-y-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+                <div key={i} className="h-20 sm:h-24 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl"></div>
               ))}
             </div>
           </div>
@@ -92,10 +92,10 @@ export default function NoticiasComunicados() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-3xl"></div>
         
-        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8">
+        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-4 sm:p-6 md:p-8">
           <div className="text-center text-red-600 dark:text-red-400">
-            <HiExclamationTriangle className="w-12 h-12 mx-auto mb-4" />
-            <p className="text-lg font-medium">{error}</p>
+            <HiExclamationTriangle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4" />
+            <p className="text-base sm:text-lg font-medium">{error}</p>
           </div>
         </div>
       </div>
@@ -109,9 +109,9 @@ export default function NoticiasComunicados() {
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-500"></div>
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-400/10 to-blue-400/10 rounded-full blur-3xl group-hover:from-emerald-400/20 group-hover:to-blue-400/20 transition-all duration-500"></div>
       
-      <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-4 sm:p-6 md:p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
         {/* Header mejorado */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
@@ -120,10 +120,10 @@ export default function NoticiasComunicados() {
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-pulse"></div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                 Noticias y Comunicados
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                 Mantente informado con las últimas actualizaciones
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function NoticiasComunicados() {
           
           <Link
             to="/noticias"
-            className="group/btn flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            className="group/btn flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap"
           >
             Ver todas
             <HiArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
@@ -151,7 +151,7 @@ export default function NoticiasComunicados() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             {contenidos.map((contenido, index) => {
               const IconComponent = getTipoIcon(contenido.tipo);
               const isUrgent = contenido.urgente;
@@ -160,29 +160,28 @@ export default function NoticiasComunicados() {
                 <div
                   key={contenido.id}
                   className={`
-                    group/card relative overflow-hidden rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer
+                    group/card relative overflow-hidden rounded-lg sm:rounded-2xl border-2 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl hover:scale-[1.01] sm:hover:scale-[1.02] cursor-pointer
                     bg-gradient-to-br ${getTipoBgColor(contenido.tipo, isUrgent)}
-                    ${index === 0 && contenidos.length > 2 ? 'lg:col-span-2' : ''}
                   `}
                 >
                   {/* Efecto de brillo en hover */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 transform -skew-x-12 group-hover/card:animate-pulse"></div>
                   
-                  <div className="relative p-6">
-                    <div className="flex items-start gap-4">
+                  <div className="relative p-3 sm:p-4 md:p-6">
+                    <div className="flex items-start gap-2 sm:gap-4">
                       {/* Icono mejorado */}
                       <div className={`
-                        flex-shrink-0 p-3 rounded-xl shadow-md
+                        flex-shrink-0 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-md
                         ${getIconBgColor(contenido.tipo, isUrgent)}
                       `}>
-                        <IconComponent className={`w-6 h-6 ${getTipoColor(contenido.tipo, isUrgent)}`} />
+                        <IconComponent className={`w-5 h-5 sm:w-6 sm:h-6 ${getTipoColor(contenido.tipo, isUrgent)}`} />
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         {/* Tags mejorados */}
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
                           <span className={`
-                            px-3 py-1 text-xs font-bold rounded-full shadow-sm
+                            px-2 sm:px-3 py-0.5 text-xs font-bold rounded-full shadow-sm
                             ${isUrgent 
                               ? 'bg-red-500 text-white animate-pulse' 
                               : contenido.tipo === 'comunicado' 
@@ -194,22 +193,22 @@ export default function NoticiasComunicados() {
                           </span>
                           
                           {isUrgent && (
-                            <span className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-red-600 text-white rounded-full animate-bounce shadow-lg">
-                              <HiBolt className="w-3 h-3" />
-                              URGENTE
+                            <span className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-red-600 text-white rounded-full animate-bounce shadow-lg">
+                              <HiBolt className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <span className="hidden sm:inline">URGENTE</span>
                             </span>
                           )}
                           
-                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                            <HiCalendar className="w-3 h-3" />
-                            {formatFecha(contenido.fecha)}
+                          <div className="flex items-center gap-0.5 sm:gap-1 text-xs text-gray-500 dark:text-gray-400">
+                            <HiCalendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            <span className="hidden sm:inline">{formatFecha(contenido.fecha)}</span>
                           </div>
                         </div>
                         
                         {/* Título mejorado */}
                         <h3 className={`
-                          font-bold mb-3 line-clamp-2 transition-colors duration-300
-                          ${index === 0 && contenidos.length > 2 ? 'text-xl' : 'text-lg'}
+                          font-bold mb-1.5 sm:mb-3 line-clamp-2 transition-colors duration-300
+                          text-sm sm:text-lg
                           ${isUrgent 
                             ? 'text-red-800 dark:text-red-200' 
                             : 'text-gray-900 dark:text-gray-100 group-hover/card:text-blue-600 dark:group-hover/card:text-blue-400'
@@ -220,21 +219,22 @@ export default function NoticiasComunicados() {
                         
                         {/* Contenido mejorado */}
                         <p className={`
-                          text-gray-600 dark:text-gray-300 mb-4 leading-relaxed
-                          ${index === 0 && contenidos.length > 2 ? 'line-clamp-3' : 'line-clamp-2'}
+                          text-gray-600 dark:text-gray-300 mb-2 sm:mb-4 leading-relaxed
+                          text-xs sm:text-sm
+                          line-clamp-2
                         `}>
                           {contenido.contenido}
                         </p>
                         
                         {/* Footer mejorado */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <Link
                             to={`/noticias/${contenido.id}`}
-                            className="group/link flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-300"
+                            className="group/link flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-300"
                           >
-                            <HiEye className="w-4 h-4" />
-                            Leer más
-                            <HiArrowRight className="w-3 h-3 group-hover/link:translate-x-1 transition-transform duration-300" />
+                            <HiEye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Leer más</span>
+                            <HiArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover/link:translate-x-1 transition-transform duration-300" />
                           </Link>
                           
                           {contenido.enlace && (
@@ -242,9 +242,9 @@ export default function NoticiasComunicados() {
                               href={contenido.enlace}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-300 underline decoration-dotted"
+                              className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-300 underline decoration-dotted"
                             >
-                              Enlace externo
+                              Enlace
                             </a>
                           )}
                         </div>
