@@ -8,7 +8,8 @@ import type {
 import {
     CALCULATION_METHODS,
     MEASUREMENT_FREQUENCIES,
-    TREND_OPTIONS
+    TREND_OPTIONS,
+    CLASS_OPTIONS
 } from '../../../domain/entities';
 import { useAuthContext } from '../../../../../apps/auth/presentation/context/AuthContext';
 
@@ -99,6 +100,7 @@ const IndicatorForm: React.FC<IndicatorFormProps> = ({
         denominatorResponsible: indicator?.denominatorResponsible || '',
         denominatorSource: indicator?.denominatorSource || '',
         denominatorDescription: indicator?.denominatorDescription || '',
+        classindicator: indicator?.classindicator || 'other',
         trend: indicator?.trend || 'increasing',
         target: indicator?.target || 0,
         author: indicator?.author || '',
@@ -142,6 +144,7 @@ const IndicatorForm: React.FC<IndicatorFormProps> = ({
         if (!form.measurementUnit?.trim()) newErrors.measurementUnit = 'La unidad de medida es obligatoria';
         if (!form.numerator?.trim()) newErrors.numerator = 'El numerador es obligatorio';
         if (!form.denominator?.trim()) newErrors.denominator = 'El denominador es obligatorio';
+        if (!form.classindicator) newErrors.classindicator = 'Debe seleccionar una clase';
         if (
             form.target === undefined ||
             form.target === null ||
@@ -338,6 +341,29 @@ const IndicatorForm: React.FC<IndicatorFormProps> = ({
                             ))}
                         </select>
                     </FormField>
+                    <FormField
+                        label="Clase"
+                        name="classindicator"
+                        value={form.classindicator}
+                        onChange={handleChange}
+                        error={errors.classindicator}
+                    >
+                        <select
+                            name="classindicator"
+                            value={form.classindicator || ''}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                            {CLASS_OPTIONS.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </FormField>
+                    
                     <FormField
                         label="Tendencia"
                         name="trend"

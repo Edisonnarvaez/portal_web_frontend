@@ -38,6 +38,21 @@ const trendToSpanish = (trend: string | undefined): string => {
   return trendMap[trend.toLowerCase()] || trend;
 };
 
+// 📈 Función para convertir clase de indicador a español
+const classIndicatorToSpanish = (classIndicator: string | undefined): string => {
+  if (!classIndicator) return 'No especificada';
+  const classIndicatorMap: { [key: string]: string } = {
+    'strategic': 'Estratégico',
+    'mission-related': 'Misional',
+    'regulatory': 'Normativo',
+    'operational': 'Operativo',
+    'tactical': 'Táctico',
+    'support': 'Soporte',
+    'other': 'Otro'
+  };
+  return classIndicatorMap[classIndicator.toLowerCase()] || classIndicator;
+};
+
 // Componentes auxiliares
 const CrudModal = ({ isOpen, onClose, title, children }: any) => {
   if (!isOpen) return null;
@@ -99,6 +114,12 @@ const ViewModal = ({ isOpen, onClose, indicator }: any) => {
               <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Meta</label>
               <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {indicator.target}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Clase de Indicador</label>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-2">
+                {classIndicatorToSpanish(indicator.classindicator)}
               </p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -295,6 +316,7 @@ const IndicadoresPage: React.FC = () => {
   const [selectedFrequency, setSelectedFrequency] = useState('');
   const [selectedProcessFilter, setSelectedProcessFilter] = useState('');
   const [selectedTrendFilter, setSelectedTrendFilter] = useState('');
+  const [selectedClassindicatorFilter, setSelectedClassindicatorFilter] = useState('');
 
   // Estados de modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -323,6 +345,8 @@ const IndicadoresPage: React.FC = () => {
   const processOptions = (processes || []).map((p: any) => ({ label: p.name, value: String(p.id) }));
   // trend options based on indicators data - Convertir tendencias a español
   const trendOptions = Array.from(new Set((indicators || []).map((i:any) => (i.trend || '').toString().toLowerCase()).filter(Boolean))).map(t => ({ label: trendToSpanish(t), value: t }));
+  // class indicator options based on indicators data - Convertir clases a español
+  const classindicatorOptions = Array.from(new Set((indicators || []).map((i:any) => (i.classindicator || '').toString().toLowerCase()).filter(Boolean))).map(c => ({ label: classIndicatorToSpanish(c), value: c }));
 
   // Filtros aplicados
   const filteredIndicators = indicators.filter((indicator: Indicator) => {
@@ -332,8 +356,9 @@ const IndicadoresPage: React.FC = () => {
     const matchesFrequency = selectedFrequency === '' || indicator.measurementFrequency === selectedFrequency;
     const matchesProcess = selectedProcessFilter === '' || String(indicator.process ?? '') === selectedProcessFilter;
     const matchesTrend = selectedTrendFilter === '' || String((indicator.trend || '').toLowerCase()) === selectedTrendFilter;
+    const matchesClassindicator = selectedClassindicatorFilter === '' || String((indicator.classindicator || '').toLowerCase()) === selectedClassindicatorFilter;
 
-    return matchesSearch && matchesStatus && matchesFrequency && matchesProcess && matchesTrend;
+    return matchesSearch && matchesStatus && matchesFrequency && matchesProcess && matchesTrend && matchesClassindicator;
   });
 
   // Handlers
@@ -395,6 +420,9 @@ const IndicadoresPage: React.FC = () => {
     setSearchTerm('');
     setSelectedStatus('');
     setSelectedFrequency('');
+    setSelectedProcessFilter('');
+    setSelectedTrendFilter('');
+    setSelectedClassindicatorFilter('');
   };
 
   return (
@@ -478,6 +506,9 @@ const IndicadoresPage: React.FC = () => {
               trendOptions={trendOptions}
               selectedTrend={selectedTrendFilter}
               onTrendChange={setSelectedTrendFilter}
+              classindicatorOptions={classindicatorOptions}
+              selectedClassindicator={selectedClassindicatorFilter}
+              onClassindicatorChange={setSelectedClassindicatorFilter}
             />
 
             {/* Tabla de indicadores */}

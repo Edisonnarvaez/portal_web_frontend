@@ -14,6 +14,7 @@ export interface Indicator {
   denominatorResponsible: string;
   denominatorSource: string;
   denominatorDescription: string;
+  classindicator: 'strategic' | 'mission-related' | 'regulatory' | 'operational' | 'tactical' | 'support' | 'other';
   trend: 'increasing' | 'decreasing';
   target: number;
   author: string;
@@ -40,6 +41,7 @@ export interface CreateIndicatorRequest {
   denominatorResponsible: string;
   denominatorSource: string;
   denominatorDescription: string;
+  classindicator: 'strategic' | 'mission-related' | 'regulatory' | 'operational' | 'tactical' | 'support' | 'other';
   trend: 'increasing' | 'decreasing';
   target: number;
   author: string;
@@ -72,4 +74,14 @@ export const MEASUREMENT_FREQUENCIES = [
 export const TREND_OPTIONS = [
   { value: 'increasing', label: 'Creciente' },
   { value: 'decreasing', label: 'Decreciente' },
+] as const;
+
+export const CLASS_OPTIONS = [
+  { value: 'strategic', label: 'Estratégico' },
+  { value: 'mission-related', label: 'Misional' },
+  { value: 'regulatory', label: 'Normativo' },
+  { value: 'operational', label: 'Operativo' },
+  { value: 'tactical', label: 'Táctico' },
+  { value: 'support', label: 'Soporte' },
+  { value: 'other', label: 'Otro' },
 ] as const;
