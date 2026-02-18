@@ -22,14 +22,19 @@ export default function Topbar() {
   return (
     <header className="sticky top-0 z-10 bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800">
       <div className="flex items-center justify-between h-16 px-4">
-        <div className="flex items-center">
+        <div className="flex items-center gap-2 sm:gap-3">
           <img 
             src="/logo_pilot_1.png" 
             alt="Logo PILOT" 
             className="h-4 sm:h-6 w-auto"
           />
           {/* Botón de menú móvil aquí si lo necesitas */}
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          {/* Título solo "PILOT" en móvil */}
+          <h1 className="block sm:hidden text-lg font-semibold text-gray-900 dark:text-gray-100">
+            PILOT
+          </h1>
+          {/* Título completo en pantallas mayores */}
+          <h1 className="hidden sm:block text-xl font-semibold text-gray-900 dark:text-gray-100">
             Portal de Gestión Institucional PILOT
           </h1>
         </div>
