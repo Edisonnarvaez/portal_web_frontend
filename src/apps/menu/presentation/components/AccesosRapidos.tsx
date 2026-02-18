@@ -41,7 +41,7 @@ export default function AccesosRapidos() {
 			<h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 md:mb-6 text-center tracking-tight">
 				Accesos Rápidos
 			</h2>
-			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
 				{ACCESOS.map((acceso) => (
 					<a
 						key={acceso.nombre}
