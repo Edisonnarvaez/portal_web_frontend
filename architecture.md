@@ -171,6 +171,11 @@ graph LR
         D3 --> D4[Version Control]
     end
     
+    subgraph "Habilitacion Module"
+        E1[Prestador Dashboard] --> E2[Servicio Management]
+        E2 --> E3[Autoevaluacion Forms]
+        E3 --> E4[Compliance Tracking]
+    end
     
     A4 --> B1
     A4 --> C1
@@ -286,7 +291,12 @@ graph TB
         C2 --> C3[File Processor]
         C3 --> C4[Search Engine]
     end
-
+    
+    subgraph "Habilitacion Service"
+        D1[Prestador Manager] --> D2[Servicio Manager]
+        D2 --> D3[Autoevaluacion Engine]
+        D3 --> D4[Compliance Tracker]
+    end
     
     subgraph "Auditorias Service"
         E1[Audit Scheduler] --> E2[Finding Tracker]
@@ -302,16 +312,18 @@ graph TB
     
     A4 --> B1
     A4 --> C1
+    A4 --> D1
     A4 --> E1
     
     B4 --> F1
+    D4 --> F1
     E4 --> F4
     
     style A1 fill:#ffebee
     style B1 fill:#e3f2fd
     style C1 fill:#f3e5f5
-    style D1 fill:#fff8e1
-    style E1 fill:#e8f5e8
+    style D1 fill:#e8f5e8
+    style E1 fill:#fff8e1
     style F1 fill:#fce4ec
 ```
 
@@ -423,6 +435,69 @@ erDiagram
         datetime created_at
     }
     
+    DATOS_PRESTADOR {
+        int id PK
+        string codigo_reps UK
+        string clase_prestador
+        string estado_habilitacion
+        date fecha_inscripcion
+        date fecha_renovacion
+        date fecha_vencimiento_habilitacion
+        string aseguradora_pep
+        string numero_poliza
+        string vigencia_poliza
+        int company_id FK
+        int sede_id FK
+        int user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+    
+    SERVICIO_SEDE {
+        int id PK
+        string codigo_servicio UK
+        string nombre_servicio
+        string descripcion
+        string modalidad
+        string complejidad
+        string estado_habilitacion
+        date fecha_habilitacion
+        date fecha_vencimiento
+        int datos_prestador_id FK
+        int sede_id FK
+        datetime created_at
+        datetime updated_at
+    }
+    
+    AUTOEVALUACION {
+        int id PK
+        string numero_autoevaluacion
+        int periodo
+        int version
+        string estado
+        date fecha_inicio
+        date fecha_completacion
+        date fecha_vencimiento
+        string observaciones
+        int datos_prestador_id FK
+        int user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+    
+    CUMPLIMIENTO {
+        int id PK
+        string estado_cumplimiento
+        string observaciones
+        string plan_mejora
+        date fecha_vencimiento_mejora
+        int autoevaluacion_id FK
+        int criterio_id FK
+        int user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+    
     USER ||--o{ USER_ROLE : "has"
     ROLE ||--o{ USER_ROLE : "assigned_to"
     APP ||--o{ ROLE : "contains"
@@ -437,6 +512,13 @@ erDiagram
     
     SUPPLIER ||--o{ INVOICE : "issues"
     USER ||--o{ INVOICE : "processes"
+    
+    USER ||--o{ DATOS_PRESTADOR : "manages"
+    DATOS_PRESTADOR ||--o{ SERVICIO_SEDE : "has"
+    DATOS_PRESTADOR ||--o{ AUTOEVALUACION : "includes"
+    USER ||--o{ AUTOEVALUACION : "creates"
+    AUTOEVALUACION ||--o{ CUMPLIMIENTO : "evaluates"
+    USER ||--o{ CUMPLIMIENTO : "registers"
 ```
 
 ### Estrategia de Caching

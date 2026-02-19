@@ -149,6 +149,33 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
           },
         ]
       : []),
+
+    // Habilitación: solo rol "admin" en "habilitacion"
+    ...(hasAppAccess(roles, "habilitacion") &&
+    user?.roles?.some((r) => r.app?.name?.toLowerCase() === "habilitacion" && r.name?.toLowerCase() === "admin")
+      ? [
+          {
+            to: "/habilitacion",
+            label: "Habilitación",
+            icon: <HiBuildingOffice2 className="w-5 h-5" />,
+            hasSubmenu: true,
+            submenu: [
+              {
+                to: "/habilitacion/dashboard",
+                label: "Dashboard",
+                icon: <HiPresentationChartBar className="w-4 h-4" />,
+                requiredRole: ["admin"],
+              },
+              {
+                to: "/habilitacion",
+                label: "Gestión",
+                icon: <HiBuildingOffice2 className="w-4 h-4" />,
+                requiredRole: ["admin"],
+              },
+            ],
+          },
+        ]
+      : []),
     {
       to: "/profile",
       label: "Mi perfil",

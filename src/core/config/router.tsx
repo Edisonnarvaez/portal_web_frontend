@@ -16,6 +16,7 @@ import DashboardPage from "../../apps/indicadores/presentation/pages/DashboardPa
 import IndicadoresPage from "../../apps/indicadores/presentation/pages/IndicadoresPage";
 import ResultadosPage from "../../apps/indicadores/presentation/pages/ResultadosPage";
 import ProcesosRoutes from "../../apps/procesos/routes";
+import HabilitacionRoutes from "../../apps/habilitacion/routes";
 import About from "../../core/presentation/pages/About";
 
 export default function AppRouter() {
@@ -53,6 +54,7 @@ export default function AppRouter() {
         { path: "indicators", element: <IndicadoresPage /> },
         { path: "results", element: <ResultadosPage /> },
         { path: "procesos/*", element: <ProcesosRoutes /> },
+        { path: "habilitacion/*", element: <HabilitacionRoutes /> },
         { path: "administracion", element: <AdministracionPage /> },
         { path: "acerca_de", element: <About /> },
       ],

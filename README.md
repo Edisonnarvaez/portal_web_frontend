@@ -28,6 +28,7 @@ src/
 │   ├── menu/               # Portal interno y comunicaciones
 │   ├── indicadores/        # Gestión de indicadores y KPIs
 │   ├── procesos/           # Gestión documental y procesos
+│   ├── habilitacion/       # Gestión de habilitación de servicios
 │   ├── auditorias/         # Seguimiento de auditorías
 │   └── administracion/     # Configuración del sistema
 ├── core/                   # Funcionalidades transversales
@@ -250,7 +251,53 @@ interface Indicator {
 - Descargas controladas
 - Auditoría de accesos
 
-### 4. 🏢 Proveedores y Terceros
+### 4. � Habilitación de Servicios
+**Funcionalidades:**
+- Gestión de prestadores de servicios (IPS, Profesionales, Personas Naturales/Jurídicas)
+- Control de habilitación por estado (habilitada, en proceso, suspendida, no habilitada, cancelada)
+- Registro y seguimiento de servicios autorizados por modalidad
+- Gestión de pólizas y seguros de responsabilidad civil
+- Autoevaluaciones anuales contra criterios de calidad
+- Registro de cumplimiento de requisitos regulatorios
+
+**Entidades Principales:**
+```typescript
+interface DatosPrestador {
+  id: number;
+  codigo_reps: string;
+  clase_prestador: 'IPS' | 'PROF' | 'PH' | 'PJ';
+  estado_habilitacion: 'HABILITADA' | 'EN_PROCESO' | 'SUSPENDIDA' | 'NO_HABILITADA' | 'CANCELADA';
+  fecha_vencimiento_habilitacion?: string;
+  aseguradora_pep?: string;
+  numero_poliza?: string;
+}
+
+interface ServicioSede {
+  id: number;
+  codigo_servicio: string;
+  nombre_servicio: string;
+  modalidad: 'INTRAMURAL' | 'AMBULATORIA' | 'TELEMEDICINA' | 'URGENCIAS' | 'AMBULANCIA';
+  complejidad: 'BAJA' | 'MEDIA' | 'ALTA';
+  estado_habilitacion: string;
+}
+
+interface Autoevaluacion {
+  id: number;
+  numero_autoevaluacion: string;
+  periodo: number;
+  estado: 'BORRADOR' | 'EN_CURSO' | 'COMPLETADA' | 'REVISADA' | 'VALIDADA';
+  fecha_vencimiento: string;
+}
+```
+
+**Dashboard de Habilitación:**
+- KPI de prestadores por estado
+- Alertas de vencimientos próximos
+- Seguimiento de autoevaluaciones
+- Mejoras vencidas pendientes de implementación
+- Cumplimiento de criterios por periodo
+
+### 5. 🏢 Proveedores y Terceros
 **Funcionalidades:**
 - Registro y gestión de terceros
 - Facturación electrónica
@@ -265,7 +312,7 @@ interface Indicator {
 4. Procesamiento de pago
 5. Archivo y seguimiento
 
-### 5. 🔍 Auditorías
+### 6. 🔍 Auditorías
 **Funcionalidades:**
 - Programación de auditorías
 - Seguimiento de hallazgos
@@ -382,6 +429,7 @@ notify.info("Información");
 - [x] Sistema de autenticación con 2FA
 - [x] Módulo de indicadores básico
 - [x] Gestión documental
+- [x] Módulo de habilitación de servicios
 - [x] Módulo de proveedores
 - [x] Portal interno (menu)
 - [x] Sistema de permisos por rol
