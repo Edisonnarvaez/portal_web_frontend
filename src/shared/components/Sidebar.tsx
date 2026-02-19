@@ -21,6 +21,9 @@ import {
   HiPresentationChartBar,
   HiInformationCircle,
   HiDocument,
+  HiDocumentChartBar,
+  HiArrowTrendingUp,
+  HiBellAlert,
 } from "react-icons/hi2";
 import { useAuthContext } from "../../apps/auth/presentation/context/AuthContext";
 import { getProfilePicUrl } from "../utils/profile";
@@ -170,6 +173,24 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
                 to: "/habilitacion",
                 label: "Gestión",
                 icon: <HiBuildingOffice2 className="w-4 h-4" />,
+                requiredRole: ["admin"],
+              },
+              {
+                to: "/habilitacion/reportes",
+                label: "Reportes",
+                icon: <HiDocumentChartBar className="w-4 h-4" />,
+                requiredRole: ["admin"],
+              },
+              {
+                to: "/habilitacion/comparativa",
+                label: "Comparativa",
+                icon: <HiArrowTrendingUp className="w-4 h-4" />,
+                requiredRole: ["admin"],
+              },
+              {
+                to: "/habilitacion/alertas",
+                label: "Alertas",
+                icon: <HiBellAlert className="w-4 h-4" />,
                 requiredRole: ["admin"],
               },
             ],
