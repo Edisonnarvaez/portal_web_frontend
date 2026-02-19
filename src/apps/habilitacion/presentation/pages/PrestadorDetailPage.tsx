@@ -22,7 +22,14 @@ import {
 import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
-import { PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal, RenovacionWizard, MejorasVencidasPanel } from '../components';
+import {
+  PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal,
+  RenovacionWizard, MejorasVencidasPanel,
+  Breadcrumbs, VencimientoBadge, AccionesContextuales, getAccionesPrestador,
+  DataTable,
+} from '../components';
+import type { DataTableColumn } from '../components';
+import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import { getEstadoLabel, getEstadoColor, formatDate, diasParaVencimiento, getEstadoVencimiento } from '../utils/formatters';
 import { LoadingScreen } from '../../../../shared/components/LoadingScreen';
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog';
@@ -112,13 +119,11 @@ const PrestadorDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
-      {/* ── Back + Header ── */}
-      <button
-        onClick={() => navigate('/habilitacion/')}
-        className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 mb-6 transition-colors"
-      >
-        <HiOutlineArrowLeft className="h-4 w-4" /> Volver a listado
-      </button>
+      {/* ── Breadcrumbs ── */}
+      <Breadcrumbs items={[
+        { label: 'Habilitación', path: '/habilitacion/' },
+        { label: prestador.codigo_reps },
+      ]} />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
@@ -177,16 +182,7 @@ const PrestadorDetailPage: React.FC = () => {
             </p>
           </div>
         </div>
-        {dias !== null && (
-          <div className="flex items-center gap-2">
-            <HiOutlineClock className="h-4 w-4 text-gray-500" />
-            <span className={`text-sm font-semibold ${
-              dias < 0 ? 'text-red-600' : dias <= 30 ? 'text-yellow-600' : 'text-green-600'
-            }`}>
-              {dias < 0 ? `Vencido hace ${Math.abs(dias)} días` : `${dias} días restantes`}
-            </span>
-          </div>
-        )}
+        <VencimientoBadge fechaVencimiento={prestador.fecha_vencimiento_habilitacion} />
       </div>
 
       {/* ── Mejoras vencidas alert ── */}

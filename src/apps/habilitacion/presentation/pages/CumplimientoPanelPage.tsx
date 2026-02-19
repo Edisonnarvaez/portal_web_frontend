@@ -15,7 +15,8 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts';
 import { useCumplimiento, useAutoevaluacion } from '../hooks';
-import { CumplimientoFormModal } from '../components';
+import { CumplimientoFormModal, Breadcrumbs, DataTable } from '../components';
+import type { DataTableColumn } from '../components';
 import { ESTADOS_CUMPLIMIENTO } from '../../domain/types';
 import { getEstadoLabel, getEstadoColor, formatDate } from '../utils/formatters';
 import { LoadingScreen } from '../../../../shared/components/LoadingScreen';
@@ -88,10 +89,29 @@ const CumplimientoPanelPage: React.FC = () => {
     }
   };
 
+  /* ── DataTable columns ── */
+  const cumplimientoColumns: DataTableColumn<Cumplimiento>[] = useMemo(() => [
+    { key: 'autoevaluacion', label: 'Autoevaluación', accessor: r => r.autoevaluacion?.numero_autoevaluacion ?? '', render: r => <span className="font-medium text-gray-900 dark:text-white">{r.autoevaluacion?.numero_autoevaluacion || '—'}</span> },
+    { key: 'servicio', label: 'Servicio', accessor: r => r.servicio_sede?.nombre_servicio ?? '', render: r => <span>{r.servicio_sede?.nombre_servicio || '—'}</span> },
+    { key: 'criterio', label: 'Criterio', accessor: r => r.criterio?.nombre ?? '', render: r => <span>{r.criterio?.nombre || '—'}</span> },
+    { key: 'cumple', label: 'Estado', accessor: r => r.cumple, render: r => (
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.cumple)}`}>{getEstadoLabel(r.cumple)}</span>
+    )},
+    { key: 'hallazgo', label: 'Hallazgo', accessor: r => r.hallazgo ?? '', render: r => <span className="max-w-[140px] truncate block">{r.hallazgo || '—'}</span> },
+    { key: 'responsable', label: 'Responsable', accessor: r => (r.responsable_mejora as any)?.username ?? '', render: r => <span>{(r.responsable_mejora as any)?.username || '—'}</span> },
+    { key: 'compromiso', label: 'Compromiso', accessor: r => r.fecha_compromiso ?? '', render: r => <span className="text-gray-500">{formatDate(r.fecha_compromiso)}</span> },
+  ], []);
+
   if (loading && cumplimientos.length === 0) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Habilitación', path: '/habilitacion/' },
+        { label: 'Cumplimientos' },
+      ]} />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -177,68 +197,35 @@ const CumplimientoPanelPage: React.FC = () => {
       )}
 
       {/* Table */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <HiOutlineCheckCircle className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No se encontraron cumplimientos</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Autoevaluación</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Servicio</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Criterio</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Estado</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Hallazgo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Responsable</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Compromiso</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-400">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-              {filtered.map(c => (
-                <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
-                    {c.autoevaluacion?.numero_autoevaluacion || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.servicio_sede?.nombre_servicio || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.criterio?.nombre || '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(c.cumple)}`}>
-                      {getEstadoLabel(c.cumple)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[140px] truncate">{c.hallazgo || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.responsable_mejora?.username || '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{formatDate(c.fecha_compromiso)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => { setEditing(c); setShowFormModal(true); }}
-                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 transition-colors"
-                        title="Editar"
-                      >
-                        <HiOutlinePencilSquare className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(c)}
-                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600 transition-colors"
-                        title="Eliminar"
-                      >
-                        <HiOutlineTrash className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <p className="text-xs text-gray-400 text-right">{filtered.length} de {cumplimientos.length} registros</p>
+      <DataTable<Cumplimiento>
+        data={filtered}
+        columns={cumplimientoColumns}
+        keyExtractor={r => r.id}
+        renderActions={c => (
+          <div className="flex items-center justify-end gap-1">
+            <button
+              onClick={() => { setEditing(c); setShowFormModal(true); }}
+              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 transition-colors"
+              title="Editar"
+            >
+              <HiOutlinePencilSquare className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setDeleteTarget(c)}
+              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600 transition-colors"
+              title="Eliminar"
+            >
+              <HiOutlineTrash className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        emptyState={
+          <div className="text-center py-16">
+            <HiOutlineCheckCircle className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No se encontraron cumplimientos</p>
+          </div>
+        }
+      />
 
       {/* Modals */}
       {showFormModal && (

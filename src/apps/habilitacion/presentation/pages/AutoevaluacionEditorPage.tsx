@@ -30,6 +30,7 @@ import {
   DuplicarAutoevaluacionModal,
   ValidarAutoevaluacionModal,
   MejorasVencidasPanel,
+  Breadcrumbs,
 } from '../components';
 import {
   ESTADOS_CUMPLIMIENTO,
@@ -144,13 +145,14 @@ const AutoevaluacionEditorPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* ── Back ── */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-      >
-        <HiOutlineArrowLeft className="h-4 w-4" /> Volver
-      </button>
+      {/* ── Breadcrumbs ── */}
+      <Breadcrumbs items={[
+        { label: 'Habilitación', path: '/habilitacion/' },
+        ...(autoevaluacion.datos_prestador
+          ? [{ label: autoevaluacion.datos_prestador.codigo_reps, path: `/habilitacion/prestador/${autoevaluacion.datos_prestador.id}` }]
+          : []),
+        { label: autoevaluacion.numero_autoevaluacion },
+      ]} />
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

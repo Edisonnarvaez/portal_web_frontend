@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import { useHallazgo } from '../hooks';
-import { HallazgoFormModal } from '../components';
+import { HallazgoFormModal, Breadcrumbs } from '../components';
 import { TIPOS_HALLAZGO, SEVERIDADES_HALLAZGO, ESTADOS_HALLAZGO } from '../../domain/types';
 import { getEstadoLabel, getEstadoColor, formatDate } from '../utils/formatters';
 import { LoadingScreen } from '../../../../shared/components/LoadingScreen';
@@ -112,6 +112,12 @@ const HallazgosPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Habilitación', path: '/habilitacion/' },
+        { label: 'Hallazgos' },
+      ]} />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

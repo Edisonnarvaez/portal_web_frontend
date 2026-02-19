@@ -15,3 +15,12 @@ export { default as ValidarAutoevaluacionModal } from './ValidarAutoevaluacionMo
 export { default as MejorasVencidasPanel } from './MejorasVencidasPanel';
 export { default as AlertasHabilitacionPanel } from './AlertasHabilitacionPanel';
 export { useAlertCount } from './AlertasHabilitacionPanel';
+
+// Phase 5 – UX/UI components
+export { default as DataTable } from './DataTable';
+export type { DataTableColumn, DataTableProps } from './DataTable';
+export { default as Breadcrumbs } from './Breadcrumbs';
+export type { BreadcrumbItem } from './Breadcrumbs';
+export { default as VencimientoBadge, getVencimientoLevel } from './VencimientoBadge';
+export { default as AccionesContextuales, getAccionesPrestador } from './AccionesContextuales';
+export type { AccionContextual } from './AccionesContextuales';
