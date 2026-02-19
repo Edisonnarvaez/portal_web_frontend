@@ -11,6 +11,8 @@ import {
   HiOutlineChartBarSquare,
   HiOutlineFunnel,
   HiOutlineListBullet,
+  HiOutlineDocumentDuplicate,
+  HiOutlineShieldCheck,
 } from 'react-icons/hi2';
 import {
   useAutoevaluacion,
@@ -25,6 +27,9 @@ import {
   HallazgoFormModal,
   PlanMejoraFormModal,
   AutoevaluacionFormModal,
+  DuplicarAutoevaluacionModal,
+  ValidarAutoevaluacionModal,
+  MejorasVencidasPanel,
 } from '../components';
 import {
   ESTADOS_CUMPLIMIENTO,
@@ -50,8 +55,10 @@ const AutoevaluacionEditorPage: React.FC = () => {
   const [editingCumplimiento, setEditingCumplimiento] = useState<any>(null);
   const [editingHallazgo, setEditingHallazgo] = useState<any>(null);
   const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [showDuplicarModal, setShowDuplicarModal] = useState(false);
+  const [showValidarModal, setShowValidarModal] = useState(false);
 
-  const { autoevaluaciones, loading: la, fetchAutoevaluaciones, getResumen } = useAutoevaluacion();
+  const { autoevaluaciones, loading: la, fetchAutoevaluaciones, getResumen, validar, duplicar } = useAutoevaluacion();
   const { criterios, evaluaciones, loading: lcr, fetchCriterios, fetchEvaluaciones } = useCriterio();
   const { cumplimientos, loading: lc, fetchCumplimientos } = useCumplimiento();
   const { hallazgos, loading: lh, fetchHallazgos } = useHallazgo();
@@ -163,12 +170,28 @@ const AutoevaluacionEditorPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowEditAutoModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-        >
-          <HiOutlinePencilSquare className="h-4 w-4" /> Editar
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {autoevaluacion.estado !== 'VALIDADA' && (
+            <button
+              onClick={() => setShowValidarModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+            >
+              <HiOutlineShieldCheck className="h-4 w-4" /> Validar
+            </button>
+          )}
+          <button
+            onClick={() => setShowDuplicarModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+          >
+            <HiOutlineDocumentDuplicate className="h-4 w-4" /> Duplicar
+          </button>
+          <button
+            onClick={() => setShowEditAutoModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            <HiOutlinePencilSquare className="h-4 w-4" /> Editar
+          </button>
+        </div>
       </div>
 
       {/* ── Progress ── */}
@@ -200,6 +223,9 @@ const AutoevaluacionEditorPage: React.FC = () => {
           <StatBadge label="No Aplica" value={progress.noAplica} color="gray" />
         </div>
       </div>
+
+      {/* ── Mejoras Vencidas Alert ── */}
+      <MejorasVencidasPanel compact autoevaluacionId={autoId} />
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
@@ -486,6 +512,34 @@ const AutoevaluacionEditorPage: React.FC = () => {
           onClose={() => { setShowPlanModal(false); setEditingPlan(null); }}
           onSuccess={() => { setShowPlanModal(false); setEditingPlan(null); fetchPlanes({ autoevaluacion_id: autoId }); }}
           planMejora={editingPlan || undefined}
+        />
+      )}
+
+      {showDuplicarModal && autoevaluacion && (
+        <DuplicarAutoevaluacionModal
+          isOpen={showDuplicarModal}
+          onClose={() => setShowDuplicarModal(false)}
+          autoevaluacion={autoevaluacion}
+          onDuplicar={duplicar}
+          onSuccess={(nueva) => {
+            setShowDuplicarModal(false);
+            fetchAutoevaluaciones();
+            navigate(`/habilitacion/autoevaluacion/${nueva.id}`);
+          }}
+        />
+      )}
+
+      {showValidarModal && autoevaluacion && (
+        <ValidarAutoevaluacionModal
+          isOpen={showValidarModal}
+          onClose={() => setShowValidarModal(false)}
+          autoevaluacion={autoevaluacion}
+          cumplimientos={cumplimientosAuto}
+          onValidar={validar}
+          onSuccess={() => {
+            setShowValidarModal(false);
+            fetchAutoevaluaciones();
+          }}
         />
       )}
     </div>

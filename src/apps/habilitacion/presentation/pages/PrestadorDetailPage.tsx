@@ -11,6 +11,7 @@ import {
   HiOutlineShieldCheck,
   HiOutlinePlus,
   HiOutlineClock,
+  HiOutlineArrowPath,
 } from 'react-icons/hi2';
 import {
   useDatosPrestador,
@@ -21,7 +22,7 @@ import {
 import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
-import { PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal } from '../components';
+import { PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal, RenovacionWizard, MejorasVencidasPanel } from '../components';
 import { getEstadoLabel, getEstadoColor, formatDate, diasParaVencimiento, getEstadoVencimiento } from '../utils/formatters';
 import { LoadingScreen } from '../../../../shared/components/LoadingScreen';
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog';
@@ -40,8 +41,9 @@ const PrestadorDetailPage: React.FC = () => {
   const [showAutoModal, setShowAutoModal] = useState(false);
   const [editingServicio, setEditingServicio] = useState<ServicioSede | null>(null);
   const [editingAuto, setEditingAuto] = useState<Autoevaluacion | null>(null);
+  const [showRenovacionWizard, setShowRenovacionWizard] = useState(false);
 
-  const { datos: prestadores, loading: lp, fetchDatos, update: updatePrestador, delete: deletePrestador } = useDatosPrestador();
+  const { datos: prestadores, loading: lp, fetchDatos, update: updatePrestador, delete: deletePrestador, iniciarRenovacion } = useDatosPrestador();
   const { servicios, loading: ls, fetchServicios, delete: deleteServicio } = useServicioSede();
   const { autoevaluaciones, loading: la, fetchAutoevaluaciones, delete: deleteAutoevaluacion } = useAutoevaluacion();
   const { cumplimientos, loading: lc, fetchCumplimientos } = useCumplimiento();
@@ -131,6 +133,14 @@ const PrestadorDetailPage: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2">
+          {dias !== null && dias <= 180 && (
+            <button
+              onClick={() => setShowRenovacionWizard(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+            >
+              <HiOutlineArrowPath className="h-4 w-4" /> Renovar
+            </button>
+          )}
           <button
             onClick={() => setShowEditModal(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -178,6 +188,9 @@ const PrestadorDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ── Mejoras vencidas alert ── */}
+      <MejorasVencidasPanel compact className="mb-6" />
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 mb-6 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
@@ -401,6 +414,17 @@ const PrestadorDetailPage: React.FC = () => {
         confirmText="Eliminar"
         cancelText="Cancelar"
       />
+
+      {showRenovacionWizard && (
+        <RenovacionWizard
+          isOpen={showRenovacionWizard}
+          onClose={() => setShowRenovacionWizard(false)}
+          prestador={prestador}
+          diasRestantes={dias}
+          onIniciarRenovacion={iniciarRenovacion}
+          onSuccess={() => fetchDatos()}
+        />
+      )}
     </div>
   );
 };

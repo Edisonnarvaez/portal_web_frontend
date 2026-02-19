@@ -65,6 +65,21 @@ export const useDatosPrestador = () => {
     }
   }, []);
 
+  const iniciarRenovacion = useCallback(async (id: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updated = await service.iniciarRenovacion(id);
+      setDatos(prev => prev.map(d => d.id === id ? updated : d));
+      return updated;
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar renovación');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     datos,
     loading,
@@ -74,6 +89,7 @@ export const useDatosPrestador = () => {
     update,
     delete: deleteDatos,
     getProximosAVencer,
+    iniciarRenovacion,
     service,
   };
 };

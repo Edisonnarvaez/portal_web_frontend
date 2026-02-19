@@ -57,6 +57,16 @@ export class DatosPrestadorService {
     return diasFaltantes < 0;
   }
 
+  async iniciarRenovacion(id: number): Promise<DatosPrestador> {
+    return this.repository.iniciarRenovacion(id);
+  }
+
+  puedeRenovar(fechaVencimiento?: string): boolean {
+    const dias = this.diasParaVencimiento(fechaVencimiento);
+    if (dias === null) return false;
+    return dias <= 180;
+  }
+
   getEstadoBadgeColor(estado: string): string {
     const estadoMap: Record<string, string> = {
       'HABILITADA': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',

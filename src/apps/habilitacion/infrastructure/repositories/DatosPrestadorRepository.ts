@@ -38,4 +38,9 @@ export class DatosPrestadorRepository implements IDatosPrestadorRepository {
     const response = await axiosInstance.get('/habilitacion/prestadores/vencidas/');
     return response.data;
   }
+
+  async iniciarRenovacion(id: number): Promise<DatosPrestador> {
+    const response = await axiosInstance.post(`/habilitacion/prestadores/${id}/iniciar_renovacion/`);
+    return response.data;
+  }
 }

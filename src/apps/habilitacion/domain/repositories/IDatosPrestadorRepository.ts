@@ -8,4 +8,5 @@ export interface IDatosPrestadorRepository {
   delete(id: number): Promise<void>;
   getProximosAVencer(dias?: number): Promise<DatosPrestador[]>;
   getVencidos(): Promise<DatosPrestador[]>;
+  iniciarRenovacion(id: number): Promise<DatosPrestador>;
 }
