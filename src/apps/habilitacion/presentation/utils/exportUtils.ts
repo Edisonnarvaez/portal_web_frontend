@@ -53,7 +53,7 @@ export const exportPlanesMejoraExcel = (planes: PlanMejora[]) => {
     'Descripción': p.descripcion,
     'Estado': getEstadoLabel(p.estado),
     'Avance (%)': p.porcentaje_avance,
-    'Responsable': p.responsable || '',
+    'Responsable': p.responsable_nombre || '',
     'Fecha Inicio': formatDate(p.fecha_inicio),
     'Fecha Vencimiento': formatDate(p.fecha_vencimiento),
     'Acciones': p.acciones_implementar,
@@ -151,7 +151,7 @@ export const exportReporteCompletoExcel = (
       'Descripción': p.descripcion,
       'Estado': getEstadoLabel(p.estado),
       'Avance (%)': p.porcentaje_avance,
-      'Responsable': p.responsable || '',
+      'Responsable': p.responsable_nombre || '',
       'Vencimiento': formatDate(p.fecha_vencimiento),
     }));
     const wsPlanes = XLSX.utils.json_to_sheet(planData);
@@ -355,7 +355,7 @@ export const exportReportePrestadorPDF = (
         p.numero_plan,
         getEstadoLabel(p.estado),
         `${p.porcentaje_avance}%`,
-        p.responsable || 'N/A',
+        p.responsable_nombre || 'N/A',
         formatDate(p.fecha_vencimiento),
       ]),
       startY: currentY + 4,

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Hallazgo, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos } from '../../domain/entities';
+import type { Hallazgo, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos, HallazgoPorOrigen } from '../../domain/entities';
 import { HallazgoService } from '../../application/services';
 
 export const useHallazgo = () => {
@@ -7,10 +7,21 @@ export const useHallazgo = () => {
   const [estadisticas, setEstadisticas] = useState<EstadisticasHallazgos | null>(null);
   const [abiertos, setAbiertos] = useState<Hallazgo[]>([]);
   const [criticos, setCriticos] = useState<Hallazgo[]>([]);
+  const [porOrigen, setPorOrigen] = useState<HallazgoPorOrigen[]>([]);
+  const [sinPlan, setSinPlan] = useState<Hallazgo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const service = new HallazgoService();
+
+  const getHallazgo = useCallback(async (id: number): Promise<Hallazgo> => {
+    try {
+      return await service.getHallazgo(id);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener hallazgo');
+      throw err;
+    }
+  }, []);
 
   const fetchHallazgos = useCallback(async (filters?: Record<string, any>) => {
     setLoading(true);
@@ -38,9 +49,9 @@ export const useHallazgo = () => {
     }
   }, []);
 
-  const fetchEstadisticas = useCallback(async (autoevaluacionId: number) => {
+  const fetchEstadisticas = useCallback(async (filters?: Record<string, any>) => {
     try {
-      const data = await service.getEstadisticas(autoevaluacionId);
+      const data = await service.getEstadisticas(filters);
       setEstadisticas(data);
     } catch (err: any) {
       setError(err.message || 'Error al cargar estadísticas');
@@ -97,11 +108,31 @@ export const useHallazgo = () => {
     }
   }, []);
 
+  const fetchPorOrigen = useCallback(async () => {
+    try {
+      const data = await service.getPorOrigen();
+      setPorOrigen(data);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar hallazgos por origen');
+    }
+  }, []);
+
+  const fetchSinPlan = useCallback(async () => {
+    try {
+      const data = await service.getSinPlan();
+      setSinPlan(data);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar hallazgos sin plan');
+    }
+  }, []);
+
   return {
     hallazgos,
     estadisticas,
     abiertos,
     criticos,
+    porOrigen,
+    sinPlan,
     loading,
     error,
     fetchHallazgos,
@@ -109,8 +140,12 @@ export const useHallazgo = () => {
     fetchEstadisticas,
     fetchAbiertos,
     fetchCriticos,
+    fetchPorOrigen,
+    fetchSinPlan,
+    getHallazgo,
     createHallazgo,
     updateHallazgo,
     deleteHallazgo,
+    service,
   };
 };

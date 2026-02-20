@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
 import type { Hallazgo, HallazgoCreate } from '../../domain/entities/Hallazgo';
-import { TIPOS_HALLAZGO, SEVERIDADES_HALLAZGO, ESTADOS_HALLAZGO } from '../../domain/types';
+import type { OrigenTipo } from '../../domain/entities/PlanMejora';
+import { TIPOS_HALLAZGO, SEVERIDADES_HALLAZGO, ESTADOS_HALLAZGO, ORIGENES_TIPO } from '../../domain/types';
 import { useHallazgo } from '../hooks/useHallazgo';
 
 interface HallazgoFormModalProps {
@@ -11,6 +12,7 @@ interface HallazgoFormModalProps {
   datosPrestadorId?: number;
   criterioId?: number;
   planMejoraId?: number;
+  origenTipo?: OrigenTipo;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -22,6 +24,7 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
   datosPrestadorId,
   criterioId,
   planMejoraId,
+  origenTipo: defaultOrigenTipo,
   onClose,
   onSuccess,
 }) => {
@@ -33,11 +36,12 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
     descripcion: '',
     tipo: 'HALLAZGO',
     severidad: 'MEDIA',
+    origen_tipo: defaultOrigenTipo || 'HABILITACION',
     area_responsable: '',
-    autoevaluacion_id: autoevaluacionId || 0,
-    datos_prestador_id: datosPrestadorId,
-    criterio_id: criterioId,
-    plan_mejora_id: planMejoraId,
+    autoevaluacion: autoevaluacionId || undefined,
+    datos_prestador: datosPrestadorId,
+    criterio: criterioId,
+    plan_mejora: planMejoraId,
     fecha_identificacion: new Date().toISOString().split('T')[0],
     observaciones: '',
   });
@@ -52,11 +56,12 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
         descripcion: hallazgo.descripcion,
         tipo: hallazgo.tipo,
         severidad: hallazgo.severidad,
+        origen_tipo: hallazgo.origen_tipo || defaultOrigenTipo || 'HABILITACION',
         area_responsable: hallazgo.area_responsable || '',
-        autoevaluacion_id: hallazgo.autoevaluacion_id || autoevaluacionId || 0,
-        datos_prestador_id: hallazgo.datos_prestador_id || datosPrestadorId,
-        criterio_id: hallazgo.criterio_id || criterioId,
-        plan_mejora_id: hallazgo.plan_mejora_id || planMejoraId,
+        autoevaluacion: hallazgo.autoevaluacion_id || autoevaluacionId || undefined,
+        datos_prestador: hallazgo.datos_prestador_id || datosPrestadorId,
+        criterio: hallazgo.criterio_id || criterioId,
+        plan_mejora: hallazgo.plan_mejora_id || planMejoraId,
         fecha_identificacion: hallazgo.fecha_identificacion || '',
         observaciones: hallazgo.observaciones || '',
       });
@@ -66,25 +71,27 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
         descripcion: '',
         tipo: 'HALLAZGO',
         severidad: 'MEDIA',
+        origen_tipo: defaultOrigenTipo || 'HABILITACION',
         area_responsable: '',
-        autoevaluacion_id: autoevaluacionId || 0,
-        datos_prestador_id: datosPrestadorId,
-        criterio_id: criterioId,
-        plan_mejora_id: planMejoraId,
+        autoevaluacion: autoevaluacionId || undefined,
+        datos_prestador: datosPrestadorId,
+        criterio: criterioId,
+        plan_mejora: planMejoraId,
         fecha_identificacion: new Date().toISOString().split('T')[0],
         observaciones: '',
       });
     }
     setError('');
-  }, [hallazgo, autoevaluacionId, datosPrestadorId, criterioId, planMejoraId, isOpen]);
+  }, [hallazgo, autoevaluacionId, datosPrestadorId, criterioId, planMejoraId, defaultOrigenTipo, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    const numericFields = ['autoevaluacion', 'datos_prestador', 'criterio', 'plan_mejora', 'auditoria', 'resultado_indicador'];
     setFormData((prev) => ({
       ...prev,
-      [name]: name.endsWith('_id') ? (value ? Number(value) : undefined) : value,
+      [name]: numericFields.includes(name) ? (value ? Number(value) : undefined) : value,
     }));
   };
 
@@ -100,8 +107,8 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
         return;
       }
 
-      if (!formData.autoevaluacion_id) {
-        setError('La autoevaluación es obligatoria');
+      if (!formData.origen_tipo) {
+        setError('El origen del hallazgo es obligatorio');
         setLoading(false);
         return;
       }
@@ -250,48 +257,70 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
               />
             </div>
 
-            {/* ID Autoevaluación */}
+            {/* Origen */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                ID Autoevaluación <span className="text-red-500">*</span>
+                Origen <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                name="autoevaluacion_id"
-                value={formData.autoevaluacion_id || ''}
+              <select
+                name="origen_tipo"
+                value={formData.origen_tipo || 'HABILITACION'}
                 onChange={handleChange}
-                required
-                disabled={!!autoevaluacionId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              >
+                {ORIGENES_TIPO.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
+          {/* Campos condicionales de Habilitación */}
+          {formData.origen_tipo === 'HABILITACION' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  ID Autoevaluación
+                </label>
+                <input
+                  type="number"
+                  name="autoevaluacion"
+                  value={formData.autoevaluacion || ''}
+                  onChange={handleChange}
+                  disabled={!!autoevaluacionId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  ID Criterio
+                </label>
+                <input
+                  type="number"
+                  name="criterio"
+                  value={formData.criterio || ''}
+                  onChange={handleChange}
+                  disabled={!!criterioId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+              </div>
+            </div>
+          )}
+
           {/* IDs opcionales */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID Prestador
               </label>
               <input
                 type="number"
-                name="datos_prestador_id"
-                value={formData.datos_prestador_id || ''}
+                name="datos_prestador"
+                value={formData.datos_prestador || ''}
                 onChange={handleChange}
                 disabled={!!datosPrestadorId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                ID Criterio
-              </label>
-              <input
-                type="number"
-                name="criterio_id"
-                value={formData.criterio_id || ''}
-                onChange={handleChange}
-                disabled={!!criterioId}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               />
             </div>
@@ -301,8 +330,8 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
               </label>
               <input
                 type="number"
-                name="plan_mejora_id"
-                value={formData.plan_mejora_id || ''}
+                name="plan_mejora"
+                value={formData.plan_mejora || ''}
                 onChange={handleChange}
                 disabled={!!planMejoraId}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
@@ -344,6 +373,18 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
           {/* Info hallazgo existente */}
           {isEdit && hallazgo && (
             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-xs text-gray-500 dark:text-gray-400 space-y-1">
+              {hallazgo.origen_tipo_display && (
+                <p><strong>Origen:</strong> {hallazgo.origen_tipo_display}</p>
+              )}
+              {hallazgo.tipo_display && (
+                <p><strong>Tipo:</strong> {hallazgo.tipo_display}</p>
+              )}
+              {hallazgo.severidad_display && (
+                <p><strong>Severidad:</strong> {hallazgo.severidad_display}</p>
+              )}
+              {hallazgo.criterio_codigo && (
+                <p><strong>Criterio:</strong> {hallazgo.criterio_codigo} — {hallazgo.criterio_nombre}</p>
+              )}
               <p><strong>Creado:</strong> {new Date(hallazgo.fecha_creacion).toLocaleDateString('es-CO')}</p>
               <p><strong>Última actualización:</strong> {new Date(hallazgo.fecha_actualizacion).toLocaleDateString('es-CO')}</p>
               {hallazgo.fecha_cierre && (

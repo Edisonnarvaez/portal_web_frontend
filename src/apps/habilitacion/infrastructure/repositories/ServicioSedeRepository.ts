@@ -1,11 +1,12 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../../domain/entities';
+import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import type { IServicioSedeRepository } from '../../domain/repositories';
 
 export class ServicioSedeRepository implements IServicioSedeRepository {
   async getAll(filters?: Record<string, any>): Promise<ServicioSede[]> {
     const response = await axiosInstance.get('/habilitacion/servicios/', { params: filters });
-    return response.data;
+    return response.data.results || response.data;
   }
 
   async getById(id: number): Promise<ServicioSede> {
@@ -31,13 +32,25 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
     const response = await axiosInstance.get('/habilitacion/servicios/', {
       params: { sede: headquartersId }
     });
-    return response.data;
+    return response.data.results || response.data;
   }
 
   async getProximosAVencer(dias: number = 90): Promise<ServicioSede[]> {
     const response = await axiosInstance.get('/habilitacion/servicios/proximos_a_vencer/', {
       params: { dias }
     });
-    return response.data;
+    return response.data.results || response.data;
+  }
+
+  async getCumplimientos(id: number): Promise<Cumplimiento[]> {
+    const response = await axiosInstance.get(`/habilitacion/servicios/${id}/cumplimientos/`);
+    return response.data.results || response.data;
+  }
+
+  async getPorComplejidad(complejidad: string): Promise<ServicioSede[]> {
+    const response = await axiosInstance.get('/habilitacion/servicios/por_complejidad/', {
+      params: { complejidad }
+    });
+    return response.data.results || response.data;
   }
 }

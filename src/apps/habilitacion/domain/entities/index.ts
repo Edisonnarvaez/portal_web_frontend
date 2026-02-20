@@ -6,3 +6,4 @@ export * from './Cumplimiento';
 export * from './Criterio';
 export * from './PlanMejora';
 export * from './Hallazgo';
+export * from './PaginatedResponse';

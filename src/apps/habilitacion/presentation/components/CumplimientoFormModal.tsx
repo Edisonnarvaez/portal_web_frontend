@@ -26,7 +26,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   const { create, update } = useCumplimiento();
   const isEdit = !!cumplimiento;
 
-  const [formData, setFormData] = useState<Partial<CumplimientoCreate>>({
+  const [formData, setFormData] = useState<Partial<CumplimientoCreate & { responsable_mejora_id?: number }>>({
     autoevaluacion_id: autoevaluacionId || 0,
     servicio_sede_id: servicioSedeId || 0,
     criterio_id: criterioId || 0,

@@ -2,27 +2,40 @@ import { useState } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
 import { CLASES_PRESTADOR, ESTADOS_HABILITACION } from '../../domain/types';
 import type { DatosPrestador, DatosPrestadorCreate } from '../../domain/entities/DatosPrestador';
-import { DatosPrestadorService } from '../../application/services/DatosPrestadorService';
-import { DatosPrestadorRepository } from '../../infrastructure/repositories/DatosPrestadorRepository';
+import { useDatosPrestador } from '../hooks/useDatosPrestador';
 
 interface PrestadorFormModalProps {
   isOpen: boolean;
   prestador?: DatosPrestador;
+  headquartersId?: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestador, onClose, onSuccess }) => {
-  const [formData, setFormData] = useState<Partial<DatosPrestador>>(
-    prestador || {
-      codigo_reps: '',
-      clase_prestador: 'IPS',
-      estado_habilitacion: 'HABILITADA',
-      fecha_vencimiento_habilitacion: new Date().toISOString().split('T')[0],
-      aseguradora_pep: '',
-      numero_poliza: '',
-      vigencia_poliza: new Date().toISOString().split('T')[0],
-    }
+const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestador, headquartersId, onClose, onSuccess }) => {
+  const { create, update } = useDatosPrestador();
+  const [formData, setFormData] = useState<Partial<DatosPrestadorCreate>>(
+    prestador
+      ? {
+          headquarters_id: prestador.headquarters_id || prestador.sede?.id || headquartersId || 0,
+          codigo_reps: prestador.codigo_reps,
+          clase_prestador: prestador.clase_prestador,
+          estado_habilitacion: prestador.estado_habilitacion,
+          fecha_vencimiento_habilitacion: prestador.fecha_vencimiento_habilitacion,
+          aseguradora_pep: prestador.aseguradora_pep,
+          numero_poliza: prestador.numero_poliza,
+          vigencia_poliza: prestador.vigencia_poliza,
+        }
+      : {
+          headquarters_id: headquartersId || 0,
+          codigo_reps: '',
+          clase_prestador: 'IPS',
+          estado_habilitacion: 'HABILITADA',
+          fecha_vencimiento_habilitacion: new Date().toISOString().split('T')[0],
+          aseguradora_pep: '',
+          numero_poliza: '',
+          vigencia_poliza: new Date().toISOString().split('T')[0],
+        }
   );
 
   const [loading, setLoading] = useState(false);
@@ -42,12 +55,10 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
     setError('');
 
     try {
-      const service = new DatosPrestadorService(new DatosPrestadorRepository());
-
       if (prestador) {
-        await service.updateDatosPrestador(prestador.id, formData as any);
+        await update(prestador.id, { id: prestador.id, ...formData });
       } else {
-        await service.createDatosPrestador(formData as DatosPrestadorCreate);
+        await create(formData as DatosPrestadorCreate);
       }
 
       onSuccess();

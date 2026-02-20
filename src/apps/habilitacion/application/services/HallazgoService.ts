@@ -1,4 +1,4 @@
-import type { Hallazgo, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos } from '../../domain/entities';
+import type { Hallazgo, HallazgoDetail, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos, HallazgoPorOrigen } from '../../domain/entities';
 import { HallazgoRepository } from '../../infrastructure/repositories';
 
 export class HallazgoService {
@@ -12,7 +12,7 @@ export class HallazgoService {
     return this.repository.getAll(filters);
   }
 
-  async getHallazgo(id: number): Promise<Hallazgo> {
+  async getHallazgo(id: number): Promise<HallazgoDetail> {
     return this.repository.getById(id);
   }
 
@@ -32,8 +32,8 @@ export class HallazgoService {
     return this.repository.delete(id);
   }
 
-  async getEstadisticas(autoevaluacionId: number): Promise<EstadisticasHallazgos> {
-    return this.repository.getEstadisticas(autoevaluacionId);
+  async getEstadisticas(filters?: Record<string, any>): Promise<EstadisticasHallazgos> {
+    return this.repository.getEstadisticas(filters);
   }
 
   async getAbiertos(): Promise<Hallazgo[]> {
@@ -42,6 +42,14 @@ export class HallazgoService {
 
   async getCriticos(): Promise<Hallazgo[]> {
     return this.repository.getCriticos();
+  }
+
+  async getPorOrigen(): Promise<HallazgoPorOrigen[]> {
+    return this.repository.getPorOrigen();
+  }
+
+  async getSinPlan(): Promise<Hallazgo[]> {
+    return this.repository.getSinPlan();
   }
 
   getSeveridadColor(severidad: string): string {

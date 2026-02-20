@@ -1,4 +1,5 @@
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../../domain/entities';
+import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import { ServicioSedeRepository } from '../../infrastructure/repositories';
 
 export class ServicioSedeService {
@@ -34,6 +35,14 @@ export class ServicioSedeService {
 
   async getProximosAVencer(dias?: number): Promise<ServicioSede[]> {
     return this.repository.getProximosAVencer(dias);
+  }
+
+  async getCumplimientos(id: number): Promise<Cumplimiento[]> {
+    return this.repository.getCumplimientos(id);
+  }
+
+  async getPorComplejidad(complejidad: string): Promise<ServicioSede[]> {
+    return this.repository.getPorComplejidad(complejidad);
   }
 
   // Métodos auxiliares

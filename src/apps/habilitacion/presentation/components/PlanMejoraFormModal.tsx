@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
-import type { PlanMejora, PlanMejoraCreate } from '../../domain/entities/PlanMejora';
-import { ESTADOS_PLAN_MEJORA } from '../../domain/types';
+import type { PlanMejora, PlanMejoraCreate, OrigenTipo } from '../../domain/entities/PlanMejora';
+import { ESTADOS_PLAN_MEJORA, ORIGENES_TIPO } from '../../domain/types';
 import { usePlanMejora } from '../hooks/usePlanMejora';
 
 interface PlanMejoraFormModalProps {
@@ -9,6 +9,7 @@ interface PlanMejoraFormModalProps {
   planMejora?: PlanMejora;
   autoevaluacionId?: number;
   criterioId?: number;
+  origenTipo?: OrigenTipo;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -18,6 +19,7 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
   planMejora,
   autoevaluacionId,
   criterioId,
+  origenTipo: defaultOrigenTipo,
   onClose,
   onSuccess,
 }) => {
@@ -27,12 +29,13 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
   const [formData, setFormData] = useState<Partial<PlanMejoraCreate>>({
     numero_plan: '',
     descripcion: '',
-    criterio_id: criterioId || 0,
-    autoevaluacion_id: autoevaluacionId || 0,
+    origen_tipo: defaultOrigenTipo || 'HABILITACION',
+    criterio: criterioId || undefined,
+    autoevaluacion: autoevaluacionId || undefined,
     estado_cumplimiento_actual: '',
     objetivo_mejorado: '',
     acciones_implementar: '',
-    responsable: '',
+    responsable: undefined,
     fecha_inicio: new Date().toISOString().split('T')[0],
     fecha_vencimiento: '',
     porcentaje_avance: 0,
@@ -46,12 +49,13 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
       setFormData({
         numero_plan: planMejora.numero_plan,
         descripcion: planMejora.descripcion,
-        criterio_id: planMejora.criterio_id || criterioId || 0,
-        autoevaluacion_id: planMejora.autoevaluacion_id || autoevaluacionId || 0,
+        origen_tipo: planMejora.origen_tipo || defaultOrigenTipo || 'HABILITACION',
+        criterio: planMejora.criterio_id || criterioId || undefined,
+        autoevaluacion: planMejora.autoevaluacion_id || autoevaluacionId || undefined,
         estado_cumplimiento_actual: planMejora.estado_cumplimiento_actual || '',
         objetivo_mejorado: planMejora.objetivo_mejorado || '',
         acciones_implementar: planMejora.acciones_implementar,
-        responsable: planMejora.responsable || '',
+        responsable: planMejora.responsable || undefined,
         fecha_inicio: planMejora.fecha_inicio || '',
         fecha_vencimiento: planMejora.fecha_vencimiento || '',
         porcentaje_avance: planMejora.porcentaje_avance || 0,
@@ -60,27 +64,29 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
       setFormData({
         numero_plan: '',
         descripcion: '',
-        criterio_id: criterioId || 0,
-        autoevaluacion_id: autoevaluacionId || 0,
+        origen_tipo: defaultOrigenTipo || 'HABILITACION',
+        criterio: criterioId || undefined,
+        autoevaluacion: autoevaluacionId || undefined,
         estado_cumplimiento_actual: '',
         objetivo_mejorado: '',
         acciones_implementar: '',
-        responsable: '',
+        responsable: undefined,
         fecha_inicio: new Date().toISOString().split('T')[0],
         fecha_vencimiento: '',
         porcentaje_avance: 0,
       });
     }
     setError('');
-  }, [planMejora, autoevaluacionId, criterioId, isOpen]);
+  }, [planMejora, autoevaluacionId, criterioId, defaultOrigenTipo, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    const numericFields = ['porcentaje_avance', 'autoevaluacion', 'criterio', 'cumplimiento', 'auditoria', 'resultado_indicador', 'responsable'];
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'porcentaje_avance' || name.endsWith('_id') ? Number(value) : value,
+      [name]: numericFields.includes(name) ? (value ? Number(value) : undefined) : value,
     }));
   };
 
@@ -173,52 +179,71 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
               />
             </div>
 
-            {/* Responsable */}
+            {/* Responsable (ID) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Responsable
+                ID Responsable
               </label>
               <input
-                type="text"
+                type="number"
                 name="responsable"
                 value={formData.responsable || ''}
                 onChange={handleChange}
-                placeholder="Nombre del responsable"
+                placeholder="ID del usuario responsable"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* ID Autoevaluación */}
+            {/* Origen */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                ID Autoevaluación <span className="text-red-500">*</span>
+                Origen <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="origen_tipo"
+                value={formData.origen_tipo || 'HABILITACION'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              >
+                {ORIGENES_TIPO.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* ID Autoevaluación */}
+            {formData.origen_tipo === 'HABILITACION' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                ID Autoevaluación
               </label>
               <input
                 type="number"
-                name="autoevaluacion_id"
-                value={formData.autoevaluacion_id || ''}
+                name="autoevaluacion"
+                value={formData.autoevaluacion || ''}
                 onChange={handleChange}
-                required
                 disabled={!!autoevaluacionId}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               />
             </div>
+            )}
 
             {/* ID Criterio */}
+            {formData.origen_tipo === 'HABILITACION' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                ID Criterio <span className="text-red-500">*</span>
+                ID Criterio
               </label>
               <input
                 type="number"
-                name="criterio_id"
-                value={formData.criterio_id || ''}
+                name="criterio"
+                value={formData.criterio || ''}
                 onChange={handleChange}
-                required
                 disabled={!!criterioId}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               />
             </div>
+            )}
 
             {/* Fecha Inicio */}
             <div>
@@ -340,6 +365,10 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
           {/* Info plan existente */}
           {isEdit && planMejora && (
             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-xs text-gray-500 dark:text-gray-400 space-y-1">
+              <p><strong>Origen:</strong> {planMejora.origen_tipo_display || planMejora.origen_tipo}</p>
+              {planMejora.responsable_nombre && (
+                <p><strong>Responsable:</strong> {planMejora.responsable_nombre}</p>
+              )}
               <p><strong>Creado:</strong> {new Date(planMejora.fecha_creacion).toLocaleDateString('es-CO')}</p>
               <p><strong>Última actualización:</strong> {new Date(planMejora.fecha_actualizacion).toLocaleDateString('es-CO')}</p>
               {planMejora.fecha_implementacion && (

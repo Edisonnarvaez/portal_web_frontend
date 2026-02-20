@@ -79,6 +79,23 @@ export const ESTADOS_HALLAZGO = [
   { value: 'CERRADO', label: 'Cerrado', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
 ] as const;
 
+// Origen de planes de mejora y hallazgos
+export const ORIGENES_TIPO = [
+  { value: 'HABILITACION', label: 'Habilitación', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+  { value: 'AUDITORIA', label: 'Auditoría', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
+  { value: 'INDICADOR', label: 'Indicador', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' },
+] as const;
+
+// Tipos de soporte de plan de mejora
+export const TIPOS_SOPORTE = [
+  { value: 'EVIDENCIA', label: 'Evidencia' },
+  { value: 'ACTA', label: 'Acta' },
+  { value: 'INFORME', label: 'Informe' },
+  { value: 'FOTOGRAFIA', label: 'Fotografía' },
+  { value: 'PLAN_ACCION', label: 'Plan de Acción' },
+  { value: 'OTRO', label: 'Otro' },
+] as const;
+
 // Categorías de criterio
 export const CATEGORIAS_CRITERIO = [
   { value: 'TALENTO_HUMANO', label: 'Talento Humano' },
@@ -102,6 +119,8 @@ export type TipoHallazgo = typeof TIPOS_HALLAZGO[number]['value'];
 export type SeveridadHallazgo = typeof SEVERIDADES_HALLAZGO[number]['value'];
 export type EstadoHallazgo = typeof ESTADOS_HALLAZGO[number]['value'];
 export type CategoriaCriterio = typeof CATEGORIAS_CRITERIO[number]['value'];
+export type OrigenTipoValue = typeof ORIGENES_TIPO[number]['value'];
+export type TipoSoporte = typeof TIPOS_SOPORTE[number]['value'];
 
 // Mensajes por rol
 export const ROLE_MESSAGES = {

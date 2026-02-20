@@ -87,6 +87,15 @@ export const useAutoevaluacion = () => {
     }
   }, []);
 
+  const getPorCompletar = useCallback(async () => {
+    try {
+      return await service.getAutoevaluacionesPorCompletar();
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener autoevaluaciones por completar');
+      throw err;
+    }
+  }, []);
+
   return {
     autoevaluaciones,
     loading,
@@ -98,6 +107,7 @@ export const useAutoevaluacion = () => {
     validar,
     duplicar,
     getResumen,
+    getPorCompletar,
     service,
   };
 };

@@ -8,7 +8,8 @@ interface PrestadorCardProps {
   estadoHabilitacion: string;
   fechaVencimiento?: string;
   aseguradora?: string;
-  numeroPolicza?: string;
+  numeroPolicza?: string; // @deprecated use numeroPoliza
+  numeroPoliza?: string;
   company?: {
     nombre: string;
   };
@@ -24,6 +25,7 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
   fechaVencimiento,
   aseguradora,
   numeroPolicza,
+  numeroPoliza: numeroPolizaProp,
   company,
   onEdit,
   onView,
@@ -88,7 +90,7 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
       {aseguradora && (
         <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
           <div><strong>Aseguradora:</strong> {aseguradora}</div>
-          {numeroPolicza && <div><strong>Póliza:</strong> {numeroPolicza}</div>}
+          {(numeroPolizaProp || numeroPolicza) && <div><strong>Póliza:</strong> {numeroPolizaProp || numeroPolicza}</div>}
         </div>
       )}
     </div>

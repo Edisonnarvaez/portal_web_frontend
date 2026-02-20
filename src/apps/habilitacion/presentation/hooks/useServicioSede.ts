@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../../domain/entities';
+import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import { ServicioSedeService } from '../../application/services';
 import { ServicioSedeRepository } from '../../infrastructure/repositories';
 
@@ -56,11 +57,44 @@ export const useServicioSede = () => {
     }
   }, []);
 
+  const getServiciosByHeadquarters = useCallback(async (headquartersId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getServiciosByHeadquarters(headquartersId);
+      setServicios(data);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener servicios por sede');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const getProximosAVencer = useCallback(async (dias?: number) => {
     try {
       return await service.getProximosAVencer(dias);
     } catch (err: any) {
       setError(err.message || 'Error al obtener próximos a vencer');
+      throw err;
+    }
+  }, []);
+
+  const getCumplimientos = useCallback(async (id: number): Promise<Cumplimiento[]> => {
+    try {
+      return await service.getCumplimientos(id);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener cumplimientos del servicio');
+      throw err;
+    }
+  }, []);
+
+  const getPorComplejidad = useCallback(async (complejidad: string): Promise<ServicioSede[]> => {
+    try {
+      return await service.getPorComplejidad(complejidad);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener servicios por complejidad');
       throw err;
     }
   }, []);
@@ -73,7 +107,10 @@ export const useServicioSede = () => {
     create,
     update,
     delete: deleteServicio,
+    getServiciosByHeadquarters,
     getProximosAVencer,
+    getCumplimientos,
+    getPorComplejidad,
     service,
   };
 };

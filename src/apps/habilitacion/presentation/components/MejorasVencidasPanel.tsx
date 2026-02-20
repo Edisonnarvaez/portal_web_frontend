@@ -44,8 +44,8 @@ const MejorasVencidasPanel: React.FC<MejorasVencidasPanelProps> = ({
         getMejorasVencidas(),
         fetchVencidos(),
       ]);
-      setCumplimientosVencidos(cumpl || []);
-      setPlanesVencidos(planes || []);
+      setCumplimientosVencidos(cumpl ?? []);
+      setPlanesVencidos(planes ?? []);
     } catch (err) {
       console.error('Error loading mejoras vencidas:', err);
     } finally {

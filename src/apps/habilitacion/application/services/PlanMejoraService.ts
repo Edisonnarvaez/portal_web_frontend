@@ -1,4 +1,4 @@
-import type { PlanMejora, PlanMejoraCreate, PlanMejoraUpdate, PlanMejoraResumen } from '../../domain/entities';
+import type { PlanMejora, PlanMejoraDetail, PlanMejoraCreate, PlanMejoraUpdate, PlanMejoraResumen, PlanMejoraPorOrigen, SoportePlan } from '../../domain/entities';
 import { PlanMejoraRepository } from '../../infrastructure/repositories';
 
 export class PlanMejoraService {
@@ -12,7 +12,7 @@ export class PlanMejoraService {
     return this.repository.getAll(filters);
   }
 
-  async getPlanDeMejora(id: number): Promise<PlanMejora> {
+  async getPlanDeMejora(id: number): Promise<PlanMejoraDetail> {
     return this.repository.getById(id);
   }
 
@@ -40,8 +40,25 @@ export class PlanMejoraService {
     return this.repository.getProximosAVencer(dias);
   }
 
-  async getResumen(autoevaluacionId: number): Promise<PlanMejoraResumen> {
-    return this.repository.getResumen(autoevaluacionId);
+  async getResumen(filters?: Record<string, any>): Promise<PlanMejoraResumen> {
+    return this.repository.getResumen(filters);
+  }
+
+  async getPorOrigen(): Promise<PlanMejoraPorOrigen[]> {
+    return this.repository.getPorOrigen();
+  }
+
+  // Soportes
+  async getSoportes(planId: number): Promise<SoportePlan[]> {
+    return this.repository.getSoportes(planId);
+  }
+
+  async uploadSoporte(planId: number, formData: FormData): Promise<SoportePlan> {
+    return this.repository.uploadSoporte(planId, formData);
+  }
+
+  async deleteSoporte(planId: number, soporteId: number): Promise<void> {
+    return this.repository.deleteSoporte(planId, soporteId);
   }
 
   diasParaVencimiento(fechaVencimiento: string): number {

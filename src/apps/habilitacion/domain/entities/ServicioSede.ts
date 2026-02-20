@@ -8,6 +8,7 @@ export interface ServicioSede {
   modalidad: ModalidadServicio;
   complejidad: ComplejidadServicio;
   estado_habilitacion: EstadoHabilitacion;
+  estado_display?: string;
   fecha_habilitacion?: string;
   fecha_vencimiento?: string;
   fecha_creacion: string;
@@ -23,15 +24,15 @@ export interface ServicioSede {
 }
 
 export interface ServicioSedeCreate {
+  sede_id: number;
   codigo_servicio: string;
   nombre_servicio: string;
   descripcion?: string;
   modalidad: ModalidadServicio;
   complejidad: ComplejidadServicio;
-  estado_habilitacion: EstadoHabilitacion;
+  estado_habilitacion?: EstadoHabilitacion;
   fecha_habilitacion?: string;
   fecha_vencimiento?: string;
-  headquarters_id: number;
 }
 
 export interface ServicioSedeUpdate extends Partial<ServicioSedeCreate> {

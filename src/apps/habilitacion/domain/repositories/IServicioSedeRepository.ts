@@ -1,4 +1,5 @@
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../entities';
+import type { Cumplimiento } from '../entities/Cumplimiento';
 
 export interface IServicioSedeRepository {
   getAll(filters?: Record<string, any>): Promise<ServicioSede[]>;
@@ -8,4 +9,6 @@ export interface IServicioSedeRepository {
   delete(id: number): Promise<void>;
   getByHeadquarters(headquartersId: number): Promise<ServicioSede[]>;
   getProximosAVencer(dias?: number): Promise<ServicioSede[]>;
+  getCumplimientos(id: number): Promise<Cumplimiento[]>;
+  getPorComplejidad(complejidad: string): Promise<ServicioSede[]>;
 }

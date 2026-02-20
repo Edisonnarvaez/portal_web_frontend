@@ -1,4 +1,6 @@
 import type { DatosPrestador, DatosPrestadorCreate, DatosPrestadorUpdate } from '../../domain/entities';
+import type { ServicioSede } from '../../domain/entities/ServicioSede';
+import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
 import { DatosPrestadorRepository } from '../../infrastructure/repositories';
 
 export class DatosPrestadorService {
@@ -59,6 +61,14 @@ export class DatosPrestadorService {
 
   async iniciarRenovacion(id: number): Promise<DatosPrestador> {
     return this.repository.iniciarRenovacion(id);
+  }
+
+  async getServicios(id: number): Promise<ServicioSede[]> {
+    return this.repository.getServicios(id);
+  }
+
+  async getAutoevaluaciones(id: number): Promise<Autoevaluacion[]> {
+    return this.repository.getAutoevaluaciones(id);
   }
 
   puedeRenovar(fechaVencimiento?: string): boolean {

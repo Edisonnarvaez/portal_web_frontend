@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import {
-  HiOutlineClipboardList,
-  HiOutlineRefresh,
   HiOutlinePlus,
   HiOutlineEye,
   HiOutlinePencil,
   HiOutlineTrash,
-  HiOutlineExclamation,
   HiOutlineCheckCircle,
   HiOutlineXCircle,
 } from 'react-icons/hi2';
+import {
+  HiOutlineClipboardList,
+  HiOutlineRefresh,
+  HiOutlineExclamation
+} from 'react-icons/hi';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { useDatosPrestador, useServicioSede, useAutoevaluacion, useCumplimiento } from '../hooks';
@@ -212,23 +214,23 @@ const HabilitacionPageEnhanced = () => {
     activeTab === 'dashboard'
       ? loadingPrestadores || loadingServicios || loadingAutoevaluaciones
       : activeTab === 'prestadores'
-      ? loadingPrestadores
-      : activeTab === 'servicios'
-      ? loadingServicios
-      : activeTab === 'autoevaluaciones'
-      ? loadingAutoevaluaciones
-      : loadingCumplimientos;
+        ? loadingPrestadores
+        : activeTab === 'servicios'
+          ? loadingServicios
+          : activeTab === 'autoevaluaciones'
+            ? loadingAutoevaluaciones
+            : loadingCumplimientos;
 
   const error =
     activeTab === 'prestadores'
       ? errorPrestadores
       : activeTab === 'servicios'
-      ? errorServicios
-      : activeTab === 'autoevaluaciones'
-      ? errorAutoevaluaciones
-      : activeTab === 'cumplimientos'
-      ? errorCumplimientos
-      : '';
+        ? errorServicios
+        : activeTab === 'autoevaluaciones'
+          ? errorAutoevaluaciones
+          : activeTab === 'cumplimientos'
+            ? errorCumplimientos
+            : '';
 
   const handleDeleteConfirm = async () => {
     if (!selectedItem) return;
@@ -308,11 +310,10 @@ const HabilitacionPageEnhanced = () => {
               setFiltroEstado('');
               setFiltroClase('');
             }}
-            className={`px-4 py-3 font-medium whitespace-nowrap transition-colors border-b-2 ${
-              activeTab === tab
+            className={`px-4 py-3 font-medium whitespace-nowrap transition-colors border-b-2 ${activeTab === tab
                 ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
+              }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
@@ -330,13 +331,12 @@ const HabilitacionPageEnhanced = () => {
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className={`p-4 rounded-lg border-l-4 ${
-                  alert.severity === 'critical'
+                className={`p-4 rounded-lg border-l-4 ${alert.severity === 'critical'
                     ? 'bg-red-50 dark:bg-red-900/20 border-red-600 text-red-800 dark:text-red-200'
                     : alert.severity === 'warning'
-                    ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-600 text-yellow-800 dark:text-yellow-200'
-                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-800 dark:text-blue-200'
-                }`}
+                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-600 text-yellow-800 dark:text-yellow-200'
+                      : 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-800 dark:text-blue-200'
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -475,21 +475,19 @@ const HabilitacionPageEnhanced = () => {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => setViewMode('cards')}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'cards'
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${viewMode === 'cards'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                  }`}
               >
                 Tarjetas
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'table'
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${viewMode === 'table'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                  }`}
               >
                 Tabla
               </button>
@@ -576,7 +574,7 @@ const HabilitacionPageEnhanced = () => {
         title="Eliminar Registro"
         message="¿Está seguro de que desea eliminar este registro? Esta acción no se puede deshacer."
         onConfirm={handleDeleteConfirm}
-        onCancel={() => {
+        onClose={() => {
           setShowDeleteDialog(false);
           setSelectedItem(null);
         }}

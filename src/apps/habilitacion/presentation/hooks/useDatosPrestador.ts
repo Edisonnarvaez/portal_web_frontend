@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DatosPrestador, DatosPrestadorCreate, DatosPrestadorUpdate } from '../../domain/entities';
+import type { ServicioSede } from '../../domain/entities/ServicioSede';
+import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
 import { DatosPrestadorService } from '../../application/services';
 import { DatosPrestadorRepository } from '../../infrastructure/repositories';
 
@@ -80,6 +82,33 @@ export const useDatosPrestador = () => {
     }
   }, []);
 
+  const getVencidos = useCallback(async () => {
+    try {
+      return await service.getVencidos();
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener vencidos');
+      throw err;
+    }
+  }, []);
+
+  const getServicios = useCallback(async (id: number): Promise<ServicioSede[]> => {
+    try {
+      return await service.getServicios(id);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener servicios del prestador');
+      throw err;
+    }
+  }, []);
+
+  const getAutoevaluaciones = useCallback(async (id: number): Promise<Autoevaluacion[]> => {
+    try {
+      return await service.getAutoevaluaciones(id);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener autoevaluaciones del prestador');
+      throw err;
+    }
+  }, []);
+
   return {
     datos,
     loading,
@@ -89,6 +118,9 @@ export const useDatosPrestador = () => {
     update,
     delete: deleteDatos,
     getProximosAVencer,
+    getVencidos,
+    getServicios,
+    getAutoevaluaciones,
     iniciarRenovacion,
     service,
   };

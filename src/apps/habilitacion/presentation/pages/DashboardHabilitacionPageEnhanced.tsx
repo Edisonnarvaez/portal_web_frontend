@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
 import {
-  HiOutlineClipboardCheck,
   HiOutlineShieldCheck,
   HiOutlineExclamationCircle,
   HiOutlineDocumentText,
@@ -13,6 +12,7 @@ import {
   HiOutlineXCircle,
   HiOutlineExclamationTriangle,
 } from 'react-icons/hi2';
+import { HiOutlineClipboardCheck } from "react-icons/hi";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
@@ -31,7 +31,7 @@ import {
   ESTADOS_CUMPLIMIENTO,
 } from '../../domain/types';
 import { formatDate, diasParaVencimiento } from '../utils/formatters';
-import { LoadingScreen } from '../../../../shared/components/LoadingScreen';
+import LoadingScreen from '../../../../shared/components/LoadingScreen';
 
 /* ─── colour palette for charts ─── */
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];

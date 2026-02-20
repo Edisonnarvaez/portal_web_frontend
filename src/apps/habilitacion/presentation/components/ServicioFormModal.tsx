@@ -31,7 +31,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
     estado_habilitacion: 'HABILITADA',
     fecha_habilitacion: new Date().toISOString().split('T')[0],
     fecha_vencimiento: '',
-    headquarters_id: headquartersId || 0,
+    sede_id: headquartersId || 0,
   });
 
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
         estado_habilitacion: servicio.estado_habilitacion,
         fecha_habilitacion: servicio.fecha_habilitacion || '',
         fecha_vencimiento: servicio.fecha_vencimiento || '',
-        headquarters_id: servicio.headquarters?.id || headquartersId || 0,
+        sede_id: servicio.headquarters?.id || headquartersId || 0,
       });
     } else {
       setFormData({
@@ -60,7 +60,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
         estado_habilitacion: 'HABILITADA',
         fecha_habilitacion: new Date().toISOString().split('T')[0],
         fecha_vencimiento: '',
-        headquarters_id: headquartersId || 0,
+        sede_id: headquartersId || 0,
       });
     }
     setError('');

@@ -3,6 +3,13 @@ import type { EstadoCumplimiento } from '../types';
 export interface Cumplimiento {
   id: number;
   cumple: EstadoCumplimiento;
+  cumple_display?: string;
+  criterio_codigo?: string;
+  criterio_nombre?: string;
+  servicio_nombre?: string;
+  tiene_plan_mejora?: boolean;
+  planes_mejora_count?: number;
+  hallazgos_count?: number;
   hallazgo?: string;
   plan_mejora?: string;
   responsable_mejora?: {
@@ -31,10 +38,11 @@ export interface CumplimientoCreate {
   cumple: EstadoCumplimiento;
   hallazgo?: string;
   plan_mejora?: string;
-  responsable_mejora_id?: number;
+  responsable_mejora?: number;
   fecha_compromiso?: string;
   servicio_sede_id: number;
   criterio_id: number;
+  documentos_evidencia?: number[];
 }
 
 export interface CumplimientoUpdate extends Partial<CumplimientoCreate> {

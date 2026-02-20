@@ -6,6 +6,7 @@ import {
   TIPOS_HALLAZGO,
   SEVERIDADES_HALLAZGO,
   ESTADOS_HALLAZGO,
+  ORIGENES_TIPO,
 } from '../../domain/types';
 
 type EstadoItem = { readonly value: string; readonly label: string; readonly color?: string };
@@ -18,6 +19,7 @@ const ALL_ESTADOS: readonly EstadoItem[][] = [
   TIPOS_HALLAZGO,
   SEVERIDADES_HALLAZGO,
   ESTADOS_HALLAZGO,
+  ORIGENES_TIPO,
 ] as unknown as EstadoItem[][];
 
 export const getEstadoLabel = (estado: string): string => {

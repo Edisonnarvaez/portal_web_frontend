@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiOutlineClipboardList, HiOutlineRefresh, HiOutlinePlus, HiOutlinePencilSquare, HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineClipboardList, HiOutlineRefresh, HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlinePencilSquare } from "react-icons/hi2";
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import { useDatosPrestador, useServicioSede, useAutoevaluacion } from '../hooks';
 import {
@@ -365,7 +366,7 @@ const HabilitacionPage = () => {
                       estadoHabilitacion={p.estado_habilitacion}
                       fechaVencimiento={p.fecha_vencimiento_habilitacion}
                       aseguradora={p.aseguradora_pep}
-                      numeroPolicza={p.numero_poliza}
+                      numeroPoliza={p.numero_poliza}
                       company={p.company}
                       onView={(id) => navigate(`/habilitacion/prestador/${id}`)}
                     />

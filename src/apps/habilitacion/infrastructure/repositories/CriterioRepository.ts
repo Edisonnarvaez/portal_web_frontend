@@ -5,7 +5,7 @@ import type { ICriterioRepository, ICriterioEvaluacionRepository } from '../../d
 export class CriterioRepository implements ICriterioRepository {
   async getAll(filters?: Record<string, any>): Promise<Criterio[]> {
     const response = await axiosInstance.get('/habilitacion/criterios/', { params: filters });
-    return response.data;
+    return response.data.results || response.data;
   }
 
   async getById(id: number): Promise<Criterio> {
@@ -31,7 +31,7 @@ export class CriterioRepository implements ICriterioRepository {
     const response = await axiosInstance.get('/habilitacion/criterios/', {
       params: { categoria }
     });
-    return response.data;
+    return response.data.results || response.data;
   }
 }
 

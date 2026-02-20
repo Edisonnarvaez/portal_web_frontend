@@ -5,7 +5,7 @@ import type { ICumplimientoRepository } from '../../domain/repositories';
 export class CumplimientoRepository implements ICumplimientoRepository {
   async getAll(filters?: Record<string, any>): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/', { params: filters });
-    return response.data;
+    return response.data.results || response.data;
   }
 
   async getById(id: number): Promise<Cumplimiento> {
@@ -29,16 +29,16 @@ export class CumplimientoRepository implements ICumplimientoRepository {
 
   async getSinCumplir(): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/sin_cumplir/');
-    return response.data;
+    return response.data.results || response.data;
   }
 
   async getConPlanMejora(): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/con_plan_mejora/');
-    return response.data;
+    return response.data.results || response.data;
   }
 
   async getMejorasVencidas(): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/mejoras_vencidas/');
-    return response.data;
+    return response.data.results || response.data;
   }
 }
