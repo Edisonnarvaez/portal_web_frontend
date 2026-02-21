@@ -7,7 +7,7 @@ import { useDatosPrestador, useServicioSede, useAutoevaluacion } from '../hooks'
 import {
   PrestadorCard, ServicioCard, AutoevaluacionCard,
   DataTable, VencimientoBadge, AccionesContextuales, getAccionesPrestador,
-  AutoevaluacionFormModal,
+  PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal,
 } from '../components';
 import type { DataTableColumn } from '../components';
 import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
@@ -34,6 +34,8 @@ const HabilitacionPage = () => {
   const [filtroComplejidad, setFiltroComplejidad] = useState('');
   const [filtroAutoevaluacion, setFiltroAutoevaluacion] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPrestadorModal, setShowPrestadorModal] = useState(false);
+  const [showServicioModal, setShowServicioModal] = useState(false);
   const [showAutoModal, setShowAutoModal] = useState(false);
 
   // Hooks
@@ -77,7 +79,7 @@ const HabilitacionPage = () => {
   const prestadoresFiltrados = prestadores.filter(p => {
     const matchesSearch =
       p.codigo_reps.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.company?.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+      (p.company_detail?.name || p.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroEstado || p.estado_habilitacion === filtroEstado;
     const matchesClase = !filtroClase || p.clase_prestador === filtroClase;
     return matchesSearch && matchesEstado && matchesClase;
@@ -109,7 +111,7 @@ const HabilitacionPage = () => {
   /* ── Column definitions for DataTable ── */
   const prestadorColumns: DataTableColumn<DatosPrestador>[] = useMemo(() => [
     { key: 'codigo_reps', label: 'Código REPS', accessor: r => r.codigo_reps },
-    { key: 'company', label: 'Empresa', accessor: r => r.company?.nombre ?? '', render: r => <span className="text-gray-900 dark:text-white font-medium">{r.company?.nombre || '—'}</span> },
+    { key: 'company', label: 'Empresa', accessor: r => r.company_detail?.name || r.company_name || '', render: r => <span className="text-gray-900 dark:text-white font-medium">{r.company_detail?.name || r.company_name || '—'}</span> },
     { key: 'clase_prestador', label: 'Clase', accessor: r => r.clase_prestador, render: r => <span>{getEstadoLabel(r.clase_prestador)}</span> },
     { key: 'estado_habilitacion', label: 'Estado', accessor: r => r.estado_habilitacion, render: r => (
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.estado_habilitacion)}`}>{getEstadoLabel(r.estado_habilitacion)}</span>
@@ -196,6 +198,19 @@ const HabilitacionPage = () => {
           >
             <HiOutlineRefresh className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="hidden sm:inline text-sm font-medium">Actualizar</span>
+          </button>
+          <button
+            onClick={() => {
+              if (activeTab === 'prestadores') setShowPrestadorModal(true);
+              else if (activeTab === 'servicios') setShowServicioModal(true);
+              else setShowAutoModal(true);
+            }}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <HiOutlinePlus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline text-sm font-medium">
+              {activeTab === 'prestadores' ? 'Nuevo Prestador' : activeTab === 'servicios' ? 'Nuevo Servicio' : 'Nueva Autoevaluación'}
+            </span>
           </button>
         </div>
       </div>
@@ -367,7 +382,7 @@ const HabilitacionPage = () => {
                       fechaVencimiento={p.fecha_vencimiento_habilitacion}
                       aseguradora={p.aseguradora_pep}
                       numeroPoliza={p.numero_poliza}
-                      company={p.company}
+                      companyName={p.company_detail?.name || p.company_name}
                       onView={(id) => navigate(`/habilitacion/prestador/${id}`)}
                     />
                   ))}
@@ -472,11 +487,33 @@ const HabilitacionPage = () => {
       </div>
 
       {/* Modals */}
+      {showPrestadorModal && (
+        <PrestadorFormModal
+          isOpen={showPrestadorModal}
+          onClose={() => setShowPrestadorModal(false)}
+          onSuccess={() => { setShowPrestadorModal(false); fetchPrestadores(); }}
+        />
+      )}
+
+      {showServicioModal && (
+        <ServicioFormModal
+          isOpen={showServicioModal}
+          onClose={() => setShowServicioModal(false)}
+          onSuccess={() => { setShowServicioModal(false); fetchServicios(); }}
+        />
+      )}
+
       {showAutoModal && (
         <AutoevaluacionFormModal
           isOpen={showAutoModal}
           onClose={() => setShowAutoModal(false)}
-          onSuccess={() => { setShowAutoModal(false); fetchAutoevaluaciones(); }}
+          onSuccess={(autoevaluacion) => {
+            setShowAutoModal(false);
+            fetchAutoevaluaciones();
+            if (autoevaluacion?.id) {
+              navigate(`/habilitacion/autoevaluacion/${autoevaluacion.id}`);
+            }
+          }}
         />
       )}
     </div>

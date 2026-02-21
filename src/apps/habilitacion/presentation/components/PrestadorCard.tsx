@@ -10,9 +10,7 @@ interface PrestadorCardProps {
   aseguradora?: string;
   numeroPolicza?: string; // @deprecated use numeroPoliza
   numeroPoliza?: string;
-  company?: {
-    nombre: string;
-  };
+  companyName?: string;
   onEdit?: (id: number) => void;
   onView?: (id: number) => void;
 }
@@ -26,7 +24,7 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
   aseguradora,
   numeroPolicza,
   numeroPoliza: numeroPolizaProp,
-  company,
+  companyName,
   onEdit,
   onView,
 }) => {
@@ -38,7 +36,7 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{codigoReps}</h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400">{company?.nombre || 'N/A'}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">{companyName || 'N/A'}</p>
         </div>
         <div className="flex gap-2">
           {onView && (

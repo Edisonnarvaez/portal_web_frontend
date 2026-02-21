@@ -442,7 +442,7 @@ const DashboardHabilitacionPageEnhanced: React.FC = () => {
                   <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{p.codigo_reps}</p>
-                      <p className="text-xs text-gray-500">{p.company?.nombre || '—'}</p>
+                      <p className="text-xs text-gray-500">{p.company_detail?.name || p.company_name || '—'}</p>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                       (dias ?? 0) <= 30 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'

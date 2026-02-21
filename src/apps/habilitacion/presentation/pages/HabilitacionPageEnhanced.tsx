@@ -177,7 +177,7 @@ const HabilitacionPageEnhanced = () => {
   const prestadoresFiltrados = prestadores.filter((p) => {
     const matchesSearch =
       p.codigo_reps.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.company?.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+      (p.company_detail?.name || p.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroEstado || p.estado_habilitacion === filtroEstado;
     const matchesClase = !filtroClase || p.clase_prestador === filtroClase;
     return matchesSearch && matchesEstado && matchesClase;

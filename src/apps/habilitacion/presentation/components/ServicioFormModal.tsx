@@ -3,6 +3,12 @@ import { HiOutlineXMark } from 'react-icons/hi2';
 import type { ServicioSede, ServicioSedeCreate } from '../../domain/entities/ServicioSede';
 import { MODALIDADES_SERVICIO, COMPLEJIDADES_SERVICIO, ESTADOS_HABILITACION } from '../../domain/types';
 import { useServicioSede } from '../hooks/useServicioSede';
+import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
+
+interface Headquarter {
+  id: number;
+  name: string;
+}
 
 interface ServicioFormModalProps {
   isOpen: boolean;
@@ -21,6 +27,8 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
 }) => {
   const { create, update } = useServicioSede();
   const isEdit = !!servicio;
+  const [sedes, setSedes] = useState<Headquarter[]>([]);
+  const [loadingSedes, setLoadingSedes] = useState(false);
 
   const [formData, setFormData] = useState<Partial<ServicioSedeCreate>>({
     codigo_servicio: '',
@@ -66,11 +74,22 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
     setError('');
   }, [servicio, headquartersId, isOpen]);
 
+  // Cargar sedes disponibles cuando no hay headquartersId fijo
+  useEffect(() => {
+    if (isOpen && !headquartersId) {
+      setLoadingSedes(true);
+      axiosInstance.get('/companies/headquarters/')
+        .then(res => setSedes(res.data))
+        .catch(() => setSedes([]))
+        .finally(() => setLoadingSedes(false));
+    }
+  }, [isOpen, headquartersId]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: name === 'sede_id' ? Number(value) : value }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -128,6 +147,29 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Sede selector (solo cuando no se pasa headquartersId como prop) */}
+            {!headquartersId && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Sede <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="sede_id"
+                  value={formData.sede_id || ''}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">
+                    {loadingSedes ? 'Cargando sedes...' : 'Seleccione una sede'}
+                  </option>
+                  {sedes.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Código de Servicio */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

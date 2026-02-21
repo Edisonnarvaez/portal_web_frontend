@@ -139,7 +139,7 @@ export default function AlertasHabilitacionPanel({
           severity: 'critical',
           category: 'habilitacion',
           title: 'Habilitación vencida',
-          description: `${d.codigo_reps} (${d.sede?.nombre || 'Sin sede'}) — Venció el ${formatDate(d.fecha_vencimiento_habilitacion)}`,
+          description: `${d.codigo_reps} (${d.headquarters_detail?.name || 'Sin sede'}) — Venció el ${formatDate(d.fecha_vencimiento_habilitacion)}`,
           actionLabel: 'Ver prestador',
           actionTo: `/habilitacion/prestador/${d.id}`,
         });
@@ -158,7 +158,7 @@ export default function AlertasHabilitacionPanel({
           severity: dias <= 30 ? 'critical' : 'warning',
           category: 'habilitacion',
           title: `Habilitación vence en ${dias} días`,
-          description: `${d.codigo_reps} (${d.sede?.nombre || 'Sin sede'}) — Vence el ${formatDate(d.fecha_vencimiento_habilitacion)}`,
+          description: `${d.codigo_reps} (${d.headquarters_detail?.name || 'Sin sede'}) — Vence el ${formatDate(d.fecha_vencimiento_habilitacion)}`,
           actionLabel: 'Renovar',
           actionTo: `/habilitacion/prestador/${d.id}`,
         });

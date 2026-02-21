@@ -3,13 +3,14 @@ import { HiOutlineXMark } from 'react-icons/hi2';
 import type { Autoevaluacion, AutoevaluacionCreate } from '../../domain/entities/Autoevaluacion';
 import { ESTADOS_AUTOEVALUACION } from '../../domain/types';
 import { useAutoevaluacion } from '../hooks/useAutoevaluacion';
+import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 
 interface AutoevaluacionFormModalProps {
   isOpen: boolean;
   autoevaluacion?: Autoevaluacion;
   datosPrestadorId?: number;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (autoevaluacion?: Autoevaluacion) => void;
 }
 
 const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
@@ -22,6 +23,11 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
   const { create, update } = useAutoevaluacion();
   const isEdit = !!autoevaluacion;
 
+  interface PrestadorOption {
+    id: number;
+    nombre_prestador: string;
+  }
+
   const [formData, setFormData] = useState<Partial<AutoevaluacionCreate>>({
     datos_prestador_id: datosPrestadorId || 0,
     periodo: new Date().getFullYear(),
@@ -33,6 +39,23 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [prestadores, setPrestadores] = useState<PrestadorOption[]>([]);
+  const [loadingPrestadores, setLoadingPrestadores] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && !datosPrestadorId) {
+      setLoadingPrestadores(true);
+      axiosInstance.get('/habilitacion/datos-prestador/')
+        .then((res) => {
+          const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+          setPrestadores(
+            data.map((p: any) => ({ id: p.id, nombre_prestador: p.nombre_prestador || `Prestador #${p.id}` }))
+          );
+        })
+        .catch(() => setPrestadores([]))
+        .finally(() => setLoadingPrestadores(false));
+    }
+  }, [isOpen, datosPrestadorId]);
 
   useEffect(() => {
     if (autoevaluacion) {
@@ -63,7 +86,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'periodo' || name === 'version' ? Number(value) : value,
+      [name]: name === 'periodo' || name === 'version' || name === 'datos_prestador_id' ? Number(value) : value,
     }));
   };
 
@@ -79,12 +102,19 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
         return;
       }
 
-      if (isEdit && autoevaluacion) {
-        await update(autoevaluacion.id, { id: autoevaluacion.id, ...formData });
-      } else {
-        await create(formData as AutoevaluacionCreate);
+      if (!formData.datos_prestador_id) {
+        setError('Debe seleccionar un prestador');
+        setLoading(false);
+        return;
       }
-      onSuccess();
+
+      if (isEdit && autoevaluacion) {
+        const updated = await update(autoevaluacion.id, { id: autoevaluacion.id, ...formData });
+        onSuccess(updated);
+      } else {
+        const created = await create(formData as AutoevaluacionCreate);
+        onSuccess(created);
+      }
       onClose();
     } catch (err: any) {
       const msg =
@@ -126,6 +156,33 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Prestador Selector (solo si no viene como prop) */}
+            {!datosPrestadorId && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Prestador <span className="text-red-500">*</span>
+                </label>
+                {loadingPrestadores ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Cargando prestadores...</p>
+                ) : (
+                  <select
+                    name="datos_prestador_id"
+                    value={formData.datos_prestador_id || ''}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Seleccione un prestador</option>
+                    {prestadores.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre_prestador}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
             {/* Periodo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

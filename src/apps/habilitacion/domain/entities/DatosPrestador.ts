@@ -4,6 +4,7 @@ export interface DatosPrestador {
   id: number;
   codigo_reps: string;
   clase_prestador: ClasePrestador;
+  clase_prestador_display?: string;
   estado_habilitacion: EstadoHabilitacion;
   estado_display?: string;
   fecha_inscripcion?: string;
@@ -11,6 +12,7 @@ export interface DatosPrestador {
   fecha_vencimiento_habilitacion?: string;
   proxima_vencer?: boolean;
   dias_vencimiento?: number;
+  vencida?: boolean;
   aseguradora_pep?: string;
   numero_poliza?: string;
   vigencia_poliza?: string;
@@ -19,17 +21,23 @@ export interface DatosPrestador {
   headquarters_id?: number;
   company_name?: string;
   usuario_responsable?: number;
-  company?: {
+  autoevaluaciones_count?: number;
+
+  // Detail endpoint nested objects (field names match API: company_detail, headquarters_detail)
+  company_detail?: {
     id: number;
-    nombre: string;
+    name: string;
+    nit?: string;
   };
+  headquarters_detail?: {
+    id: number;
+    name: string;
+    habilitationCode?: string;
+  };
+
   user?: {
     id: number;
     username: string;
-  };
-  sede?: {
-    id: number;
-    nombre: string;
   };
 }
 

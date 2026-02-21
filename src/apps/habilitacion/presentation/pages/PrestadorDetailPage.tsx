@@ -1,16 +1,13 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    HiOutlineArrowLeft,
     HiOutlinePencilSquare,
     HiOutlineTrash,
     HiOutlineClipboardDocumentCheck,
     HiOutlineBuildingOffice2,
     HiOutlineDocumentText,
-    HiOutlineCheckCircle,
     HiOutlineShieldCheck,
     HiOutlinePlus,
-    HiOutlineClock,
     HiOutlineArrowPath,
 } from 'react-icons/hi2';
 import {
@@ -25,10 +22,8 @@ import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
 import {
     PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal,
     RenovacionWizard, MejorasVencidasPanel,
-    Breadcrumbs, VencimientoBadge, AccionesContextuales, getAccionesPrestador,
-    DataTable,
+    Breadcrumbs, VencimientoBadge,
 } from '../components';
-import type { DataTableColumn } from '../components';
 import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import { getEstadoLabel, getEstadoColor, formatDate, diasParaVencimiento, getEstadoVencimiento } from '../utils/formatters';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
@@ -50,39 +45,95 @@ const PrestadorDetailPage: React.FC = () => {
     const [editingAuto, setEditingAuto] = useState<Autoevaluacion | null>(null);
     const [showRenovacionWizard, setShowRenovacionWizard] = useState(false);
 
-    const { datos: prestadores, loading: lp, fetchDatos, update: updatePrestador, delete: deletePrestador, iniciarRenovacion } = useDatosPrestador();
-    const { servicios, loading: ls, fetchServicios, delete: deleteServicio } = useServicioSede();
-    const { autoevaluaciones, loading: la, fetchAutoevaluaciones, delete: deleteAutoevaluacion } = useAutoevaluacion();
-    const { cumplimientos, loading: lc, fetchCumplimientos } = useCumplimiento();
+    // Local state for detail data (fetched via dedicated sub-resource endpoints)
+    const [prestador, setPrestador] = useState<DatosPrestador | null>(null);
+    const [serviciosPrestador, setServiciosPrestador] = useState<ServicioSede[]>([]);
+    const [autoevaluacionesPrestador, setAutoevaluacionesPrestador] = useState<Autoevaluacion[]>([]);
+    const [cumplimientosPrestador, setCumplimientosPrestador] = useState<Cumplimiento[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const prestador = useMemo(() => prestadores.find(p => p.id === prestadorId), [prestadores, prestadorId]);
+    // Hooks for mutations only
+    const { delete: deletePrestador, iniciarRenovacion, getServicios, getAutoevaluaciones, service: prestadorService } = useDatosPrestador();
+    const { delete: deleteServicio } = useServicioSede();
+    const { } = useAutoevaluacion();
+    const { service: cumplimientoService } = useCumplimiento();
 
+    // ── Data loading functions ──
+    const loadPrestador = useCallback(async () => {
+        try {
+            const data = await prestadorService.getDatosPrestador(prestadorId);
+            setPrestador(data);
+            return data;
+        } catch (err) {
+            console.error('Error loading prestador:', err);
+            setPrestador(null);
+            return null;
+        }
+    }, [prestadorId]);
+
+    const loadServicios = useCallback(async () => {
+        try {
+            const data = await getServicios(prestadorId);
+            setServiciosPrestador(data);
+        } catch (err) {
+            console.error('Error loading servicios:', err);
+            setServiciosPrestador([]);
+        }
+    }, [prestadorId]);
+
+    const loadAutoevaluaciones = useCallback(async () => {
+        try {
+            const data = await getAutoevaluaciones(prestadorId);
+            setAutoevaluacionesPrestador(data);
+            return data;
+        } catch (err) {
+            console.error('Error loading autoevaluaciones:', err);
+            setAutoevaluacionesPrestador([]);
+            return [];
+        }
+    }, [prestadorId]);
+
+    const loadCumplimientos = useCallback(async (autoIds: number[]) => {
+        if (autoIds.length === 0) {
+            setCumplimientosPrestador([]);
+            return;
+        }
+        try {
+            const results: Cumplimiento[] = [];
+            for (const autoId of autoIds) {
+                const data = await cumplimientoService.getCumplimientos({ autoevaluacion: autoId });
+                results.push(...data);
+            }
+            setCumplimientosPrestador(results);
+        } catch (err) {
+            console.error('Error loading cumplimientos:', err);
+            setCumplimientosPrestador([]);
+        }
+    }, [cumplimientoService]);
+
+    // ── Initial data load ──
     useEffect(() => {
-        fetchDatos();
-        fetchServicios();
-        fetchAutoevaluaciones();
-        fetchCumplimientos();
-    }, []);
-
-    const serviciosPrestador = useMemo(
-        () => servicios.filter(s => s.datos_prestador?.id === prestadorId),
-        [servicios, prestadorId],
-    );
-
-    const autoevaluacionesPrestador = useMemo(
-        () => autoevaluaciones.filter(a => a.datos_prestador?.id === prestadorId),
-        [autoevaluaciones, prestadorId],
-    );
-
-    const cumplimientosPrestador = useMemo(
-        () => cumplimientos.filter(c => {
-            const autoIds = autoevaluacionesPrestador.map(a => a.id);
-            return c.autoevaluacion && autoIds.includes(c.autoevaluacion.id);
-        }),
-        [cumplimientos, autoevaluacionesPrestador],
-    );
-
-    const loading = lp || ls || la || lc;
+        const loadAll = async () => {
+            setLoading(true);
+            try {
+                const [_, __, autos] = await Promise.all([
+                    loadPrestador(),
+                    loadServicios(),
+                    loadAutoevaluaciones(),
+                ]);
+                // Load cumplimientos filtered by this prestador's autoevaluaciones
+                if (autos && autos.length > 0) {
+                    const autoIds = autos.map((a: Autoevaluacion) => a.id);
+                    await loadCumplimientos(autoIds);
+                } else {
+                    setCumplimientosPrestador([]);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadAll();
+    }, [prestadorId]);
 
     const handleDelete = async () => {
         try {
@@ -133,7 +184,7 @@ const PrestadorDetailPage: React.FC = () => {
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{prestador.codigo_reps}</h1>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {prestador.company?.nombre || 'Sin empresa'} · {getEstadoLabel(prestador.clase_prestador)}
+                            {prestador.company_detail?.name || prestador.company_name || 'Sin empresa'} · {getEstadoLabel(prestador.clase_prestador)}
                         </p>
                     </div>
                 </div>
@@ -214,8 +265,8 @@ const PrestadorDetailPage: React.FC = () => {
                         <InfoRow label="Código REPS" value={prestador.codigo_reps} />
                         <InfoRow label="Clase" value={getEstadoLabel(prestador.clase_prestador)} />
                         <InfoRow label="Estado" value={getEstadoLabel(prestador.estado_habilitacion)} badge={getEstadoColor(prestador.estado_habilitacion)} />
-                        <InfoRow label="Empresa" value={prestador.company?.nombre || '—'} />
-                        <InfoRow label="Sede" value={prestador.sede?.nombre || '—'} />
+                        <InfoRow label="Empresa" value={prestador.company_detail?.name || prestador.company_name || '—'} />
+                        <InfoRow label="Sede" value={prestador.headquarters_detail?.name || '—'} />
                     </InfoCard>
                     <InfoCard title="Fechas y Vigencia">
                         <InfoRow label="Inscripción" value={formatDate(prestador.fecha_inscripcion)} />
@@ -275,7 +326,7 @@ const PrestadorDetailPage: React.FC = () => {
                                             <HiOutlinePencilSquare className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={async () => { await deleteServicio(s.id); fetchServicios(); }}
+                                            onClick={async () => { await deleteServicio(s.id); loadServicios(); }}
                                             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600 transition-colors"
                                         >
                                             <HiOutlineTrash className="h-4 w-4" />
@@ -353,8 +404,8 @@ const PrestadorDetailPage: React.FC = () => {
                                     {cumplimientosPrestador.map(c => (
                                         <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                             <td className="px-4 py-3 text-gray-900 dark:text-white">{c.autoevaluacion?.numero_autoevaluacion || '—'}</td>
-                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.servicio_sede?.nombre_servicio || '—'}</td>
-                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.criterio?.nombre || '—'}</td>
+                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.servicio_sede?.nombre_servicio || c.servicio_nombre || '—'}</td>
+                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.criterio?.nombre || c.criterio_nombre || '—'}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(c.cumple)}`}>
                                                     {getEstadoLabel(c.cumple)}
@@ -375,7 +426,7 @@ const PrestadorDetailPage: React.FC = () => {
                 <PrestadorFormModal
                     isOpen={showEditModal}
                     onClose={() => setShowEditModal(false)}
-                    onSuccess={() => { setShowEditModal(false); fetchDatos(); }}
+                    onSuccess={() => { setShowEditModal(false); loadPrestador(); }}
                     prestador={prestador}
                 />
             )}
@@ -384,7 +435,7 @@ const PrestadorDetailPage: React.FC = () => {
                 <ServicioFormModal
                     isOpen={showServicioModal}
                     onClose={() => { setShowServicioModal(false); setEditingServicio(null); }}
-                    onSuccess={() => { setShowServicioModal(false); setEditingServicio(null); fetchServicios(); }}
+                    onSuccess={() => { setShowServicioModal(false); setEditingServicio(null); loadServicios(); }}
                     servicio={editingServicio || undefined}
                 />
             )}
@@ -393,7 +444,14 @@ const PrestadorDetailPage: React.FC = () => {
                 <AutoevaluacionFormModal
                     isOpen={showAutoModal}
                     onClose={() => { setShowAutoModal(false); setEditingAuto(null); }}
-                    onSuccess={() => { setShowAutoModal(false); setEditingAuto(null); fetchAutoevaluaciones(); }}
+                    onSuccess={(autoevaluacion) => {
+                        setShowAutoModal(false);
+                        setEditingAuto(null);
+                        loadAutoevaluaciones();
+                        if (autoevaluacion?.id && !editingAuto) {
+                            navigate(`/habilitacion/autoevaluacion/${autoevaluacion.id}`);
+                        }
+                    }}
                     autoevaluacion={editingAuto || undefined}
                 />
             )}
@@ -415,7 +473,7 @@ const PrestadorDetailPage: React.FC = () => {
                     prestador={prestador}
                     diasRestantes={dias}
                     onIniciarRenovacion={iniciarRenovacion}
-                    onSuccess={() => fetchDatos()}
+                    onSuccess={() => loadPrestador()}
                 />
             )}
         </div>
