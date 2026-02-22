@@ -24,6 +24,7 @@ export default function FormModal({
   onSubmit,
   onCancel
 }: FormModalProps) {
+
   const [form, setForm] = useState<Partial<Document>>({
     codigo_documento: document?.codigo_documento || "",
     nombre_documento: document?.nombre_documento || "",
@@ -34,10 +35,7 @@ export default function FormModal({
     activo: document?.activo ?? true,
     documento_padre: document?.documento_padre || null,
   });
-//console.log('Estado inicial del formulario:', {
-//  version: document?.version ?? 0,
-//  versionType: typeof (document?.version ?? 0)
-//});
+
   const [files, setFiles] = useState<{
     archivo_oficial: File | null;
     archivo_editable: File | null;
@@ -47,23 +45,46 @@ export default function FormModal({
   });
 
   const [formError, setFormError] = useState("");
+  const [documentosDuplicados, setDocumentosDuplicados] = useState<Document[]>([]);
+
+  // 🔎 Verificar duplicados
+  const verificarDuplicados = (codigo: string, nombre: string) => {
+    const duplicados = documents.filter(doc => {
+      if (isEdit && document && doc.id === document.id) return false;
+
+      return (
+        doc.codigo_documento.toLowerCase() === codigo.toLowerCase() ||
+        doc.nombre_documento.toLowerCase() === nombre.toLowerCase()
+      );
+    });
+
+    setDocumentosDuplicados(duplicados);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
   const { name, value, type } = e.target;
-  
+
   let processedValue: any = value;
-  
+
   if (type === "checkbox") {
     processedValue = (e.target as HTMLInputElement).checked;
   } else if (name === "version" || name === "proceso") {
-    // ✅ SOLUCIÓN: Convertir explícitamente a número para campos numéricos
     processedValue = value === "" ? 0 : Number(value);
   }
-  
-  setForm((prevForm) => ({
-    ...prevForm,
+
+  const updatedForm = {
+    ...form,
     [name]: processedValue,
-  }));
+  };
+
+  setForm(updatedForm);
+
+  if (name === "codigo_documento" || name === "nombre_documento") {
+    verificarDuplicados(
+      updatedForm.codigo_documento || "",
+      updatedForm.nombre_documento || ""
+    );
+  }
 };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,6 +118,14 @@ export default function FormModal({
     setFormError("");
     
     if (!validateForm()) return;
+
+    // ⚠ Confirmar si hay duplicados
+    if (!isEdit && documentosDuplicados.length > 0) {
+      const confirmar = window.confirm(
+        "Ya existe un documento con el mismo código o nombre. ¿Deseas crearlo de todas maneras?"
+      );
+      if (!confirmar) return;
+    }
 
     try {
       const formData = new FormData();
@@ -192,6 +221,21 @@ export default function FormModal({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          {/* Alerta duplicados */}
+          {documentosDuplicados.length > 0 && (
+            <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-md">
+              <p className="text-sm font-semibold text-yellow-800">
+                ⚠ Ya existen documentos con este código o nombre:
+              </p>
+              <ul className="text-sm text-yellow-700 mt-2">
+                {documentosDuplicados.map(doc => (
+                  <li key={doc.id}>
+                    {doc.codigo_documento} v{doc.version} - {doc.nombre_documento}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
