@@ -184,8 +184,13 @@ const PrestadorDetailPage: React.FC = () => {
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{prestador.codigo_reps}</h1>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {prestador.company_detail?.name || prestador.company_name || 'Sin empresa'} · {getEstadoLabel(prestador.clase_prestador)}
+                            {prestador.nombre_prestador || 'Sin nombre'} · {getEstadoLabel(prestador.clase_prestador)}
                         </p>
+                        {prestador.sede_principal && (
+                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                                Sede Principal
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -263,9 +268,13 @@ const PrestadorDetailPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <InfoCard title="Datos Generales">
                         <InfoRow label="Código REPS" value={prestador.codigo_reps} />
+                        <InfoRow label="Nombre Prestador" value={prestador.nombre_prestador || '—'} />
+                        {prestador.sede_principal && (
+                            <InfoRow label="Tipo de Sede" value="Principal" />
+                        )}
                         <InfoRow label="Clase" value={getEstadoLabel(prestador.clase_prestador)} />
                         <InfoRow label="Estado" value={getEstadoLabel(prestador.estado_habilitacion)} badge={getEstadoColor(prestador.estado_habilitacion)} />
-                        <InfoRow label="Empresa" value={prestador.company_detail?.name || prestador.company_name || '—'} />
+                        <InfoRow label="Empresa" value={prestador.company_detail?.name || '—'} />
                         <InfoRow label="Sede" value={prestador.headquarters_detail?.name || '—'} />
                     </InfoCard>
                     <InfoCard title="Fechas y Vigencia">

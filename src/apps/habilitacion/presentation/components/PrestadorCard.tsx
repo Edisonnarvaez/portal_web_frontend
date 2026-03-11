@@ -4,6 +4,8 @@ import { getEstadoColor, formatDate, diasParaVencimiento } from '../utils';
 interface PrestadorCardProps {
   id: number;
   codigoReps: string;
+  nombrePrestador?: string;
+  sedePrincipal?: boolean;
   clasePresta: string;
   estadoHabilitacion: string;
   fechaVencimiento?: string;
@@ -23,13 +25,14 @@ interface PrestadorCardProps {
 export const PrestadorCard: React.FC<PrestadorCardProps> = ({
   id,
   codigoReps,
+  nombrePrestador,
+  sedePrincipal,
   clasePresta,
   estadoHabilitacion,
   fechaVencimiento,
   aseguradora,
   numeroPolicza,
   numeroPoliza: numeroPolizaProp,
-  companyName,
   headquarters_detail,
   onEdit,
   onView,
@@ -42,7 +45,12 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{codigoReps}</h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400">{companyName || 'N/A'}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">{nombrePrestador || 'N/A'}</p>
+          {sedePrincipal && (
+            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+              Sede Principal
+            </span>
+          )}
           {headquarters_detail && (
             <p className="text-xs text-gray-600 dark:text-gray-400">{headquarters_detail.name}</p>
           )}

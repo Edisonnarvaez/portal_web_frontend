@@ -45,7 +45,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
   useEffect(() => {
     if (isOpen && !datosPrestadorId) {
       setLoadingPrestadores(true);
-      axiosInstance.get('/habilitacion/datos-prestador/')
+      axiosInstance.get('/habilitacion/prestadores/')
         .then((res) => {
           const data = Array.isArray(res.data) ? res.data : res.data.results || [];
           setPrestadores(

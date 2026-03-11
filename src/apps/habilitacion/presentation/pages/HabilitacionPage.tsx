@@ -378,6 +378,8 @@ const HabilitacionPage = () => {
                       key={p.id}
                       id={p.id}
                       codigoReps={p.codigo_reps}
+                      nombrePrestador={p.nombre_prestador}
+                      sedePrincipal={p.sede_principal}
                       clasePresta={p.clase_prestador}
                       estadoHabilitacion={p.estado_habilitacion}
                       fechaVencimiento={p.fecha_vencimiento_habilitacion}

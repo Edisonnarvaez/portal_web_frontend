@@ -20,6 +20,8 @@ export interface HeadquartersDetail {
 export interface DatosPrestador {
   id: number;
   codigo_reps: string;
+  nombre_prestador: string;
+  sede_principal: boolean;
   company_detail: CompanyDetail;
   headquarters_detail: HeadquartersDetail;
   clase_prestador: ClasePrestador;
@@ -44,6 +46,8 @@ export interface DatosPrestador {
 export interface DatosPrestadorCreate {
   headquarters_id: number;
   codigo_reps: string;
+  nombre_prestador: string;
+  sede_principal?: boolean;
   clase_prestador: ClasePrestador;
   estado_habilitacion?: EstadoHabilitacionPrestador;
   fecha_inscripcion?: string;

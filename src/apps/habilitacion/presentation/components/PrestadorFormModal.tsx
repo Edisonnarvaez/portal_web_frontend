@@ -27,6 +27,8 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
       ? {
           headquarters_id: prestador.headquarters_detail?.id || headquartersId || 0,
           codigo_reps: prestador.codigo_reps,
+          nombre_prestador: prestador.nombre_prestador,
+          sede_principal: prestador.sede_principal || false,
           clase_prestador: prestador.clase_prestador,
           estado_habilitacion: prestador.estado_habilitacion,
           fecha_inscripcion: prestador.fecha_inscripcion || '',
@@ -39,6 +41,8 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
       : {
           headquarters_id: headquartersId || 0,
           codigo_reps: '',
+          nombre_prestador: '',
+          sede_principal: false,
           clase_prestador: 'IPS',
           estado_habilitacion: 'HABILITADA',
           fecha_inscripcion: new Date().toISOString().split('T')[0],
@@ -64,10 +68,11 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
   }, [isOpen, headquartersId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const inputElement = e.target as HTMLInputElement;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'headquarters_id' ? Number(value) : value,
+      [name]: type === 'checkbox' ? inputElement.checked : name === 'headquarters_id' ? Number(value) : value,
     }));
   };
 
@@ -139,6 +144,34 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
                 placeholder="Ej: 123456789"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Nombre del Prestador <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nombre_prestador"
+                value={formData.nombre_prestador || ''}
+                onChange={handleChange}
+                required
+                placeholder="Ej: Clínica XYZ"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="sede_principal"
+                checked={formData.sede_principal || false}
+                onChange={handleChange}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              />
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Es Sede Principal
+              </label>
             </div>
 
             <div>

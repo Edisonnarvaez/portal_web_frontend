@@ -490,7 +490,12 @@ const HabilitacionPageEnhanced = () => {
               viewMode={viewMode}
               renderCard={(item) => (
                 <div className="relative">
-                  <PrestadorCard key={item.id} {...item} />
+                  <PrestadorCard
+                    key={item.id}
+                    {...item}
+                    nombrePrestador={item.nombre_prestador}
+                    sedePrincipal={item.sede_principal}
+                  />
                   <ActionButtons
                     onEdit={() => setSelectedItem(item)}
                     onDelete={() => {
