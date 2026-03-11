@@ -11,6 +11,11 @@ interface PrestadorCardProps {
   numeroPolicza?: string; // @deprecated use numeroPoliza
   numeroPoliza?: string;
   companyName?: string;
+  headquarters_detail?: {
+    id: number;
+    name: string;
+    habilitationCode?: string;
+  };
   onEdit?: (id: number) => void;
   onView?: (id: number) => void;
 }
@@ -25,6 +30,7 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
   numeroPolicza,
   numeroPoliza: numeroPolizaProp,
   companyName,
+  headquarters_detail,
   onEdit,
   onView,
 }) => {
@@ -37,7 +43,12 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{codigoReps}</h3>
           <p className="text-xs text-gray-600 dark:text-gray-400">{companyName || 'N/A'}</p>
+          {headquarters_detail && (
+            <p className="text-xs text-gray-600 dark:text-gray-400">{headquarters_detail.name}</p>
+          )}
+          
         </div>
+        
         <div className="flex gap-2">
           {onView && (
             <button
@@ -61,6 +72,10 @@ export const PrestadorCard: React.FC<PrestadorCardProps> = ({
       </div>
 
       <div className="space-y-2 mb-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-gray-600 dark:text-gray-400">Sede:</span>
+          <span className="font-medium text-gray-900 dark:text-white">{headquarters_detail?.name || 'N/A'}</span>
+        </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-gray-600 dark:text-gray-400">Clase:</span>
           <span className="font-medium text-gray-900 dark:text-white">{clasePresta}</span>

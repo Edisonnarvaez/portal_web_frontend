@@ -9,7 +9,7 @@ interface ServicioCardProps {
   estadoHabilitacion: string;
   fechaVencimiento?: string;
   headquarters?: {
-    nombre: string;
+    name: string;
   };
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
@@ -93,7 +93,7 @@ export const ServicioCard: React.FC<ServicioCardProps> = ({
 
       {headquarters && (
         <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
-          <strong>Sede:</strong> {headquarters.nombre}
+          <strong>Sede:</strong> {headquarters.name}
         </div>
       )}
     </div>

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  HiOutlinePlus,
-  HiOutlineEye,
   HiOutlinePencil,
   HiOutlineTrash,
   HiOutlineCheckCircle,
@@ -17,7 +15,8 @@ import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { useDatosPrestador, useServicioSede, useAutoevaluacion, useCumplimiento } from '../hooks';
 import { PrestadorCard, ServicioCard, AutoevaluacionCard } from '../components';
 import {
-  ESTADOS_HABILITACION,
+  ESTADOS_HABILITACION_PRESTADOR,
+  ESTADOS_HABILITACION_SERVICIO,
   CLASES_PRESTADOR,
   MODALIDADES_SERVICIO,
   COMPLEJIDADES_SERVICIO,
@@ -49,7 +48,6 @@ const HabilitacionPageEnhanced = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modales
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
@@ -79,7 +77,6 @@ const HabilitacionPageEnhanced = () => {
   } = useAutoevaluacion();
 
   const {
-    cumplimientos,
     loading: loadingCumplimientos,
     error: errorCumplimientos,
     fetchCumplimientos,
@@ -115,7 +112,7 @@ const HabilitacionPageEnhanced = () => {
     const alerts: AlertItem[] = [];
 
     // Prestadores próximos a vencer
-    prestadores.forEach((p, idx) => {
+    prestadores.forEach((p) => {
       const fechaVencimiento = new Date(p.fecha_vencimiento_habilitacion || '');
       const hoy = new Date();
       const diasFaltantes = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 3600 * 24));
@@ -177,7 +174,7 @@ const HabilitacionPageEnhanced = () => {
   const prestadoresFiltrados = prestadores.filter((p) => {
     const matchesSearch =
       p.codigo_reps.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.company_detail?.name || p.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (p.company_detail?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroEstado || p.estado_habilitacion === filtroEstado;
     const matchesClase = !filtroClase || p.clase_prestador === filtroClase;
     return matchesSearch && matchesEstado && matchesClase;
@@ -201,12 +198,6 @@ const HabilitacionPageEnhanced = () => {
       a.datos_prestador?.codigo_reps.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroAutoevaluacion || a.estado === filtroAutoevaluacion;
     return matchesSearch && matchesEstado;
-  });
-
-  // Filtrar cumplimientos
-  const cumplimientosFiltrados = cumplimientos.filter((c) => {
-    const matchesEstado = !filtroCumplimiento || c.cumple === filtroCumplimiento;
-    return matchesEstado;
   });
 
   const alerts = calculateAlerts();
@@ -287,15 +278,6 @@ const HabilitacionPageEnhanced = () => {
             <HiOutlineRefresh className="w-4 h-4" />
             <span className="hidden sm:inline text-sm">Actualizar</span>
           </button>
-          {activeTab !== 'dashboard' && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <HiOutlinePlus className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm">Crear</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -418,7 +400,7 @@ const HabilitacionPageEnhanced = () => {
                     label="Estado"
                     value={filtroEstado}
                     onChange={setFiltroEstado}
-                    options={ESTADOS_HABILITACION.map((e) => ({ value: e.value, label: e.label }))}
+                    options={ESTADOS_HABILITACION_PRESTADOR.map((e) => ({ value: e.value, label: e.label }))}
                   />
                   <Select
                     label="Clase"
@@ -435,7 +417,7 @@ const HabilitacionPageEnhanced = () => {
                     label="Estado"
                     value={filtroEstado}
                     onChange={setFiltroEstado}
-                    options={ESTADOS_HABILITACION.map((e) => ({ value: e.value, label: e.label }))}
+                    options={ESTADOS_HABILITACION_SERVICIO.map((e) => ({ value: e.value, label: e.label }))}
                   />
                   <Select
                     label="Modalidad"
@@ -510,7 +492,6 @@ const HabilitacionPageEnhanced = () => {
                 <div className="relative">
                   <PrestadorCard key={item.id} {...item} />
                   <ActionButtons
-                    item={item}
                     onEdit={() => setSelectedItem(item)}
                     onDelete={() => {
                       setSelectedItem(item);
@@ -531,7 +512,6 @@ const HabilitacionPageEnhanced = () => {
                 <div className="relative">
                   <ServicioCard key={item.id} {...item} />
                   <ActionButtons
-                    item={item}
                     onEdit={() => setSelectedItem(item)}
                     onDelete={() => {
                       setSelectedItem(item);
@@ -552,7 +532,6 @@ const HabilitacionPageEnhanced = () => {
                 <div className="relative">
                   <AutoevaluacionCard key={item.id} {...item} />
                   <ActionButtons
-                    item={item}
                     onEdit={() => setSelectedItem(item)}
                     onDelete={() => {
                       setSelectedItem(item);
@@ -699,12 +678,11 @@ const ContentGrid: React.FC<ContentGridProps> = ({ items, emptyMessage, viewMode
 };
 
 interface ActionButtonsProps {
-  item: any;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDelete }) => (
+const ActionButtons: React.FC<ActionButtonsProps> = ({ onEdit, onDelete }) => (
   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
     <button
       onClick={onEdit}

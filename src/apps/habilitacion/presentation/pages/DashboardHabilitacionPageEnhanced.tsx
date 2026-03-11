@@ -27,10 +27,10 @@ import {
   useHallazgo,
 } from '../hooks';
 import {
-  ESTADOS_HABILITACION,
+  ESTADOS_HABILITACION_PRESTADOR,
   ESTADOS_CUMPLIMIENTO,
 } from '../../domain/types';
-import { formatDate, diasParaVencimiento } from '../utils/formatters';
+import { diasParaVencimiento } from '../utils/formatters';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
 
 /* ─── colour palette for charts ─── */
@@ -114,8 +114,8 @@ const DashboardHabilitacionPageEnhanced: React.FC = () => {
   const { servicios, loading: ls, fetchServicios } = useServicioSede();
   const { autoevaluaciones, loading: la, fetchAutoevaluaciones } = useAutoevaluacion();
   const { cumplimientos, loading: lc, fetchCumplimientos } = useCumplimiento();
-  const { planes, vencidos: planesVencidos, loading: lpm, fetchPlanes, fetchVencidos: fetchPlanesVencidos } = usePlanMejora();
-  const { hallazgos, estadisticas, loading: lh, fetchHallazgos, fetchEstadisticas, fetchCriticos, criticos } = useHallazgo();
+  const { planes, loading: lpm, fetchPlanes, fetchVencidos: fetchPlanesVencidos } = usePlanMejora();
+  const { hallazgos, loading: lh, fetchHallazgos, fetchCriticos, criticos } = useHallazgo();
 
   useEffect(() => {
     fetchPrestadores();
@@ -164,7 +164,7 @@ const DashboardHabilitacionPageEnhanced: React.FC = () => {
 
   /* ─── chart data ─── */
   const estadoHabilitacionData = useMemo(() =>
-    ESTADOS_HABILITACION.map(e => ({
+    ESTADOS_HABILITACION_PRESTADOR.map(e => ({
       name: e.label,
       value: prestadores.filter(p => p.estado_habilitacion === e.value).length,
     })).filter(d => d.value > 0),
@@ -442,7 +442,7 @@ const DashboardHabilitacionPageEnhanced: React.FC = () => {
                   <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{p.codigo_reps}</p>
-                      <p className="text-xs text-gray-500">{p.company_detail?.name || p.company_name || '—'}</p>
+                      <p className="text-xs text-gray-500">{p.company_detail?.name || '—'}</p>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                       (dias ?? 0) <= 30 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'

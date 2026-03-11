@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiOutlineClipboardList, HiOutlineRefresh, HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi';
-import { HiOutlinePencilSquare } from "react-icons/hi2";
+import { HiOutlineClipboardList, HiOutlineRefresh, HiOutlinePlus } from 'react-icons/hi';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import { useDatosPrestador, useServicioSede, useAutoevaluacion } from '../hooks';
 import {
@@ -14,13 +13,14 @@ import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
 import {
-  ESTADOS_HABILITACION,
+  ESTADOS_HABILITACION_PRESTADOR,
+  ESTADOS_HABILITACION_SERVICIO,
   CLASES_PRESTADOR,
   MODALIDADES_SERVICIO,
   COMPLEJIDADES_SERVICIO,
   ESTADOS_AUTOEVALUACION,
 } from '../../domain/types';
-import { getEstadoLabel, getEstadoColor, formatDate } from '../utils/formatters';
+import { getEstadoLabel, getEstadoColor } from '../utils/formatters';
 
 const HabilitacionPage = () => {
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ const HabilitacionPage = () => {
   const prestadoresFiltrados = prestadores.filter(p => {
     const matchesSearch =
       p.codigo_reps.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.company_detail?.name || p.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (p.company_detail?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroEstado || p.estado_habilitacion === filtroEstado;
     const matchesClase = !filtroClase || p.clase_prestador === filtroClase;
     return matchesSearch && matchesEstado && matchesClase;
@@ -111,7 +111,8 @@ const HabilitacionPage = () => {
   /* ── Column definitions for DataTable ── */
   const prestadorColumns: DataTableColumn<DatosPrestador>[] = useMemo(() => [
     { key: 'codigo_reps', label: 'Código REPS', accessor: r => r.codigo_reps },
-    { key: 'company', label: 'Empresa', accessor: r => r.company_detail?.name || r.company_name || '', render: r => <span className="text-gray-900 dark:text-white font-medium">{r.company_detail?.name || r.company_name || '—'}</span> },
+    { key: 'headquarters', label: 'Sede', accessor: r => r.headquarters_detail?.name || '—' },
+    { key: 'company', label: 'Empresa', accessor: r => r.company_detail?.name || '', render: r => <span className="text-gray-900 dark:text-white font-medium">{r.company_detail?.name || '—'}</span> },
     { key: 'clase_prestador', label: 'Clase', accessor: r => r.clase_prestador, render: r => <span>{getEstadoLabel(r.clase_prestador)}</span> },
     { key: 'estado_habilitacion', label: 'Estado', accessor: r => r.estado_habilitacion, render: r => (
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.estado_habilitacion)}`}>{getEstadoLabel(r.estado_habilitacion)}</span>
@@ -275,7 +276,7 @@ const HabilitacionPage = () => {
                     className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
                   >
                     <option value="">Todos</option>
-                    {ESTADOS_HABILITACION.map(e => (
+                    {ESTADOS_HABILITACION_PRESTADOR.map(e => (
                       <option key={e.value} value={e.value}>{e.label}</option>
                     ))}
                   </select>
@@ -306,7 +307,7 @@ const HabilitacionPage = () => {
                     className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
                   >
                     <option value="">Todos</option>
-                    {ESTADOS_HABILITACION.map(e => (
+                    {ESTADOS_HABILITACION_SERVICIO.map(e => (
                       <option key={e.value} value={e.value}>{e.label}</option>
                     ))}
                   </select>
@@ -382,7 +383,8 @@ const HabilitacionPage = () => {
                       fechaVencimiento={p.fecha_vencimiento_habilitacion}
                       aseguradora={p.aseguradora_pep}
                       numeroPoliza={p.numero_poliza}
-                      companyName={p.company_detail?.name || p.company_name}
+                      companyName={p.company_detail?.name}
+                      headquarters_detail={p.headquarters_detail}
                       onView={(id) => navigate(`/habilitacion/prestador/${id}`)}
                     />
                   ))}
@@ -425,7 +427,7 @@ const HabilitacionPage = () => {
                       complejidad={s.complejidad}
                       estadoHabilitacion={s.estado_habilitacion}
                       fechaVencimiento={s.fecha_vencimiento}
-                      headquarters={s.headquarters}
+                      headquarters={s.prestador?.headquarters_detail}
                     />
                   ))}
                 </div>

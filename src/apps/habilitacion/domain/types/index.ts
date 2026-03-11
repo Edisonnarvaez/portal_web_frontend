@@ -1,11 +1,23 @@
-// Estados de habilitación
-export const ESTADOS_HABILITACION = [
+// Estados de habilitación - PRESTADOR (singular)
+export const ESTADOS_HABILITACION_PRESTADOR = [
   { value: 'HABILITADA', label: 'Habilitada', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
   { value: 'EN_PROCESO', label: 'En Proceso', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
   { value: 'SUSPENDIDA', label: 'Suspendida', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
   { value: 'NO_HABILITADA', label: 'No Habilitada', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
   { value: 'CANCELADA', label: 'Cancelada', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
 ] as const;
+
+// Estados de habilitación - SERVICIO (plural)
+export const ESTADOS_HABILITACION_SERVICIO = [
+  { value: 'HABILITADO', label: 'Habilitado', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+  { value: 'EN_PROCESO', label: 'En Proceso', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+  { value: 'SUSPENDIDO', label: 'Suspendido', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+  { value: 'NO_HABILITADO', label: 'No Habilitado', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+  { value: 'CANCELADO', label: 'Cancelado', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+] as const;
+
+// Alias para compatibilidad hacia atrás
+export const ESTADOS_HABILITACION = ESTADOS_HABILITACION_PRESTADOR;
 
 // Clase de prestador
 export const CLASES_PRESTADOR = [
@@ -107,8 +119,14 @@ export const CATEGORIAS_CRITERIO = [
   { value: 'INTERDEPENDENCIA', label: 'Interdependencia' },
 ] as const;
 
-// Type exports
+// Type exports - Estados de Habilitación
+// Nota: DatosPrestador usa: HABILITADA, EN_PROCESO, SUSPENDIDA, NO_HABILITADA, CANCELADA
+// ServicioSede usa: HABILITADO, EN_PROCESO, SUSPENDIDO, NO_HABILITADO, CANCELADO
 export type EstadoHabilitacion = typeof ESTADOS_HABILITACION[number]['value'];
+export type EstadoHabilitacionPrestador = 'HABILITADA' | 'EN_PROCESO' | 'SUSPENDIDA' | 'NO_HABILITADA' | 'CANCELADA';
+export type EstadoHabilitacionServicio = 'HABILITADO' | 'EN_PROCESO' | 'SUSPENDIDO' | 'NO_HABILITADO' | 'CANCELADO';
+
+// Type exports - General
 export type ClasePrestador = typeof CLASES_PRESTADOR[number]['value'];
 export type ModalidadServicio = typeof MODALIDADES_SERVICIO[number]['value'];
 export type ComplejidadServicio = typeof COMPLEJIDADES_SERVICIO[number]['value'];
