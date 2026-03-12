@@ -15,7 +15,9 @@ export interface MejorasResumen {
 export interface Autoevaluacion {
   id: number;
   numero_autoevaluacion: string;
-  prestador_codigo?: string;
+  prestador_codigo?: string; // Código REPS del prestador
+  datos_prestador?: { id: number; codigo_reps: string }; // Alternativa con detalles
+  datos_prestador_detail?: { id: number; codigo_reps: string; company_name: string }; // Alternativa completa
   periodo: number;
   version: number;
   estado: EstadoAutoevaluacion;
@@ -33,14 +35,10 @@ export interface Autoevaluacion {
   observaciones?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
-  datos_prestador?: {
+  usuario_responsable_detail?: {
     id: number;
-    codigo_reps: string;
-  };
-  datos_prestador_detail?: {
-    id: number;
-    codigo_reps: string;
-    company_name: string;
+    username: string;
+    email: string;
   };
   user?: {
     id: number;

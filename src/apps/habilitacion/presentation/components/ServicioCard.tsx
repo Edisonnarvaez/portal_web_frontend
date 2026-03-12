@@ -151,19 +151,14 @@ export const ServicioCard: React.FC<ServicioCardProps> = ({
       )}
 
       {/* Información del Prestador */}
-      {servicio.prestador && (
+      {servicio.prestador_codigo && (
         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-            <strong>Prestador:</strong> {servicio.prestador.codigo_reps}
+            <strong>Prestador:</strong> {servicio.prestador_codigo}
           </p>
-          {servicio.prestador.nombre_prestador && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {servicio.prestador.nombre_prestador}
-            </p>
-          )}
-          {servicio.prestador.headquarters_detail?.name && (
+          {servicio.prestador_headquarters && (
             <p className="text-xs text-gray-500 dark:text-gray-500">
-              <strong>Sede:</strong> {servicio.prestador.headquarters_detail.name}
+              <strong>Sede:</strong> {servicio.prestador_headquarters}
             </p>
           )}
         </div>

@@ -12,6 +12,18 @@ export type ComplejidadServicio = 'BAJA' | 'MEDIA' | 'ALTA';
 export type EstadoHabilitacionServicio = 'HABILITADO' | 'EN_PROCESO' | 'SUSPENDIDO' | 'NO_HABILITADO' | 'CANCELADO';
 
 /**
+ * Respuesta reducida de prestador que viene dentro de servicios
+ * El backend devuelve solo los campos necesarios para mostrar el prestador
+ */
+export interface PrestadorDetailReducido {
+  id?: number;
+  codigo_reps?: string;
+  nombre_prestador?: string; // Campo principal para mostrar el nombre del prestador
+  headquarters?: string;
+  estado_habilitacion?: string;
+}
+
+/**
  * ServicioSede - Servicios de salud habilitados en una sede específica
  * Un servicio es la combinación de modalidad + tipo de servicio en una sede determinada.
  * 
@@ -20,10 +32,13 @@ export type EstadoHabilitacionServicio = 'HABILITADO' | 'EN_PROCESO' | 'SUSPENDI
  */
 export interface ServicioSede {
   id: number;
-  prestador: DatosPrestador; // FK: Relación con DatosPrestador (hacia arriba)
+  prestador_codigo?: string; // Código REPS del prestador
+  prestador_detail?: PrestadorDetailReducido | DatosPrestador; // FK: Objeto anidado (puede ser reducido o completo)
+  prestador_id?: number; // FK: ID del prestador (alternativa si viene como ID)
   codigo_servicio: string; // Código asignado por REPS
   nombre_servicio: string;
   descripcion?: string | null;
+  prestador_headquarters?: string; // Información adicional del backend
   modalidad: ModalidadServicio;
   complejidad: ComplejidadServicio;
   estado_habilitacion: EstadoHabilitacionServicio;

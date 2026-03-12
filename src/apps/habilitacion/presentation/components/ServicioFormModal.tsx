@@ -40,7 +40,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
   const isEdit = !!servicio;
 
   const [formData, setFormData] = useState<Partial<ServicioSedeCreate>>({
-    prestador_id: prestador?.id || servicio?.prestador?.id || undefined,
+    prestador_id: prestador?.id || servicio?.prestador_detail?.id || undefined,
     codigo_servicio: '',
     nombre_servicio: '',
     descripcion: '',
@@ -64,8 +64,12 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
 
   useEffect(() => {
     if (servicio) {
+      // Extraer prestador_id desde el servicio
+      // El backend puede enviar el ID como prestador_id u obtenerlo del code
+      const preId = servicio.prestador_id || prestador?.id;
+      
       setFormData({
-        prestador_id: servicio.prestador.id || prestador?.id,
+        prestador_id: preId,
         codigo_servicio: servicio.codigo_servicio,
         nombre_servicio: servicio.nombre_servicio,
         descripcion: servicio.descripcion || '',
@@ -83,7 +87,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
     }
     setError('');
     setFieldErrors({});
-  }, [servicio, prestador, isOpen])
+  }, [servicio, prestador, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

@@ -21,6 +21,8 @@ import {
   ESTADOS_AUTOEVALUACION,
 } from '../../domain/types';
 import { getEstadoLabel, getEstadoColor } from '../utils/formatters';
+import { ServicioSedeRepository } from '../../infrastructure/repositories';
+import { DatosPrestadorRepository } from '../../infrastructure/repositories';
 
 const HabilitacionPage = () => {
   const navigate = useNavigate();
@@ -32,9 +34,13 @@ const HabilitacionPage = () => {
   const [filtroClase, setFiltroClase] = useState('');
   const [filtroModalidad, setFiltroModalidad] = useState('');
   const [filtroComplejidad, setFiltroComplejidad] = useState('');
+  const [filtroPrestadorServicios, setFiltroPrestadorServicios] = useState('');
   const [filtroAutoevaluacion, setFiltroAutoevaluacion] = useState('');
+  const [filtroPrestadorAutoevaluacion, setFiltroPrestadorAutoevaluacion] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPrestadorModal, setShowPrestadorModal] = useState(false);
+  const [enrichedPrestadorNames, setEnrichedPrestadorNames] = useState<Map<string, string>>(new Map());
+  const [enrichedPrestadorDetails, setEnrichedPrestadorDetails] = useState<Map<number, DatosPrestador>>(new Map());
   const [showServicioModal, setShowServicioModal] = useState(false);
   const [showAutoModal, setShowAutoModal] = useState(false);
 
@@ -78,9 +84,92 @@ const HabilitacionPage = () => {
     loadAllData();
   }, []); // Solo se ejecuta una vez al montar
 
+  // ========== CARGAR DETALLES DE SERVICIOS PARA EXTRAER NOMBRE_PRESTADOR ==========
+  // El listado de servicios no devuelve prestador_detail, así que cargamos detalles en paralelo
+  useEffect(() => {
+    if (servicios.length === 0) return;
+
+    const loadServiceDetails = async () => {
+      try {
+        // Cargar detalles de todos los servicios en paralelo
+        const repository = new ServicioSedeRepository();
+        const detailsPromises = servicios.map(s => 
+          repository.getById(s.id).catch(() => null)
+        );
+        
+        const details = await Promise.allSettled(detailsPromises);
+        
+        // Construir mapa de nombres_prestador desde los detalles cargados
+        const namesMap = new Map<string, string>();
+        details.forEach((detail, idx) => {
+          if (detail.status === 'fulfilled' && detail.value?.prestador_detail?.nombre_prestador) {
+            const service = servicios[idx];
+            const nombrePrestador = detail.value.prestador_detail.nombre_prestador;
+            if (nombrePrestador && service.prestador_codigo) {
+              namesMap.set(service.prestador_codigo, nombrePrestador);
+            }
+          }
+        });
+        
+        setEnrichedPrestadorNames(namesMap);
+        console.log('Nombres_prestador cargados:', namesMap);
+      } catch (err) {
+        console.error('Error al cargar detalles de servicios:', err);
+      }
+    };
+
+    loadServiceDetails();
+  }, [servicios.length]);
+
+  // ========== CARGAR DETALLES DE PRESTADORES PARA EXTRAER NOMBRE Y SEDE ==========
+  // El listado de prestadores no devuelve headquarters_detail ni nombre_prestador completos
+  useEffect(() => {
+    if (prestadores.length === 0) return;
+
+    const loadPrestadorDetails = async () => {
+      try {
+        // Cargar detalles de todos los prestadores en paralelo
+        const repository = new DatosPrestadorRepository();
+        const detailsPromises = prestadores.map(p => 
+          repository.getById(p.id).catch(() => null)
+        );
+        
+        const details = await Promise.allSettled(detailsPromises);
+        
+        // Construir mapa con detalles completos de prestadores
+        const detailsMap = new Map<number, DatosPrestador>();
+        details.forEach((detail, idx) => {
+          if (detail.status === 'fulfilled' && detail.value) {
+            const prestador = prestadores[idx];
+            detailsMap.set(prestador.id, detail.value);
+          }
+        });
+        
+        setEnrichedPrestadorDetails(detailsMap);
+        console.log('Detalles de prestadores cargados:', detailsMap);
+      } catch (err) {
+        console.error('Error al cargar detalles de prestadores:', err);
+      }
+    };
+
+    loadPrestadorDetails();
+  }, [prestadores.length]);
+
   // ========== REFRESCAR CUANDO CAMBIA EL TAB ACTIVO ==========
   // Esto permite que el usuario pueda actualizar el tab actual
+  // También resetea los filtros específicos del tab anterior
   useEffect(() => {
+    // Resetear filtros tab-específicos
+    setFiltroEstado('');
+    setFiltroClase('');
+    setFiltroModalidad('');
+    setFiltroComplejidad('');
+    setFiltroPrestadorServicios('');
+    setFiltroPrestadorAutoevaluacion('');
+    setFiltroAutoevaluacion('');
+    setSearchTerm('');
+
+    // Refrescar data del tab actual
     if (activeTab === 'prestadores') {
       fetchPrestadores();
     } else if (activeTab === 'servicios') {
@@ -108,26 +197,60 @@ const HabilitacionPage = () => {
     const matchesEstado = !filtroEstado || s.estado_habilitacion === filtroEstado;
     const matchesModalidad = !filtroModalidad || s.modalidad === filtroModalidad;
     const matchesComplejidad = !filtroComplejidad || s.complejidad === filtroComplejidad;
-    return matchesSearch && matchesEstado && matchesModalidad && matchesComplejidad;
+    
+    // Comparar prestador_codigo directamente con el filtro
+    let matchesPrestador = true;
+    if (filtroPrestadorServicios) {
+      matchesPrestador = s.prestador_codigo === filtroPrestadorServicios;
+    }
+    
+    return matchesSearch && matchesEstado && matchesModalidad && matchesComplejidad && matchesPrestador;
   });
 
   // Filtrar autoevaluaciones
   const autoevaluacionesFiltradas = autoevaluaciones.filter(a => {
     const matchesSearch =
       a.numero_autoevaluacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.datos_prestador?.codigo_reps.toLowerCase().includes(searchTerm.toLowerCase());
+      a.prestador_codigo?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroAutoevaluacion || a.estado === filtroAutoevaluacion;
-    return matchesSearch && matchesEstado;
+    
+    // Comparar prestador_codigo directamente con el filtro
+    let matchesPrestador = true;
+    if (filtroPrestadorAutoevaluacion) {
+      matchesPrestador = a.prestador_codigo === filtroPrestadorAutoevaluacion;
+    }
+    
+    return matchesSearch && matchesEstado && matchesPrestador;
   });
 
   const loading = activeTab === 'prestadores' ? loadingPrestadores : activeTab === 'servicios' ? loadingServicios : loadingAutoevaluaciones;
   const error = activeTab === 'prestadores' ? errorPrestadores : activeTab === 'servicios' ? errorServicios : errorAutoevaluaciones;
 
+  // Crear mapa de nombres de prestadores desde servicios y autoevaluaciones
+  const prestadorNamesMap = useMemo(() => {
+    const nameMap = new Map<string, string>();
+    
+    // Prioridad 1: Usar nombres enriquecidos cargados desde detalles de servicios
+    enrichedPrestadorNames.forEach((nombre, codigo) => {
+      nameMap.set(codigo, nombre);
+    });
+    
+    // Prioridad 2: company_name del array prestadores para los que no tenemos nombre enriquecido
+    prestadores.forEach(p => {
+      if (p.codigo_reps && !nameMap.has(p.codigo_reps) && p.company_name) {
+        nameMap.set(p.codigo_reps, p.company_name);
+      }
+    });
+    
+    console.log('Mapa final de nombres de prestador:', Object.fromEntries(nameMap));
+    return nameMap;
+  }, [enrichedPrestadorNames, prestadores]);
+
   /* ── Column definitions for DataTable ── */
   const prestadorColumns: DataTableColumn<DatosPrestador>[] = useMemo(() => [
     { key: 'codigo_reps', label: 'Código REPS', accessor: r => r.codigo_reps },
     { key: 'headquarters', label: 'Sede', accessor: r => r.headquarters_detail?.name || '—' },
-    { key: 'company', label: 'Empresa', accessor: r => r.company_detail?.name || '', render: r => <span className="text-gray-900 dark:text-white font-medium">{r.company_detail?.name || '—'}</span> },
+    { key: 'company', label: 'Empresa', accessor: r => r.company_name || '', render: r => <span className="text-gray-900 dark:text-white font-medium">{r.company_name || '—'}</span> },
     { key: 'clase_prestador', label: 'Clase', accessor: r => r.clase_prestador, render: r => <span>{getEstadoLabel(r.clase_prestador)}</span> },
     { key: 'estado_habilitacion', label: 'Estado', accessor: r => r.estado_habilitacion, render: r => (
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.estado_habilitacion)}`}>{getEstadoLabel(r.estado_habilitacion)}</span>
@@ -150,6 +273,11 @@ const HabilitacionPage = () => {
 
   const servicioColumns: DataTableColumn<ServicioSede>[] = useMemo(() => [
     { key: 'codigo_servicio', label: 'Código', accessor: r => r.codigo_servicio },
+    { key: 'prestador', label: 'Prestador', accessor: r => r.prestador_codigo || '—', render: r => {
+      const nombrePrestador = prestadorNamesMap.get(r.prestador_codigo || '');
+      const displayText = nombrePrestador || r.prestador_codigo || '—';
+      return <span className="text-gray-900 dark:text-white font-medium">{displayText}</span>;
+    }},
     { key: 'nombre_servicio', label: 'Servicio', accessor: r => r.nombre_servicio, render: r => <span className="text-gray-900 dark:text-white font-medium">{r.nombre_servicio}</span> },
     { key: 'modalidad', label: 'Modalidad', accessor: r => r.modalidad, render: r => <span>{getEstadoLabel(r.modalidad)}</span> },
     { key: 'complejidad', label: 'Complejidad', accessor: r => r.complejidad, render: r => <span>{getEstadoLabel(r.complejidad)}</span> },
@@ -159,7 +287,7 @@ const HabilitacionPage = () => {
     { key: 'vencimiento', label: 'Vencimiento', sortable: true, accessor: r => r.fecha_vencimiento ?? '', render: r => (
       <VencimientoBadge fechaVencimiento={r.fecha_vencimiento ?? undefined} compact />
     )},
-  ], []);
+  ], [prestadores, prestadorNamesMap]);
 
   const autoevaluacionColumns: DataTableColumn<Autoevaluacion>[] = useMemo(() => [
     { key: 'numero_autoevaluacion', label: 'Número', accessor: r => r.numero_autoevaluacion, render: r => <span className="font-mono text-gray-900 dark:text-white">{r.numero_autoevaluacion}</span> },
@@ -168,11 +296,15 @@ const HabilitacionPage = () => {
     { key: 'estado', label: 'Estado', accessor: r => r.estado, render: r => (
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.estado)}`}>{getEstadoLabel(r.estado)}</span>
     )},
-    { key: 'prestador', label: 'Prestador', accessor: r => r.datos_prestador?.codigo_reps ?? '', render: r => <span>{r.datos_prestador?.codigo_reps || '—'}</span> },
+    { key: 'prestador', label: 'Prestador', accessor: r => r.prestador_codigo ?? '', render: r => {
+      const nombrePrestador = prestadorNamesMap.get(r.prestador_codigo || '');
+      const displayText = nombrePrestador || r.prestador_codigo || '—';
+      return <span>{displayText}</span>;
+    }},
     { key: 'vencimiento', label: 'Vencimiento', sortable: true, accessor: r => r.fecha_vencimiento ?? '', render: r => (
       <VencimientoBadge fechaVencimiento={r.fecha_vencimiento ?? undefined} compact />
     )},
-  ], []);
+  ], [prestadorNamesMap]);
 
   if (loading) return <LoadingScreen />;
 
@@ -315,6 +447,25 @@ const HabilitacionPage = () => {
             {activeTab === 'servicios' && (
               <>
                 <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prestador</label>
+                  <select
+                    value={filtroPrestadorServicios}
+                    onChange={(e) => {
+                      setFiltroPrestadorServicios(e.target.value);
+                    }}
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
+                  >
+                    <option value="">Todos</option>
+                    {prestadores.map(p => {
+                      const nombrePrestador = prestadorNamesMap.get(p.codigo_reps);
+                      const displayText = `${p.codigo_reps}${nombrePrestador ? ` - ${nombrePrestador}` : ''}`;
+                      return (
+                        <option key={p.id} value={p.codigo_reps}>{displayText}</option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado</label>
                   <select
                     value={filtroEstado}
@@ -357,19 +508,40 @@ const HabilitacionPage = () => {
             )}
 
             {activeTab === 'autoevaluaciones' && (
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado</label>
-                <select
-                  value={filtroAutoevaluacion}
-                  onChange={(e) => setFiltroAutoevaluacion(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
-                >
-                  <option value="">Todos</option>
-                  {ESTADOS_AUTOEVALUACION.map(e => (
-                    <option key={e.value} value={e.value}>{e.label}</option>
-                  ))}
-                </select>
-              </div>
+              <>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prestador</label>
+                  <select
+                    value={filtroPrestadorAutoevaluacion}
+                    onChange={(e) => {
+                      setFiltroPrestadorAutoevaluacion(e.target.value);
+                    }}
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
+                  >
+                    <option value="">Todos</option>
+                    {prestadores.map(p => {
+                      const nombrePrestador = prestadorNamesMap.get(p.codigo_reps);
+                      const displayText = `${p.codigo_reps}${nombrePrestador ? ` - ${nombrePrestador}` : ''}`;
+                      return (
+                        <option key={p.id} value={p.codigo_reps}>{displayText}</option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado</label>
+                  <select
+                    value={filtroAutoevaluacion}
+                    onChange={(e) => setFiltroAutoevaluacion(e.target.value)}
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
+                  >
+                    <option value="">Todos</option>
+                    {ESTADOS_AUTOEVALUACION.map(e => (
+                      <option key={e.value} value={e.value}>{e.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -388,23 +560,26 @@ const HabilitacionPage = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {prestadoresFiltrados.map(p => (
-                    <PrestadorCard
-                      key={p.id}
-                      id={p.id}
-                      codigoReps={p.codigo_reps}
-                      nombrePrestador={p.nombre_prestador}
-                      sedePrincipal={p.sede_principal}
-                      clasePresta={p.clase_prestador}
-                      estadoHabilitacion={p.estado_habilitacion}
-                      fechaVencimiento={p.fecha_vencimiento_habilitacion}
-                      aseguradora={p.aseguradora_pep}
-                      numeroPoliza={p.numero_poliza}
-                      companyName={p.company_detail?.name}
-                      headquarters_detail={p.headquarters_detail}
-                      onView={(id) => navigate(`/habilitacion/prestador/${id}`)}
-                    />
-                  ))}
+                  {prestadoresFiltrados.map(p => {
+                    const detailEnriquecido = enrichedPrestadorDetails.get(p.id);
+                    return (
+                      <PrestadorCard
+                        key={p.id}
+                        id={p.id}
+                        codigoReps={p.codigo_reps}
+                        nombrePrestador={detailEnriquecido?.nombre_prestador || prestadorNamesMap.get(p.codigo_reps)}
+                        sedePrincipal={p.sede_principal}
+                        clasePresta={p.clase_prestador}
+                        estadoHabilitacion={p.estado_habilitacion}
+                        fechaVencimiento={p.fecha_vencimiento_habilitacion}
+                        aseguradora={p.aseguradora_pep}
+                        numeroPoliza={p.numero_poliza}
+                        companyName={p.company_name}
+                        headquarters_detail={detailEnriquecido?.headquarters_detail || p.headquarters_detail}
+                        onView={(id) => navigate(`/habilitacion/prestador/${id}`)}
+                      />
+                    );
+                  })}
                 </div>
               )
             ) : (
@@ -476,7 +651,7 @@ const HabilitacionPage = () => {
                       periodo={a.periodo}
                       estado={a.estado}
                       fechaVencimiento={a.fecha_vencimiento}
-                      datosPrestador={a.datos_prestador}
+                      datosPrestador={a.datos_prestador_detail}
                     />
                   ))}
                 </div>

@@ -14,32 +14,33 @@ export interface HeadquartersDetail {
 
 /**
  * DatosPrestador - Información de habilitación de un prestador vinculado a una sede
- * Modela la respuesta del endpoint: /api/habilitacion/prestadores/{id}/
+ * Modela la respuesta del endpoint: /api/habilitacion/prestadores/
  * Representa un DatosPrestador del backend (relación OneToOne con Headquarters)
  */
 export interface DatosPrestador {
   id: number;
   codigo_reps: string;
-  nombre_prestador: string;
-  sede_principal: boolean;
-  company_detail: CompanyDetail;
-  headquarters_detail: HeadquartersDetail;
+  nombre_prestador?: string; // Puede estar vacío en el endpoint
+  company_name?: string; // Nombre de la empresa (usado en listados)
+  sede_principal?: boolean;
+  company_detail?: CompanyDetail;
+  headquarters_detail?: HeadquartersDetail;
   clase_prestador: ClasePrestador;
-  clase_prestador_display: string;
+  clase_prestador_display?: string;
   estado_habilitacion: EstadoHabilitacionPrestador;
-  estado_display: string;
-  fecha_inscripcion: string; // ISO date
-  fecha_renovacion: string; // ISO date
-  fecha_vencimiento_habilitacion: string; // ISO date
-  dias_vencimiento: number; // Campo computado por el backend
-  proxima_vencer: boolean; // Campo computado: próximo a vencer en 90 días
-  vencida: boolean; // Campo computado
+  estado_display?: string;
+  fecha_inscripcion?: string; // ISO date
+  fecha_renovacion?: string; // ISO date
+  fecha_vencimiento_habilitacion?: string; // ISO date
+  dias_vencimiento?: number; // Campo computado por el backend
+  proxima_vencer?: boolean; // Campo computado: próximo a vencer en 90 días
+  vencida?: boolean; // Campo computado
   aseguradora_pep?: string;
   numero_poliza?: string;
   vigencia_poliza?: string; // ISO date
-  autoevaluaciones_count: number;
-  fecha_creacion: string; // ISO datetime
-  fecha_actualizacion: string; // ISO datetime
+  autoevaluaciones_count?: number;
+  fecha_creacion?: string; // ISO datetime
+  fecha_actualizacion?: string; // ISO datetime
   usuario_responsable?: number;
 }
 
