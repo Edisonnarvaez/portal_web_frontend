@@ -41,7 +41,10 @@ const PrestadorDetailPage: React.FC = () => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showServicioModal, setShowServicioModal] = useState(false);
     const [showAutoModal, setShowAutoModal] = useState(false);
+    const [showServicioDeleteDialog, setShowServicioDeleteDialog] = useState(false);
     const [editingServicio, setEditingServicio] = useState<ServicioSede | null>(null);
+    const [servicioAEliminar, setServicioAEliminar] = useState<ServicioSede | null>(null);
+    const [servicioDeleteError, setServicioDeleteError] = useState<string>('');
     const [editingAuto, setEditingAuto] = useState<Autoevaluacion | null>(null);
     const [showRenovacionWizard, setShowRenovacionWizard] = useState(false);
 
@@ -141,6 +144,28 @@ const PrestadorDetailPage: React.FC = () => {
             navigate('/habilitacion/');
         } catch (err) {
             console.error('Error deleting prestador:', err);
+        }
+    };
+
+    const handleDeleteServicio = async () => {
+        if (!servicioAEliminar) return;
+        
+        try {
+            setServicioDeleteError('');
+            await deleteServicio(servicioAEliminar.id);
+            setShowServicioDeleteDialog(false);
+            setServicioAEliminar(null);
+            await loadServicios();
+        } catch (err: any) {
+            // Capturar el mensaje de error del backend
+            const errorMessage = 
+                err.response?.data?.detail || 
+                err.response?.data?.error || 
+                err.message || 
+                'No se puede eliminar este servicio';
+            
+            setServicioDeleteError(errorMessage);
+            console.error('Error deleting servicio:', err);
         }
     };
 
@@ -335,7 +360,7 @@ const PrestadorDetailPage: React.FC = () => {
                                             <HiOutlinePencilSquare className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={async () => { await deleteServicio(s.id); loadServicios(); }}
+                                            onClick={() => { setServicioAEliminar(s); setServicioDeleteError(''); setShowServicioDeleteDialog(true); }}
                                             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600 transition-colors"
                                         >
                                             <HiOutlineTrash className="h-4 w-4" />
@@ -475,6 +500,39 @@ const PrestadorDetailPage: React.FC = () => {
                 confirmText="Eliminar"
                 cancelText="Cancelar"
             />
+
+            {servicioAEliminar && (
+                <ConfirmDialog
+                    isOpen={showServicioDeleteDialog}
+                    title="Eliminar Servicio"
+                    message={`¿Está seguro de que desea eliminar el servicio "${servicioAEliminar.nombre_servicio}"? Esta acción no se puede deshacer.`}
+                    onConfirm={handleDeleteServicio}
+                    onClose={() => {
+                        setShowServicioDeleteDialog(false);
+                        setServicioAEliminar(null);
+                        setServicioDeleteError('');
+                    }}
+                    confirmText="Eliminar"
+                    cancelText="Cancelar"
+                />
+            )}
+
+            {servicioDeleteError && (
+                <div className="fixed bottom-4 right-4 max-w-sm bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg shadow-lg p-4 z-50">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                            <p className="font-medium text-red-800 dark:text-red-200">Error al eliminar servicio</p>
+                            <p className="text-sm text-red-700 dark:text-red-300 mt-1">{servicioDeleteError}</p>
+                        </div>
+                        <button
+                            onClick={() => setServicioDeleteError('')}
+                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showRenovacionWizard && (
                 <RenovacionWizard
