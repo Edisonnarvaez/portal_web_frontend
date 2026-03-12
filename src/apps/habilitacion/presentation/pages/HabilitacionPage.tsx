@@ -118,7 +118,7 @@ const HabilitacionPage = () => {
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.estado_habilitacion)}`}>{getEstadoLabel(r.estado_habilitacion)}</span>
     )},
     { key: 'vencimiento', label: 'Vencimiento', sortable: true, accessor: r => r.fecha_vencimiento_habilitacion ?? '', render: r => (
-      <VencimientoBadge fechaVencimiento={r.fecha_vencimiento_habilitacion} compact />
+      <VencimientoBadge fechaVencimiento={r.fecha_vencimiento_habilitacion ?? undefined} compact />
     )},
     { key: 'acciones_ctx', label: 'Acciones', sortable: false, render: r => {
       const ultimaAuto = autoevaluaciones
@@ -142,7 +142,7 @@ const HabilitacionPage = () => {
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.estado_habilitacion)}`}>{getEstadoLabel(r.estado_habilitacion)}</span>
     )},
     { key: 'vencimiento', label: 'Vencimiento', sortable: true, accessor: r => r.fecha_vencimiento ?? '', render: r => (
-      <VencimientoBadge fechaVencimiento={r.fecha_vencimiento} compact />
+      <VencimientoBadge fechaVencimiento={r.fecha_vencimiento ?? undefined} compact />
     )},
   ], []);
 
@@ -155,7 +155,7 @@ const HabilitacionPage = () => {
     )},
     { key: 'prestador', label: 'Prestador', accessor: r => r.datos_prestador?.codigo_reps ?? '', render: r => <span>{r.datos_prestador?.codigo_reps || '—'}</span> },
     { key: 'vencimiento', label: 'Vencimiento', sortable: true, accessor: r => r.fecha_vencimiento ?? '', render: r => (
-      <VencimientoBadge fechaVencimiento={r.fecha_vencimiento} compact />
+      <VencimientoBadge fechaVencimiento={r.fecha_vencimiento ?? undefined} compact />
     )},
   ], []);
 
@@ -422,14 +422,7 @@ const HabilitacionPage = () => {
                   {serviciosFiltrados.map(s => (
                     <ServicioCard
                       key={s.id}
-                      id={s.id}
-                      codigoServicio={s.codigo_servicio}
-                      nombreServicio={s.nombre_servicio}
-                      modalidad={s.modalidad}
-                      complejidad={s.complejidad}
-                      estadoHabilitacion={s.estado_habilitacion}
-                      fechaVencimiento={s.fecha_vencimiento}
-                      headquarters={s.prestador?.headquarters_detail}
+                      servicio={s}
                     />
                   ))}
                 </div>

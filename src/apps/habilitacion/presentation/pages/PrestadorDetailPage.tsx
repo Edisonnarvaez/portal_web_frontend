@@ -325,7 +325,7 @@ const PrestadorDetailPage: React.FC = () => {
                                     <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                                         <p>Modalidad: <span className="font-medium text-gray-900 dark:text-white">{getEstadoLabel(s.modalidad)}</span></p>
                                         <p>Complejidad: <span className="font-medium text-gray-900 dark:text-white">{getEstadoLabel(s.complejidad)}</span></p>
-                                        <p>Vence: <span className="font-medium">{formatDate(s.fecha_vencimiento)}</span></p>
+                                        <p>Vence: <span className="font-medium">{formatDate(s.fecha_vencimiento ?? undefined)}</span></p>
                                     </div>
                                     <div className="flex justify-end gap-2 mt-4">
                                         <button
@@ -446,6 +446,7 @@ const PrestadorDetailPage: React.FC = () => {
                     onClose={() => { setShowServicioModal(false); setEditingServicio(null); }}
                     onSuccess={() => { setShowServicioModal(false); setEditingServicio(null); loadServicios(); }}
                     servicio={editingServicio || undefined}
+                    prestador={prestador || undefined}
                 />
             )}
 

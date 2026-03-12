@@ -1,8 +1,3 @@
-import type { 
-  ModalidadServicio, 
-  ComplejidadServicio,
-  EstadoHabilitacionServicio
-} from '../types';
 import type { DatosPrestador } from './DatosPrestador';
 
 // ============================================================================
@@ -10,25 +5,38 @@ import type { DatosPrestador } from './DatosPrestador';
 // ============================================================================
 
 /**
+ * Tipos para ServicioSede basados en choices del backend
+ */
+export type ModalidadServicio = 'INTRAMURAL' | 'AMBULATORIA' | 'TELEMEDICINA' | 'URGENCIAS' | 'AMBULANCIA';
+export type ComplejidadServicio = 'BAJA' | 'MEDIA' | 'ALTA';
+export type EstadoHabilitacionServicio = 'HABILITADO' | 'EN_PROCESO' | 'SUSPENDIDO' | 'NO_HABILITADO' | 'CANCELADO';
+
+/**
  * ServicioSede - Servicios de salud habilitados en una sede específica
- * Un servicio es la combinación de modalidad + tipo de servicio en una sede determinada
+ * Un servicio es la combinación de modalidad + tipo de servicio en una sede determinada.
+ * 
+ * Estructura sincronizada con el modelo Django:
+ * habilitacion/models.py::ServicioSede
  */
 export interface ServicioSede {
   id: number;
-  prestador: DatosPrestador; // FK: Relación con DatosPrestador
-  codigo_servicio: string; // Código REPS del servicio
+  prestador: DatosPrestador; // FK: Relación con DatosPrestador (hacia arriba)
+  codigo_servicio: string; // Código asignado por REPS
   nombre_servicio: string;
-  descripcion?: string;
+  descripcion?: string | null;
   modalidad: ModalidadServicio;
   complejidad: ComplejidadServicio;
   estado_habilitacion: EstadoHabilitacionServicio;
-  estado_display?: string;
-  fecha_habilitacion?: string; // ISO date
-  fecha_vencimiento?: string; // ISO date
+  fecha_habilitacion?: string | null; // ISO date (YYYY-MM-DD)
+  fecha_vencimiento?: string | null; // ISO date (YYYY-MM-DD)
   fecha_creacion: string; // ISO datetime
   fecha_actualizacion: string; // ISO datetime
 }
 
+/**
+ * DTO para crear un nuevo ServicioSede
+ * El backend asigna automáticamente: id, fecha_creacion, fecha_actualizacion
+ */
 export interface ServicioSedeCreate {
   prestador_id: number;
   codigo_servicio: string;
@@ -36,15 +44,21 @@ export interface ServicioSedeCreate {
   descripcion?: string;
   modalidad: ModalidadServicio;
   complejidad: ComplejidadServicio;
-  estado_habilitacion?: EstadoHabilitacionServicio;
+  estado_habilitacion?: EstadoHabilitacionServicio; // Default: 'EN_PROCESO'
   fecha_habilitacion?: string;
   fecha_vencimiento?: string;
 }
 
+/**
+ * DTO para actualizar un ServicioSede (parcial o completa)
+ */
 export interface ServicioSedeUpdate extends Partial<ServicioSedeCreate> {
   id: number;
 }
 
+/**
+ * Respuesta paginada del listado de servicios
+ */
 export interface ServicioSedeListResponse {
   count: number;
   next?: string;
