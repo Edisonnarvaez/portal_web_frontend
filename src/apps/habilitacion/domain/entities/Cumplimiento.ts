@@ -19,6 +19,11 @@ export interface Cumplimiento {
   fecha_compromiso?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
+  documentos_evidencia?: Array<{
+    id: number;
+    nombre?: string;
+    url?: string;
+  }>;
   autoevaluacion?: {
     id: number;
     numero_autoevaluacion: string;

@@ -67,12 +67,13 @@ export const useServicioSede = () => {
 
   /**
    * Obtener servicios próximos a vencer
+   * El servicio filtra automáticamente por los próximos 90 días
    */
-  const getProximosAVencer = useCallback(async (dias?: number): Promise<ServicioSede[]> => {
+  const getProximosAVencer = useCallback(async (): Promise<ServicioSede[]> => {
     setLoading(true);
     setError(null);
     try {
-      return await service.getProximosAVencer(dias);
+      return await service.getProximosAVencer();
     } catch (err: any) {
       const errorMsg = err.message || 'Error al obtener próximos a vencer';
       setError(errorMsg);

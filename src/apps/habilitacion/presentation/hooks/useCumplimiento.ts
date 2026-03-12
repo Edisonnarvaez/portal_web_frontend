@@ -83,6 +83,19 @@ export const useCumplimiento = () => {
     }
   }, []);
 
+  /**
+   * Obtener servicios de una autoevaluación específica
+   * Útil para llenar dropdown en CumplimientoFormModal
+   */
+  const getServiciosDeAutoevaluacion = useCallback(async (autoevaluacionId: number) => {
+    try {
+      return await service.getServiciosDeAutoevaluacion(autoevaluacionId);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener servicios de autoevaluación');
+      throw err;
+    }
+  }, []);
+
   return {
     cumplimientos,
     loading,
@@ -94,6 +107,7 @@ export const useCumplimiento = () => {
     getSinCumplir,
     getConPlanMejora,
     getMejorasVencidas,
+    getServiciosDeAutoevaluacion,
     service,
   };
 };

@@ -75,7 +75,7 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
    * Obtener servicios próximos a vencer (próximos 90 días por defecto)
    * GET /api/habilitacion/servicios/proximos_a_vencer/
    */
-  async getProximosAVencer(dias?: number): Promise<ServicioSede[]> {
+  async getProximosAVencer(): Promise<ServicioSede[]> {
     const response = await axiosInstance.get<ServicioSedeListResponse>(
       '/habilitacion/servicios/proximos_a_vencer/'
     );

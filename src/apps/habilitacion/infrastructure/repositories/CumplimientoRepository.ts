@@ -41,4 +41,17 @@ export class CumplimientoRepository implements ICumplimientoRepository {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/mejoras_vencidas/');
     return response.data.results || response.data;
   }
+
+  /**
+   * Obtener servicios disponibles para una autoevaluación específica
+   * GET /api/habilitacion/cumplimientos/servicios_de_autoevaluacion/?autoevaluacion_id={id}
+   * Retorna: { autoevaluacion, prestador, servicios, total_servicios }
+   */
+  async getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<any> {
+    const response = await axiosInstance.get(
+      '/habilitacion/cumplimientos/servicios_de_autoevaluacion/',
+      { params: { autoevaluacion_id: autoevaluacionId } }
+    );
+    return response.data;
+  }
 }

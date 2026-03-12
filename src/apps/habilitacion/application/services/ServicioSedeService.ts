@@ -82,9 +82,10 @@ export class ServicioSedeService {
 
   /**
    * Obtener servicios próximos a vencer (próximos 90 días)
+   * El repositorio ya filtra automáticamente por los próximos 90 días
    */
-  async getProximosAVencer(dias?: number): Promise<ServicioSede[]> {
-    return this.repository.getProximosAVencer(dias);
+  async getProximosAVencer(): Promise<ServicioSede[]> {
+    return this.repository.getProximosAVencer();
   }
 
   /**

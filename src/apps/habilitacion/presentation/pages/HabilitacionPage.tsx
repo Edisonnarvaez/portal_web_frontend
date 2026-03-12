@@ -60,19 +60,34 @@ const HabilitacionPage = () => {
     fetchAutoevaluaciones,
   } = useAutoevaluacion();
 
-  // Cargar datos iniciales
+  // ========== CARGAR TODOS LOS DATOS AL MONTAR ==========
+  // Esto evita que los contadores muestren 0 y carga toda la data sin lazy loading
   useEffect(() => {
-    const loadData = async () => {
-      if (activeTab === 'prestadores') {
-        await fetchPrestadores();
-      } else if (activeTab === 'servicios') {
-        await fetchServicios();
-      } else if (activeTab === 'autoevaluaciones') {
-        await fetchAutoevaluaciones();
+    const loadAllData = async () => {
+      try {
+        await Promise.all([
+          fetchPrestadores(),
+          fetchServicios(),
+          fetchAutoevaluaciones(),
+        ]);
+      } catch (err) {
+        console.error('Error al cargar datos iniciales:', err);
       }
     };
 
-    loadData();
+    loadAllData();
+  }, []); // Solo se ejecuta una vez al montar
+
+  // ========== REFRESCAR CUANDO CAMBIA EL TAB ACTIVO ==========
+  // Esto permite que el usuario pueda actualizar el tab actual
+  useEffect(() => {
+    if (activeTab === 'prestadores') {
+      fetchPrestadores();
+    } else if (activeTab === 'servicios') {
+      fetchServicios();
+    } else if (activeTab === 'autoevaluaciones') {
+      fetchAutoevaluaciones();
+    }
   }, [activeTab, fetchPrestadores, fetchServicios, fetchAutoevaluaciones]);
 
   // Filtrar prestadores

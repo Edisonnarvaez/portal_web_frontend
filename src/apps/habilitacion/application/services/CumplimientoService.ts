@@ -40,6 +40,14 @@ export class CumplimientoService {
     return this.repository.getMejorasVencidas();
   }
 
+  /**
+   * Obtener servicios disponibles para una autoevaluación específica
+   * Útil para el dropdown en CumplimientoFormModal
+   */
+  async getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<any> {
+    return this.repository.getServiciosDeAutoevaluacion(autoevaluacionId);
+  }
+
   // Métodos auxiliares
   diasParaVencimiento(fechaCompromiso?: string): number | null {
     if (!fechaCompromiso) return null;
