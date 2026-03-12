@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { HiOutlineXMark } from 'react-icons/hi2';
+import { HiOutlineXMark, HiOutlineExclamationTriangle, HiOutlineCheckCircle } from 'react-icons/hi2';
 import type { Autoevaluacion, AutoevaluacionCreate } from '../../domain/entities/Autoevaluacion';
+import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
 import { ESTADOS_AUTOEVALUACION } from '../../domain/types';
 import { useAutoevaluacion } from '../hooks/useAutoevaluacion';
-import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
+import { useDatosPrestador } from '../hooks/useDatosPrestador';
 
 interface AutoevaluacionFormModalProps {
   isOpen: boolean;
@@ -20,13 +21,11 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update } = useAutoevaluacion();
+  const { create, update, autoevaluaciones } = useAutoevaluacion();
+  const { datos: prestadores } = useDatosPrestador();
   const isEdit = !!autoevaluacion;
 
-  interface PrestadorOption {
-    id: number;
-    nombre_prestador: string;
-  }
+  interface PrestadorOption extends DatosPrestador {}
 
   const [formData, setFormData] = useState<Partial<AutoevaluacionCreate>>({
     datos_prestador_id: datosPrestadorId || 0,
@@ -39,54 +38,105 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [prestadores, setPrestadores] = useState<PrestadorOption[]>([]);
-  const [loadingPrestadores, setLoadingPrestadores] = useState(false);
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [prestadoresFiltered, setPrestadoresFiltered] = useState<PrestadorOption[]>([]);
+  const [selectedPrestador, setSelectedPrestador] = useState<DatosPrestador | null>(null);
+
+  // Calcular fecha de vencimiento por defecto (365 días a partir de hoy)
+  const calcularFechaVencimientoDefecto = (): string => {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + 365);
+    return fecha.toISOString().split('T')[0];
+  };
 
   useEffect(() => {
-    if (isOpen && !datosPrestadorId) {
-      setLoadingPrestadores(true);
-      axiosInstance.get('/habilitacion/prestadores/')
-        .then((res) => {
-          const data = Array.isArray(res.data) ? res.data : res.data.results || [];
-          setPrestadores(
-            data.map((p: any) => ({ id: p.id, nombre_prestador: p.nombre_prestador || `Prestador #${p.id}` }))
-          );
-        })
-        .catch(() => setPrestadores([]))
-        .finally(() => setLoadingPrestadores(false));
+    if (isOpen) {
+      setPrestadoresFiltered(prestadores as PrestadorOption[]);
+      
+      if (autoevaluacion) {
+        const vencimiento = autoevaluacion.fecha_vencimiento || '';
+        setFormData({
+          datos_prestador_id: autoevaluacion.datos_prestador?.id || datosPrestadorId || 0,
+          periodo: autoevaluacion.periodo,
+          version: autoevaluacion.version,
+          estado: autoevaluacion.estado,
+          fecha_vencimiento: vencimiento,
+          observaciones: autoevaluacion.observaciones || '',
+        });
+        
+        // Preseleccionar prestador si es edit
+        if (autoevaluacion.datos_prestador?.id) {
+          const prestador = prestadores.find(p => p.id === autoevaluacion.datos_prestador?.id);
+          if (prestador) setSelectedPrestador(prestador);
+        }
+      } else {
+        const vencimientoDefecto = calcularFechaVencimientoDefecto();
+        setFormData({
+          datos_prestador_id: datosPrestadorId || 0,
+          periodo: new Date().getFullYear(),
+          version: 1,
+          estado: 'BORRADOR',
+          fecha_vencimiento: vencimientoDefecto,
+          observaciones: '',
+        });
+      }
+      setError('');
+      setValidationWarnings([]);
     }
-  }, [isOpen, datosPrestadorId]);
+  }, [isOpen, autoevaluacion, datosPrestadorId, prestadores]);
 
+  // Validar cambios en periodo y prestador
   useEffect(() => {
-    if (autoevaluacion) {
-      setFormData({
-        datos_prestador_id: autoevaluacion.datos_prestador?.id || datosPrestadorId || 0,
-        periodo: autoevaluacion.periodo,
-        version: autoevaluacion.version,
-        estado: autoevaluacion.estado,
-        fecha_vencimiento: autoevaluacion.fecha_vencimiento || '',
-        observaciones: autoevaluacion.observaciones || '',
-      });
-    } else {
-      setFormData({
-        datos_prestador_id: datosPrestadorId || 0,
-        periodo: new Date().getFullYear(),
-        version: 1,
-        estado: 'BORRADOR',
-        fecha_vencimiento: '',
-        observaciones: '',
-      });
+    if (!isOpen || !formData.datos_prestador_id || !formData.periodo) return;
+
+    const warnings: string[] = [];
+    
+    // Verificar si ya existe una autoevaluación del mismo prestador en el mismo periodo
+    const existeDuplicado = autoevaluaciones.some(a => 
+      a.datos_prestador?.id === formData.datos_prestador_id &&
+      a.periodo === formData.periodo &&
+      (!isEdit || a.id !== autoevaluacion?.id) // No contar la misma al editar
+    );
+
+    if (existeDuplicado) {
+      warnings.push(`Ya existe una autoevaluación para este prestador en el período ${formData.periodo}`);
     }
-    setError('');
-  }, [autoevaluacion, datosPrestadorId, isOpen]);
+
+    // Validar fecha vencimiento no sea en el pasado
+    if (formData.fecha_vencimiento) {
+      const fechaVencimiento = new Date(formData.fecha_vencimiento);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      if (fechaVencimiento < hoy && !isEdit) {
+        warnings.push('La fecha de vencimiento no puede ser en el pasado');
+      }
+    }
+
+    setValidationWarnings(warnings);
+  }, [formData.datos_prestador_id, formData.periodo, formData.fecha_vencimiento, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    
+    if (name === 'datos_prestador_id') {
+      const prestador = prestadoresFiltered.find(p => p.id === Number(value));
+      setSelectedPrestador(prestador || null);
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: name === 'periodo' || name === 'version' || name === 'datos_prestador_id' ? Number(value) : value,
+    }));
+  };
+
+  const handleAutoFechaVencimiento = () => {
+    const vencimientoDefecto = calcularFechaVencimientoDefecto();
+    setFormData(prev => ({
+      ...prev,
+      fecha_vencimiento: vencimientoDefecto,
     }));
   };
 
@@ -96,8 +146,15 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
     setError('');
 
     try {
-      if (!formData.periodo || !formData.fecha_vencimiento) {
-        setError('Periodo y fecha de vencimiento son obligatorios');
+      // Validaciones finales
+      if (!formData.periodo) {
+        setError('Periodo es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.fecha_vencimiento) {
+        setError('Fecha de vencimiento es obligatoria');
         setLoading(false);
         return;
       }
@@ -106,6 +163,20 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
         setError('Debe seleccionar un prestador');
         setLoading(false);
         return;
+      }
+
+      // Verificar duplicado antes de crear
+      if (!isEdit) {
+        const existeDuplicado = autoevaluaciones.some(a => 
+          a.datos_prestador?.id === formData.datos_prestador_id &&
+          a.periodo === formData.periodo
+        );
+
+        if (existeDuplicado) {
+          setError('Ya existe una autoevaluación para este prestador en el período indicado');
+          setLoading(false);
+          return;
+        }
       }
 
       if (isEdit && autoevaluacion) {
@@ -150,8 +221,22 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
+            <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg flex gap-2">
+              <HiOutlineExclamationTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+          )}
+
+          {validationWarnings.length > 0 && (
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+              <ul className="space-y-1">
+                {validationWarnings.map((warning, idx) => (
+                  <li key={idx} className="text-sm text-yellow-700 dark:text-yellow-300 flex gap-2">
+                    <span>⚠</span>
+                    <span>{warning}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -162,24 +247,36 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Prestador <span className="text-red-500">*</span>
                 </label>
-                {loadingPrestadores ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Cargando prestadores...</p>
-                ) : (
-                  <select
-                    name="datos_prestador_id"
-                    value={formData.datos_prestador_id || ''}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccione un prestador</option>
-                    {prestadores.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nombre_prestador}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                <select
+                  name="datos_prestador_id"
+                  value={formData.datos_prestador_id || ''}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccione un prestador</option>
+                  {prestadoresFiltered.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.codigo_reps} - {p.company_name || `Prestador #${p.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Info prestador seleccionado */}
+            {selectedPrestador && (
+              <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex gap-2 items-start">
+                  <HiOutlineCheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-300">{selectedPrestador.company_name}</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400">Código: {selectedPrestador.codigo_reps}</p>
+                    {selectedPrestador.clase_prestador && (
+                      <p className="text-xs text-blue-700 dark:text-blue-400">Clase: {selectedPrestador.clase_prestador}</p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -213,7 +310,8 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
                 value={formData.version || 1}
                 onChange={handleChange}
                 min={1}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                disabled={isEdit}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-900"
               />
             </div>
 
@@ -226,7 +324,8 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
                 name="estado"
                 value={formData.estado || 'BORRADOR'}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                disabled={!isEdit}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-900"
               >
                 {ESTADOS_AUTOEVALUACION.map((e) => (
                   <option key={e.value} value={e.value}>
@@ -237,10 +336,21 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
             </div>
 
             {/* Fecha Vencimiento */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha de Vencimiento <span className="text-red-500">*</span>
-              </label>
+            <div className="md:col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Fecha de Vencimiento <span className="text-red-500">*</span>
+                </label>
+                {!isEdit && (
+                  <button
+                    type="button"
+                    onClick={handleAutoFechaVencimiento}
+                    className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                  >
+                    Auto (Hoy + 365 días)
+                  </button>
+                )}
+              </div>
               <input
                 type="date"
                 name="fecha_vencimiento"
@@ -269,17 +379,17 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 
           {/* Info autoevaluación existente */}
           {isEdit && autoevaluacion && (
-            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-1">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 <strong>N° Autoevaluación:</strong> {autoevaluacion.numero_autoevaluacion}
               </p>
               {autoevaluacion.fecha_inicio && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   <strong>Fecha Inicio:</strong> {new Date(autoevaluacion.fecha_inicio).toLocaleDateString('es-CO')}
                 </p>
               )}
               {autoevaluacion.fecha_completacion && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   <strong>Fecha Completación:</strong> {new Date(autoevaluacion.fecha_completacion).toLocaleDateString('es-CO')}
                 </p>
               )}
@@ -297,8 +407,8 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 transition-colors"
+              disabled={loading || validationWarnings.length > 0}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear Autoevaluación'}
             </button>

@@ -13,6 +13,7 @@ export { default as RenovacionWizard } from './RenovacionWizard';
 export { default as DuplicarAutoevaluacionModal } from './DuplicarAutoevaluacionModal';
 export { default as ValidarAutoevaluacionModal } from './ValidarAutoevaluacionModal';
 export { default as MejorasVencidasPanel } from './MejorasVencidasPanel';
+export { default as ResumenPanel } from './ResumenPanel';
 export { default as AlertasHabilitacionPanel } from './AlertasHabilitacionPanel';
 export { useAlertCount } from './AlertasHabilitacionPanel';
 

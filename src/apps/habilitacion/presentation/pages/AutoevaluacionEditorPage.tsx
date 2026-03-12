@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    HiOutlineArrowLeft,
     HiOutlinePencilSquare,
     HiOutlineDocumentCheck,
     HiOutlineCheckCircle,
@@ -30,6 +29,7 @@ import {
     DuplicarAutoevaluacionModal,
     ValidarAutoevaluacionModal,
     MejorasVencidasPanel,
+    ResumenPanel,
     Breadcrumbs,
 } from '../components';
 import {
@@ -59,7 +59,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
     const [showDuplicarModal, setShowDuplicarModal] = useState(false);
     const [showValidarModal, setShowValidarModal] = useState(false);
 
-    const { autoevaluaciones, loading: la, fetchAutoevaluaciones, getResumen, validar, duplicar } = useAutoevaluacion();
+    const { autoevaluaciones, loading: la, fetchAutoevaluaciones, validar, duplicar } = useAutoevaluacion();
     const { criterios, evaluaciones, loading: lcr, fetchCriterios, fetchEvaluaciones } = useCriterio();
     const { cumplimientos, loading: lc, fetchCumplimientos } = useCumplimiento();
     const { hallazgos, loading: lh, fetchHallazgos } = useHallazgo();
@@ -197,6 +197,16 @@ const AutoevaluacionEditorPage: React.FC = () => {
             </div>
 
             {/* ── Progress ── */}
+            {/* ── Resumen Panel ── */}
+            {cumplimientosAuto.length > 0 && (
+                <ResumenPanel 
+                    cumplimientos={cumplimientosAuto}
+                    hallazgos={hallazgosAuto}
+                    planes={planesAuto}
+                    compact={false}
+                />
+            )}
+
             <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -311,20 +321,47 @@ const AutoevaluacionEditorPage: React.FC = () => {
             {/* ── Cumplimientos tab ── */}
             {activeTab === 'cumplimientos' && (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                        <div className="flex items-center gap-3">
-                            <HiOutlineFunnel className="h-4 w-4 text-gray-400" />
-                            <select
-                                value={filtroCumplimiento}
-                                onChange={e => setFiltroCumplimiento(e.target.value)}
-                                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            >
-                                <option value="">Todos</option>
-                                {ESTADOS_CUMPLIMIENTO.map(e => (
-                                    <option key={e.value} value={e.value}>{e.label}</option>
-                                ))}
-                            </select>
+                    {/* Filtros visuales */}
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div className="flex items-center gap-2">
+                                <HiOutlineFunnel className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Filtrar por:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => setFiltroCumplimiento('')}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                                        filtroCumplimiento === ''
+                                            ? 'bg-gray-600 text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Todos ({cumplimientosAuto.length})
+                                </button>
+                                {ESTADOS_CUMPLIMIENTO.map(e => {
+                                    const count = cumplimientosAuto.filter(c => c.cumple === e.value).length;
+                                    const isActive = filtroCumplimiento === e.value;
+                                    return (
+                                        <button
+                                            key={e.value}
+                                            onClick={() => setFiltroCumplimiento(e.value)}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                                                isActive
+                                                    ? `${e.color || 'bg-blue-100'} text-blue-700 dark:text-blue-300 border-2 border-blue-500`
+                                                    : `${e.color || 'bg-gray-100 dark:bg-gray-700'} text-gray-700 dark:text-gray-300 hover:opacity-80`
+                                            }`}
+                                        >
+                                            {e.label} ({count})
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Botón para crear nuevo */}
+                    <div className="flex justify-end">
                         <button
                             onClick={() => { setEditingCumplimiento(null); setShowCumplimientoModal(true); }}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -338,35 +375,75 @@ const AutoevaluacionEditorPage: React.FC = () => {
                     ) : (
                         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-800">
+                                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200 dark:border-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Servicio</th>
-                                        <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Criterio</th>
-                                        <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Hallazgo</th>
-                                        <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Compromiso</th>
-                                        <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-400">Acciones</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Servicio</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Criterio</th>
+                                        <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">Cumplimiento</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Hallazgo / Observación</th>
+                                        <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">Fecha Compromiso</th>
+                                        <th className="px-4 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                    {cumplimientosFiltrados.map(c => (
-                                        <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                            <td className="px-4 py-3 text-gray-900 dark:text-white">{c.servicio_sede?.nombre_servicio || '—'}</td>
-                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.criterio?.nombre || '—'}</td>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                    {cumplimientosFiltrados.map((c, idx) => (
+                                        <tr 
+                                            key={c.id} 
+                                            className={`transition-colors ${
+                                                idx % 2 === 0 
+                                                    ? 'bg-white dark:bg-gray-950'
+                                                    : 'bg-gray-50 dark:bg-gray-900'
+                                            } hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+                                        >
                                             <td className="px-4 py-3">
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(c.cumple)}`}>
+                                                <div className="font-medium text-gray-900 dark:text-white">
+                                                    {c.servicio_sede?.nombre_servicio || '—'}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-gray-700 dark:text-gray-300">
+                                                    {c.criterio?.nombre || '—'}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full ${getEstadoColor(c.cumple)}`}>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                                     {getEstadoLabel(c.cumple)}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[160px] truncate">{c.hallazgo || '—'}</td>
-                                            <td className="px-4 py-3 text-gray-500">{formatDate(c.fecha_compromiso)}</td>
+                                            <td className="px-4 py-3">
+                                                <div className="max-w-sm">
+                                                    <p className="text-gray-700 dark:text-gray-300 text-sm">
+                                                        {c.hallazgo || '—'}
+                                                    </p>
+                                                    {c.plan_mejora && (
+                                                        <div className="mt-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                                            📋 Plan de mejora iniciado
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div className="font-medium text-gray-900 dark:text-white">
+                                                    {formatDate(c.fecha_compromiso || '')}
+                                                </div>
+                                                {c.fecha_compromiso && new Date(c.fecha_compromiso) < new Date() && (
+                                                    <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
+                                                        ⚠️ Vencido
+                                                    </div>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-3 text-right">
-                                                <button
-                                                    onClick={() => { setEditingCumplimiento(c); setShowCumplimientoModal(true); }}
-                                                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 transition-colors"
-                                                >
-                                                    <HiOutlinePencilSquare className="h-4 w-4" />
-                                                </button>
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => { setEditingCumplimiento(c); setShowCumplimientoModal(true); }}
+                                                        className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <HiOutlinePencilSquare className="h-4 w-4" />
+                                                    </button>
+                                                    {/* TODO: Agregar botón de eliminar si es necesario */}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

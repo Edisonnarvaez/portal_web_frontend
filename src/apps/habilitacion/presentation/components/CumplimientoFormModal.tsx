@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
 import type { Cumplimiento, CumplimientoCreate } from '../../domain/entities/Cumplimiento';
+import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import { ESTADOS_CUMPLIMIENTO } from '../../domain/types';
 import { useCumplimiento } from '../hooks/useCumplimiento';
 
@@ -23,7 +24,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update } = useCumplimiento();
+  const { create, update, getServiciosDeAutoevaluacion } = useCumplimiento();
   const isEdit = !!cumplimiento;
 
   const [formData, setFormData] = useState<Partial<CumplimientoCreate & { responsable_mejora_id?: number }>>({
@@ -38,6 +39,8 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [servicios, setServicios] = useState<ServicioSede[]>([]);
+  const [serviciosLoading, setServiciosLoading] = useState(false);
 
   useEffect(() => {
     if (cumplimiento) {
@@ -64,6 +67,29 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     }
     setError('');
   }, [cumplimiento, autoevaluacionId, servicioSedeId, criterioId, isOpen]);
+
+  // Cargar servicios disponibles para la autoevaluación
+  useEffect(() => {
+    if (!isOpen || !autoevaluacionId) {
+      setServicios([]);
+      return;
+    }
+
+    const loadServicios = async () => {
+      try {
+        setServiciosLoading(true);
+        const serviciosData = await getServiciosDeAutoevaluacion(autoevaluacionId);
+        setServicios(serviciosData || []);
+      } catch (err) {
+        console.error('Error al cargar servicios:', err);
+        setServicios([]);
+      } finally {
+        setServiciosLoading(false);
+      }
+    };
+
+    loadServicios();
+  }, [isOpen, autoevaluacionId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -133,7 +159,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* ID Autoevaluación */}
+            {/* ID Autoevaluación (Read-Only) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID Autoevaluación <span className="text-red-500">*</span>
@@ -149,20 +175,33 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
               />
             </div>
 
-            {/* ID Servicio Sede */}
+            {/* Servicio Sede */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                ID Servicio Sede <span className="text-red-500">*</span>
+                Servicio <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                name="servicio_sede_id"
-                value={formData.servicio_sede_id || ''}
-                onChange={handleChange}
-                required
-                disabled={!!servicioSedeId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
+              {serviciosLoading ? (
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                  Cargando servicios...
+                </div>
+              ) : (
+                <select
+                  name="servicio_sede_id"
+                  value={formData.servicio_sede_id || ''}
+                  onChange={handleChange}
+                  required
+                  disabled={!!servicioSedeId || servicios.length === 0}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                >
+                  <option value="">Seleccione un servicio</option>
+                  {servicios.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.nombre_servicio} ({s.codigo_servicio})
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* ID Criterio */}

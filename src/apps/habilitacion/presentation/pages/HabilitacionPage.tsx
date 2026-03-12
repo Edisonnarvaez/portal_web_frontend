@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiOutlineClipboardList, HiOutlineRefresh, HiOutlinePlus } from 'react-icons/hi';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
-import { useDatosPrestador, useServicioSede, useAutoevaluacion } from '../hooks';
+import { useDatosPrestador, useServicioSede, useAutoevaluacion, useCumplimiento } from '../hooks';
 import {
   PrestadorCard, ServicioCard, AutoevaluacionCard,
   DataTable, VencimientoBadge, AccionesContextuales, getAccionesPrestador,
-  PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal,
+  PrestadorFormModal, ServicioFormModal, AutoevaluacionFormModal, ResumenPanel,
 } from '../components';
 import type { DataTableColumn } from '../components';
 import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
@@ -66,6 +66,11 @@ const HabilitacionPage = () => {
     fetchAutoevaluaciones,
   } = useAutoevaluacion();
 
+  const {
+    cumplimientos,
+    fetchCumplimientos,
+  } = useCumplimiento();
+
   // ========== CARGAR TODOS LOS DATOS AL MONTAR ==========
   // Esto evita que los contadores muestren 0 y carga toda la data sin lazy loading
   useEffect(() => {
@@ -75,6 +80,7 @@ const HabilitacionPage = () => {
           fetchPrestadores(),
           fetchServicios(),
           fetchAutoevaluaciones(),
+          fetchCumplimientos(),
         ]);
       } catch (err) {
         console.error('Error al cargar datos iniciales:', err);
@@ -634,7 +640,15 @@ const HabilitacionPage = () => {
 
         {/* Autoevaluaciones */}
         {activeTab === 'autoevaluaciones' && (
-          <div>
+          <div className="space-y-6">
+            {/* Resumen Panel */}
+            <ResumenPanel
+              cumplimientos={cumplimientos}
+              hallazgos={[]}
+              planes={[]}
+              compact={true}
+            />
+
             {error && <div className="p-4 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg mb-4">{error}</div>}
             {viewMode === 'cards' ? (
               autoevaluacionesFiltradas.length === 0 ? (
@@ -651,7 +665,13 @@ const HabilitacionPage = () => {
                       periodo={a.periodo}
                       estado={a.estado}
                       fechaVencimiento={a.fecha_vencimiento}
-                      datosPrestador={a.datos_prestador_detail}
+                      porcentajeCumplimiento={a.porcentaje_cumplimiento}
+                      datosPrestador={{
+                        codigo_reps: a.prestador_codigo || '',
+                        nombre_prestador: prestadorNamesMap.get(a.prestador_codigo || '') || a.datos_prestador_detail?.company_name,
+                      }}
+                      onEdit={(id) => navigate(`/habilitacion/autoevaluacion/${id}`)}
+                      onResumen={(id) => navigate(`/habilitacion/autoevaluacion/${id}`)}
                     />
                   ))}
                 </div>

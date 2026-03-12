@@ -9,4 +9,5 @@ export interface ICumplimientoRepository {
   getSinCumplir(): Promise<Cumplimiento[]>;
   getConPlanMejora(): Promise<Cumplimiento[]>;
   getMejorasVencidas(): Promise<Cumplimiento[]>;
+  getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<any>;
 }
