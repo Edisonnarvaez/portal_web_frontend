@@ -150,7 +150,7 @@ export default function ReporteCumplimientoPage() {
     // Load autoevaluaciones on mount
     useEffect(() => {
         fetchAutoevaluaciones();
-    }, []);
+    }, [fetchAutoevaluaciones]);
 
     // Load data when autoevaluacion selected
     useEffect(() => {
@@ -170,7 +170,7 @@ export default function ReporteCumplimientoPage() {
             fetchHallazgos();
             setResumen(null);
         }
-    }, [selectedAutoeval]);
+    }, [selectedAutoeval, fetchCumplimientos, fetchPlanes, fetchHallazgos, getResumen]);
 
     // ─── Computed Data ──────────────────────────────────────────
     const selectedAutoevaluacion = useMemo(
@@ -196,8 +196,8 @@ export default function ReporteCumplimientoPage() {
         const categorias: Record<string, { cumple: number; no_cumple: number; parcial: number; no_aplica: number }> = {};
 
         cumplimientos.forEach((c) => {
-            // Use criterio name as pseudo-category when no category field
-            const cat = c.criterio?.nombre || 'Sin criterio';
+            // Use criterio name as pseudo-category (fallback from list or detail endpoint)
+            const cat = c.criterio_nombre || c.criterio?.nombre || 'Sin criterio';
             if (!categorias[cat]) {
                 categorias[cat] = { cumple: 0, no_cumple: 0, parcial: 0, no_aplica: 0 };
             }
@@ -232,7 +232,9 @@ export default function ReporteCumplimientoPage() {
     const hallazgosByType = useMemo(() => {
         const counts: Record<string, number> = {};
         hallazgos.forEach((h) => {
-            counts[h.tipo] = (counts[h.tipo] || 0) + 1;
+            if (h.tipo) {
+                counts[h.tipo] = (counts[h.tipo] || 0) + 1;
+            }
         });
         return Object.entries(counts).map(([key, value]) => ({
             name: getEstadoLabel(key),
@@ -245,7 +247,9 @@ export default function ReporteCumplimientoPage() {
     const planesByEstado = useMemo(() => {
         const counts: Record<string, number> = {};
         planes.forEach((p) => {
-            counts[p.estado] = (counts[p.estado] || 0) + 1;
+            if (p.estado) {
+                counts[p.estado] = (counts[p.estado] || 0) + 1;
+            }
         });
         return Object.entries(counts).map(([key, value]) => ({
             name: getEstadoLabel(key),
@@ -634,10 +638,10 @@ export default function ReporteCumplimientoPage() {
                                                 className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition"
                                             >
                                                 <td className="px-4 py-3 text-gray-900 dark:text-gray-100">
-                                                    {c.servicio_sede?.nombre_servicio || 'N/A'}
+                                                    {c.servicio_nombre || c.servicio_sede?.nombre_servicio || 'N/A'}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                                                    {c.criterio?.nombre || 'N/A'}
+                                                    {c.criterio_nombre || c.criterio?.nombre || 'N/A'}
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
                                                     <span

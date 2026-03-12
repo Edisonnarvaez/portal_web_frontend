@@ -7,6 +7,23 @@ import { useCumplimiento } from '../hooks/useCumplimiento';
 import { useCriterio } from '../hooks/useCriterio';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 
+// Función para convertir fecha ISO a formato YYYY-MM-DD
+const formatDateForInput = (dateString?: string): string => {
+  if (!dateString) return '';
+  try {
+    // Si ya está en formato YYYY-MM-DD, devolverlo como está
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    // Si es ISO string (YYYY-MM-DDTHH:MM:SSZ), extraer la parte de fecha
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+};
+
 interface CumplimientoFormModalProps {
   isOpen: boolean;
   cumplimiento?: Cumplimiento;
@@ -25,7 +42,6 @@ interface FormErrors {
   hallazgo?: string;
   plan_mejora?: string;
   fecha_compromiso?: string;
-  responsable_mejora_id?: string;
 }
 
 const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
@@ -41,7 +57,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   const { fetchCriterios, criterios: criteriosDelHook } = useCriterio();
   const isEdit = !!cumplimiento;
 
-  const [formData, setFormData] = useState<Partial<CumplimientoCreate & { responsable_mejora_id?: number }>>({
+  const [formData, setFormData] = useState<Partial<CumplimientoCreate>>({
     autoevaluacion_id: autoevaluacionId || 0,
     servicio_sede_id: servicioSedeId || 0,
     criterio_id: criterioId || 0,
@@ -57,7 +73,11 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   const [success, setSuccess] = useState('');
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [servicios, setServicios] = useState<ServicioSede[]>([]);
-  const [serviciosLoading, setServiciosLoading] = useState(false);
+  
+  // Estados mejorados para servicios
+  const [serviciosState, setServiciosState] = useState<'idle' | 'loading' | 'success' | 'no_servicios' | 'error'>('idle');
+  const [serviciosMensaje, setServiciosMensaje] = useState<string>('');
+  
   const [criteriosLoading, setCriteriosLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
@@ -66,20 +86,19 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
 
   useEffect(() => {
     if (cumplimiento) {
-      const data: Partial<CumplimientoCreate & { responsable_mejora_id?: number }> = {
+      const data: Partial<CumplimientoCreate> = {
         autoevaluacion_id: cumplimiento.autoevaluacion?.id || autoevaluacionId || 0,
         servicio_sede_id: cumplimiento.servicio_sede?.id || servicioSedeId || 0,
         criterio_id: cumplimiento.criterio?.id || criterioId || 0,
         cumple: cumplimiento.cumple as any,
         hallazgo: cumplimiento.hallazgo || '',
         plan_mejora: cumplimiento.plan_mejora || '',
-        responsable_mejora_id: cumplimiento.responsable_mejora?.id,
-        fecha_compromiso: cumplimiento.fecha_compromiso || '',
+        fecha_compromiso: formatDateForInput(cumplimiento.fecha_compromiso),
       };
       setFormData(data);
       setOriginalData(data);
     } else {
-      const data: Partial<CumplimientoCreate & { responsable_mejora_id?: number }> = {
+      const data: Partial<CumplimientoCreate> = {
         autoevaluacion_id: autoevaluacionId || 0,
         servicio_sede_id: servicioSedeId || 0,
         criterio_id: criterioId || 0,
@@ -100,28 +119,55 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   useEffect(() => {
     if (!isOpen || !autoevaluacionId) {
       setServicios([]);
+      setServiciosState('idle');
       return;
     }
 
     const loadServicios = async () => {
       try {
-        setServiciosLoading(true);
-        const serviciosData = await getServiciosDeAutoevaluacion(autoevaluacionId);
+        setServiciosState('loading');
+        const response = await getServiciosDeAutoevaluacion(autoevaluacionId);
         
-        if (Array.isArray(serviciosData)) {
-          setServicios(serviciosData);
-        } else if (serviciosData && typeof serviciosData === 'object') {
-          const arr = serviciosData.results || serviciosData.data || [];
-          setServicios(Array.isArray(arr) ? arr : []);
+        // Estructura mejorada del backend:
+        // { autoevaluacion, prestador, servicios, total_servicios }
+        if (response && response.servicios) {
+          if (response.servicios.length === 0) {
+            setServicios([]);
+            setServiciosState('no_servicios');
+            setServiciosMensaje(
+              `No hay servicios registrados para esta institución. ` +
+              `Debe crear al menos un servicio antes de registrar cumplimientos.`
+            );
+            setError(''); // Limpiar errores previos
+          } else {
+            setServicios(response.servicios);
+            setServiciosState('success');
+            setServiciosMensaje('');
+            setError('');
+          }
+        } else if (Array.isArray(response)) {
+          // Fallback: si backend retorna array directo
+          if (response.length === 0) {
+            setServicios([]);
+            setServiciosState('no_servicios');
+            setServiciosMensaje('No hay servicios registrados para esta autoevaluación.');
+          } else {
+            setServicios(response);
+            setServiciosState('success');
+            setServiciosMensaje('');
+          }
         } else {
           setServicios([]);
+          setServiciosState('error');
+          setServiciosMensaje('Formato de respuesta inesperado del servidor.');
+          setError('Error al cargar servicios: formato inválido');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error al cargar servicios:', err);
-        setError('No se pudieron cargar los servicios. Intenta nuevamente.');
         setServicios([]);
-      } finally {
-        setServiciosLoading(false);
+        setServiciosState('error');
+        setServiciosMensaje(err.message || 'No se pudieron cargar los servicios.');
+        setError(`Error al cargar servicios: ${err.message}`);
       }
     };
 
@@ -153,10 +199,23 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    
+    let finalValue: any = value;
+    
+    // Convertir IDs a números
+    if (name.endsWith('_id')) {
+      finalValue = value ? Number(value) : 0;
+    }
+    // Formatear fecha si es necesario
+    else if (name === 'fecha_compromiso' && value) {
+      finalValue = formatDateForInput(value);
+    }
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: name.endsWith('_id') ? (value ? Number(value) : 0) : value,
+      [name]: finalValue,
     }));
+    
     // Limpiar error de este campo cuando cambia
     if (formErrors[name as keyof FormErrors]) {
       setFormErrors((prev) => ({
@@ -194,6 +253,14 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       }
       if (!formData.fecha_compromiso) {
         errors.fecha_compromiso = 'Fecha de compromiso es requerida';
+      } else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.fecha_compromiso)) {
+        errors.fecha_compromiso = 'Formato de fecha inválido. Use YYYY-MM-DD';
+      } else {
+        // Validar que sea una fecha válida
+        const date = new Date(formData.fecha_compromiso + 'T00:00:00');
+        if (isNaN(date.getTime())) {
+          errors.fecha_compromiso = 'Fecha inválida';
+        }
       }
     }
 
@@ -214,11 +281,19 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     setSuccess('');
 
     try {
+      // Crear copia de datos para enviar, asegurar formato correcto de fecha
+      const dataToSend: CumplimientoCreate = {
+        ...formData,
+        fecha_compromiso: formData.fecha_compromiso ? formatDateForInput(formData.fecha_compromiso) : undefined,
+      } as CumplimientoCreate;
+      
+      console.log('📤 Enviando cumplimiento:', JSON.stringify(dataToSend, null, 2));
+      
       if (isEdit && cumplimiento) {
-        await update(cumplimiento.id, { id: cumplimiento.id, ...formData });
+        await update(cumplimiento.id, { id: cumplimiento.id, ...dataToSend });
         setSuccess('Cumplimiento actualizado exitosamente');
       } else {
-        await create(formData as CumplimientoCreate);
+        await create(dataToSend);
         setSuccess('Cumplimiento registrado exitosamente');
       }
       
@@ -227,9 +302,43 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         onClose();
       }, 800);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || err.response?.data?.message || err.message || 'Error al guardar cumplimiento';
-      setError(msg);
-      console.error('Error en handleSubmit:', err);
+      // Obtener el mensaje de error más detallado posible
+      const backendErrors = err.response?.data;
+      let errorMsg = 'Error al guardar cumplimiento';
+      
+      if (backendErrors) {
+        // Verificar si es error de unicidad
+        if (backendErrors.non_field_errors && Array.isArray(backendErrors.non_field_errors)) {
+          errorMsg = backendErrors.non_field_errors[0] + '\n\n💡 Este cumplimiento ya existe. Puedes:\n• Editar el cumplimiento existente\n• Seleccionar otro servicio o criterio';
+        }
+        // Si es un objeto con múltiples errores (Django DRF)
+        else if (typeof backendErrors === 'object') {
+          const errorLines = Object.entries(backendErrors)
+            .map(([key, value]: [string, any]) => {
+              if (Array.isArray(value)) {
+                return `${key}: ${value.join(', ')}`;
+              }
+              return `${key}: ${String(value)}`;
+            });
+          errorMsg = errorLines.join('\n');
+        } else {
+          errorMsg = String(backendErrors);
+        }
+      } else if (err.response?.data?.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      setError(errorMsg);
+      console.error('❌ Error en handleSubmit:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+        formData: formData
+      });
     } finally {
       setLoading(false);
     }
@@ -274,7 +383,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                 <HiOutlineExclamationTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-red-800 dark:text-red-300">Error al guardar</p>
-                  <p className="text-sm text-red-700 dark:text-red-400 mt-1">{error}</p>
+                  <p className="text-sm text-red-700 dark:text-red-400 mt-1 whitespace-pre-line">{error}</p>
                 </div>
               </div>
             )}
@@ -301,18 +410,30 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
               {/* Servicio */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Servicio / Departamento <span className="text-red-500">*</span>
+                  Servicio del Prestador <span className="text-red-500">*</span>
                 </label>
-                {serviciosLoading ? (
+                {serviciosState === 'loading' ? (
                   <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
                     Cargando servicios...
                   </div>
-                ) : servicios.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
-                    ⚠️ No hay servicios disponibles para esta autoevaluación
+                ) : serviciosState === 'no_servicios' ? (
+                  <div className="w-full px-4 py-3 border border-orange-300 dark:border-orange-600 rounded-lg bg-orange-50 dark:bg-orange-900/20">
+                    <p className="text-sm font-medium text-orange-800 dark:text-orange-300">⚠️ No hay servicios disponibles</p>
+                    <p className="text-xs text-orange-700 dark:text-orange-400 mt-2">{serviciosMensaje}</p>
+                    <a 
+                      href="/habilitacion/servicios" 
+                      className="inline-block text-xs font-medium text-orange-600 dark:text-orange-400 hover:underline mt-2"
+                    >
+                      ➜ Ir a Gestión de Servicios
+                    </a>
                   </div>
-                ) : (
+                ) : serviciosState === 'error' ? (
+                  <div className="w-full px-4 py-3 border border-red-300 dark:border-red-600 rounded-lg bg-red-50 dark:bg-red-900/20">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">❌ Error al cargar servicios</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 mt-2">{serviciosMensaje}</p>
+                  </div>
+                ) : serviciosState === 'success' ? (
                   <>
                     <select
                       name="servicio_sede_id"
@@ -337,6 +458,10 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1">{formErrors.servicio_sede_id}</p>
                     )}
                   </>
+                ) : (
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 text-sm">
+                    Cargando...
+                  </div>
                 )}
               </div>
 
