@@ -7,7 +7,9 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
 
   async getAll(filters?: Record<string, any>): Promise<PlanMejora[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/`, { params: filters });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getById(id: number): Promise<PlanMejoraDetail> {
@@ -19,7 +21,9 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { autoevaluacion: autoevaluacionId }
     });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async create(data: PlanMejoraCreate): Promise<PlanMejora> {
@@ -38,7 +42,9 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
 
   async getVencidos(): Promise<PlanMejora[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/vencidos/`);
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getResumen(filters?: Record<string, any>): Promise<PlanMejoraResumen> {
@@ -50,7 +56,9 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/proximos-vencer/`, {
       params: { dias }
     });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getPorOrigen(): Promise<PlanMejoraPorOrigen[]> {

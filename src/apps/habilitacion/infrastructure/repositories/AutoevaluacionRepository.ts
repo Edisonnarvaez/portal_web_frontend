@@ -5,7 +5,9 @@ import type { IAutoevaluacionRepository } from '../../domain/repositories';
 export class AutoevaluacionRepository implements IAutoevaluacionRepository {
   async getAll(filters?: Record<string, any>): Promise<Autoevaluacion[]> {
     const response = await axiosInstance.get('/habilitacion/autoevaluaciones/', { params: filters });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getById(id: number): Promise<Autoevaluacion> {
@@ -44,6 +46,8 @@ export class AutoevaluacionRepository implements IAutoevaluacionRepository {
 
   async getPorCompletar(): Promise<Autoevaluacion[]> {
     const response = await axiosInstance.get('/habilitacion/autoevaluaciones/por_completar/');
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 }

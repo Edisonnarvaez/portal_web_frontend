@@ -48,6 +48,16 @@ export class CumplimientoService {
     return this.repository.getServiciosDeAutoevaluacion(autoevaluacionId);
   }
 
+  /**
+   * Obtener criterios disponibles para una autoevaluación específica
+   * Útil para el dropdown en CumplimientoFormModal
+   */
+  async getCriteriosDeAutoevaluacion(autoevaluacionId: number): Promise<any> {
+    // Por ahora, delegamos a getCriterios con filtro
+    // En el futuro, esto podría implementarse directamente en el repositorio
+    return this.repository.getAll({ autoevaluacion_id: autoevaluacionId });
+  }
+
   // Métodos auxiliares
   diasParaVencimiento(fechaCompromiso?: string): number | null {
     if (!fechaCompromiso) return null;

@@ -7,7 +7,9 @@ export class HallazgoRepository implements IHallazgoRepository {
 
   async getAll(filters?: Record<string, any>): Promise<Hallazgo[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/`, { params: filters });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getById(id: number): Promise<HallazgoDetail> {
@@ -19,7 +21,9 @@ export class HallazgoRepository implements IHallazgoRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { autoevaluacion: autoevaluacionId }
     });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async create(data: HallazgoCreate): Promise<Hallazgo> {
@@ -45,7 +49,9 @@ export class HallazgoRepository implements IHallazgoRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { estado: 'ABIERTO' }
     });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getCriticos(): Promise<Hallazgo[]> {

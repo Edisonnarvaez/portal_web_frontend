@@ -37,28 +37,30 @@ export class CriterioRepository implements ICriterioRepository {
 
 export class CriterioEvaluacionRepository implements ICriterioEvaluacionRepository {
   async getAll(filters?: Record<string, any>): Promise<CriterioEvaluacion[]> {
-    const response = await axiosInstance.get('/normativity/criterios-evaluacion/', { params: filters });
-    return response.data;
+    const response = await axiosInstance.get('/normativity/criterios/', { params: filters });
+    // Manejar respuesta correctamente (puede ser array directo o { results: [...] })
+    return Array.isArray(response.data) ? response.data : (response.data.results || []);
   }
 
   async getByAutoevaluacion(autoevaluacionId: number): Promise<CriterioEvaluacion[]> {
-    const response = await axiosInstance.get('/normativity/criterios-evaluacion/', {
+    const response = await axiosInstance.get('/normativity/criterios/', {
       params: { autoevaluacion: autoevaluacionId }
     });
-    return response.data;
+    // Manejar respuesta correctamente (puede ser array directo o { results: [...] })
+    return Array.isArray(response.data) ? response.data : (response.data.results || []);
   }
 
   async create(data: any): Promise<CriterioEvaluacion> {
-    const response = await axiosInstance.post('/normativity/criterios-evaluacion/', data);
+    const response = await axiosInstance.post('/normativity/criterios/', data);
     return response.data;
   }
 
   async update(id: number, data: any): Promise<CriterioEvaluacion> {
-    const response = await axiosInstance.patch(`/normativity/criterios-evaluacion/${id}/`, data);
+    const response = await axiosInstance.patch(`/normativity/criterios/${id}/`, data);
     return response.data;
   }
 
   async delete(id: number): Promise<void> {
-    await axiosInstance.delete(`/normativity/criterios-evaluacion/${id}/`);
+    await axiosInstance.delete(`/normativity/criterios/${id}/`);
   }
 }

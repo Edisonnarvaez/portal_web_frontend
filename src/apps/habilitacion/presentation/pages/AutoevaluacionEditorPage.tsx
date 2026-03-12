@@ -12,6 +12,7 @@ import {
     HiOutlineListBullet,
     HiOutlineDocumentDuplicate,
     HiOutlineShieldCheck,
+    HiOutlineTrash,
 } from 'react-icons/hi2';
 import {
     useAutoevaluacion,
@@ -32,6 +33,7 @@ import {
     ResumenPanel,
     Breadcrumbs,
 } from '../components';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import {
     ESTADOS_CUMPLIMIENTO,
     CATEGORIAS_CRITERIO,
@@ -56,14 +58,17 @@ const AutoevaluacionEditorPage: React.FC = () => {
     const [editingCumplimiento, setEditingCumplimiento] = useState<any>(null);
     const [editingHallazgo, setEditingHallazgo] = useState<any>(null);
     const [editingPlan, setEditingPlan] = useState<any>(null);
+    const [deletingCumplimiento, setDeletingCumplimiento] = useState<any>(null);
+    const [deletingHallazgo, setDeletingHallazgo] = useState<any>(null);
+    const [deletingPlan, setDeletingPlan] = useState<any>(null);
     const [showDuplicarModal, setShowDuplicarModal] = useState(false);
     const [showValidarModal, setShowValidarModal] = useState(false);
 
     const { autoevaluaciones, loading: la, fetchAutoevaluaciones, validar, duplicar } = useAutoevaluacion();
     const { criterios, evaluaciones, loading: lcr, fetchCriterios, fetchEvaluaciones } = useCriterio();
-    const { cumplimientos, loading: lc, fetchCumplimientos } = useCumplimiento();
-    const { hallazgos, loading: lh, fetchHallazgos } = useHallazgo();
-    const { planes, loading: lp, fetchPlanes } = usePlanMejora();
+    const { cumplimientos, loading: lc, fetchCumplimientos, delete: deleteCumplimiento } = useCumplimiento();
+    const { hallazgos, loading: lh, fetchHallazgos, deleteHallazgo } = useHallazgo();
+    const { planes, loading: lp, fetchPlanes, deletePlan } = usePlanMejora();
 
     const autoevaluacion = useMemo(() => autoevaluaciones.find(a => a.id === autoId), [autoevaluaciones, autoId]);
 
@@ -71,6 +76,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
         fetchAutoevaluaciones();
         fetchCriterios();
         fetchEvaluaciones(autoId);
+        // Usar los parámetros correctos del backend
         fetchCumplimientos({ autoevaluacion_id: autoId });
         fetchHallazgos({ autoevaluacion_id: autoId });
         fetchPlanes({ autoevaluacion_id: autoId });
@@ -79,26 +85,83 @@ const AutoevaluacionEditorPage: React.FC = () => {
     const loading = la || lcr || lc || lh || lp;
 
     /* ─── computed ─── */
-    const cumplimientosAuto = useMemo(
-        () => cumplimientos.filter(c => c.autoevaluacion?.id === autoId),
-        [cumplimientos, autoId],
-    );
+    // Los fetch ya usan { autoevaluacion_id: autoId } para filtrar en el backend
+    // Si el backend no filtra correctamente, aquí se hace fallback local
 
-    const hallazgosAuto = useMemo(
-        () => hallazgos.filter(h => h.autoevaluacion_id === autoId),
-        [hallazgos, autoId],
-    );
+    const cumplimientosAuto = useMemo(() => {
+        const filtered = cumplimientos.filter(c => c.autoevaluacion_id === autoId);
+        if (filtered.length > 0) {
+            console.log('✓ cumplimientos filtrados por autoevaluacion_id:', filtered.length);
+            return filtered;
+        }
+        console.log('⚠️ No hay cumplimientos para esta autoevaluación. Total en state:', cumplimientos.length);
+        return filtered;
+    }, [cumplimientos, autoId]);
 
-    const planesAuto = useMemo(
-        () => planes.filter(p => p.autoevaluacion_id === autoId),
-        [planes, autoId],
-    );
+    const hallazgosAuto = useMemo(() => {
+        const filtered = hallazgos.filter(h => h.autoevaluacion_id === autoId);
+        if (filtered.length > 0) {
+            console.log('✓ hallazgos filtrados por autoevaluacion_id:', filtered.length);
+            return filtered;
+        }
+        console.log('✓ hallazgos (backend ya filtrado):', hallazgos.length);
+        return hallazgos;
+    }, [hallazgos, autoId]);
+
+    const planesAuto = useMemo(() => {
+        const filtered = planes.filter(p => p.autoevaluacion_id === autoId);
+        if (filtered.length > 0) {
+            console.log('✓ planes filtrados por autoevaluacion_id:', filtered.length);
+            return filtered;
+        }
+        console.log('✓ planes (backend ya filtrado):', planes.length);
+        return planes;
+    }, [planes, autoId]);
+
+    // Obtener criterios específicos solo de esta autoevaluación
+    // basados en evaluaciones cargadas
+    const criteriosAuto = useMemo(() => {
+        // Asegurar que evaluaciones es siempre un array
+        if (!Array.isArray(evaluaciones) || evaluaciones.length === 0) {
+            console.warn('⚠️ evaluaciones vacío, mostrando todos los criterios');
+            return criterios;
+        }
+        
+        // Buscar los criterios_id en evaluaciones
+        const criterioIds = new Set();
+        evaluaciones.forEach(e => {
+            if (e.criterio_id && typeof e.criterio_id === 'number') {
+                criterioIds.add(e.criterio_id);
+            }
+        });
+        
+        console.log('✓ criterioIds extraído:', Array.from(criterioIds), 'cantidad:', criterioIds.size);
+        
+        if (criterioIds.size === 0) {
+            // Si no hay criterio_id válidos en evaluaciones, mostrar todos los criterios
+            console.warn('⚠️ No hay criterio_ids válidos en evaluaciones, mostrando TODOS los criterios como fallback');
+            return criterios;
+        }
+        
+        // Intentar hacer match
+        const filtered = criterios.filter(c => criterioIds.has(c.id));
+        console.log('✓ CRITERIOS FILTRADOS:', filtered.length, 'de', criterios.length);
+        
+        if (filtered.length === 0) {
+            // Si el filtrado retorna vacío, es porque los IDs no coinciden
+            // Mostrar todos los criterios como fallback
+            console.warn('⚠️ No coincidieron criterios con las evaluaciones, mostrando TODOS como fallback');
+            return criterios;
+        }
+        
+        return filtered;
+    }, [criterios, evaluaciones]);
 
     const criteriosFiltrados = useMemo(() => {
-        let list = criterios;
+        let list = criteriosAuto;
         if (filtroCategoria) list = list.filter(c => c.categoria === filtroCategoria);
         return list;
-    }, [criterios, filtroCategoria]);
+    }, [criteriosAuto, filtroCategoria]);
 
     const cumplimientosFiltrados = useMemo(() => {
         let list = cumplimientosAuto;
@@ -122,8 +185,53 @@ const AutoevaluacionEditorPage: React.FC = () => {
     const getEvaluacionForCriterio = (criterioId: number): CriterioEvaluacion | undefined =>
         evaluaciones.find(e => e.criterio_id === criterioId);
 
+    // Handlers para delete
+    const handleDeleteCumplimiento = async () => {
+        if (!deletingCumplimiento) return;
+        try {
+            await deleteCumplimiento(deletingCumplimiento.id);
+            setDeletingCumplimiento(null);
+            fetchCumplimientos({ autoevaluacion_id: autoId });
+        } catch (err) {
+            console.error('Error eliminando cumplimiento:', err);
+        }
+    };
+
+    const handleDeleteHallazgo = async () => {
+        if (!deletingHallazgo) return;
+        try {
+            await deleteHallazgo(deletingHallazgo.id);
+            setDeletingHallazgo(null);
+            fetchHallazgos({ autoevaluacion_id: autoId });
+        } catch (err) {
+            console.error('Error eliminando hallazgo:', err);
+        }
+    };
+
+    const handleDeletePlan = async () => {
+        if (!deletingPlan) return;
+        try {
+            await deletePlan(deletingPlan.id);
+            setDeletingPlan(null);
+            fetchPlanes({ autoevaluacion_id: autoId });
+        } catch (err) {
+            console.error('Error eliminando plan de mejora:', err);
+        }
+    };
+    
+    // DEBUG: Log de estados para diagnosticar problemas
+    console.log('✓ AUTO-PAGE RENDER:', {
+        autoId,
+        criterios_count: criterios.length,
+        evaluaciones_count: evaluaciones.length,
+        criteriosAuto_count: criteriosAuto.length,
+        cumplimientosAuto_count: cumplimientosAuto.length,
+        hallazgosAuto_count: hallazgosAuto.length,
+        planesAuto_count: planesAuto.length,
+    });
+
     const tabs: { key: EditorTab; label: string; count: number }[] = [
-        { key: 'criterios', label: 'Criterios', count: criterios.length },
+        { key: 'criterios', label: 'Criterios', count: criteriosAuto.length },
         { key: 'cumplimientos', label: 'Cumplimientos', count: cumplimientosAuto.length },
         { key: 'hallazgos', label: 'Hallazgos', count: hallazgosAuto.length },
         { key: 'planes', label: 'Planes Mejora', count: planesAuto.length },
@@ -277,7 +385,12 @@ const AutoevaluacionEditorPage: React.FC = () => {
                     </div>
 
                     {criteriosFiltrados.length === 0 ? (
-                        <EmptyState message="No hay criterios disponibles" />
+                        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                            <p className="text-gray-600 dark:text-gray-400 mb-2">No hay criterios disponibles</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                                Debug: criterios={criterios.length}, criteriosAuto={criteriosAuto.length}, evaluaciones={evaluaciones?.length || 0}
+                            </p>
+                        </div>
                     ) : (
                         <div className="space-y-3">
                             {criteriosFiltrados.map(cr => {
@@ -333,8 +446,8 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                     onClick={() => setFiltroCumplimiento('')}
                                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                                         filtroCumplimiento === ''
-                                            ? 'bg-gray-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                            ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                     }`}
                                 >
                                     Todos ({cumplimientosAuto.length})
@@ -346,10 +459,16 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                         <button
                                             key={e.value}
                                             onClick={() => setFiltroCumplimiento(e.value)}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors border-2 ${
                                                 isActive
-                                                    ? `${e.color || 'bg-blue-100'} text-blue-700 dark:text-blue-300 border-2 border-blue-500`
-                                                    : `${e.color || 'bg-gray-100 dark:bg-gray-700'} text-gray-700 dark:text-gray-300 hover:opacity-80`
+                                                    ? e.value === 'CUMPLE'
+                                                        ? 'bg-green-100 dark:bg-green-600 text-green-800 dark:text-white border-green-500 dark:border-green-400'
+                                                        : e.value === 'NO_CUMPLE'
+                                                        ? 'bg-red-100 dark:bg-red-600 text-red-800 dark:text-white border-red-500 dark:border-red-400'
+                                                        : e.value === 'PARCIALMENTE'
+                                                        ? 'bg-yellow-100 dark:bg-yellow-600 text-yellow-800 dark:text-white border-yellow-500 dark:border-yellow-400'
+                                                        : 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-white border-gray-500 dark:border-gray-400'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
                                             }`}
                                         >
                                             {e.label} ({count})
@@ -397,12 +516,12 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                         >
                                             <td className="px-4 py-3">
                                                 <div className="font-medium text-gray-900 dark:text-white">
-                                                    {c.servicio_sede?.nombre_servicio || '—'}
+                                                    {c.servicio_nombre || c.servicio_sede?.nombre_servicio || '—'}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="font-medium text-gray-700 dark:text-gray-300">
-                                                    {c.criterio?.nombre || '—'}
+                                                    {c.criterio_nombre || c.criterio?.nombre || '—'}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-center">
@@ -442,7 +561,13 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                                     >
                                                         <HiOutlinePencilSquare className="h-4 w-4" />
                                                     </button>
-                                                    {/* TODO: Agregar botón de eliminar si es necesario */}
+                                                    <button
+                                                        onClick={() => setDeletingCumplimiento(c)}
+                                                        className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <HiOutlineTrash className="h-4 w-4" />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -473,11 +598,10 @@ const AutoevaluacionEditorPage: React.FC = () => {
                             {hallazgosAuto.map(h => (
                                 <div
                                     key={h.id}
-                                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 hover:shadow transition-shadow cursor-pointer"
-                                    onClick={() => { setEditingHallazgo(h); setShowHallazgoModal(true); }}
+                                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 hover:shadow transition-shadow"
                                 >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
+                                    <div className="flex items-start justify-between gap-3 cursor-pointer" onClick={() => { setEditingHallazgo(h); setShowHallazgoModal(true); }}>
+                                        <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-gray-900 dark:text-white text-sm">{h.numero_hallazgo}</p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{h.descripcion}</p>
                                         </div>
@@ -492,6 +616,22 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                                 {getEstadoLabel(h.estado)}
                                             </span>
                                         </div>
+                                    </div>
+                                    <div className="flex justify-end gap-1 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                        <button
+                                            onClick={() => { setEditingHallazgo(h); setShowHallazgoModal(true); }}
+                                            className="p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                            title="Editar"
+                                        >
+                                            <HiOutlinePencilSquare className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingHallazgo(h)}
+                                            className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                            title="Eliminar"
+                                        >
+                                            <HiOutlineTrash className="h-4 w-4" />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -519,10 +659,9 @@ const AutoevaluacionEditorPage: React.FC = () => {
                             {planesAuto.map(p => (
                                 <div
                                     key={p.id}
-                                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 hover:shadow transition-shadow cursor-pointer"
-                                    onClick={() => { setEditingPlan(p); setShowPlanModal(true); }}
+                                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 hover:shadow transition-shadow"
                                 >
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer" onClick={() => { setEditingPlan(p); setShowPlanModal(true); }}>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-gray-900 dark:text-white text-sm">{p.numero_plan}</p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{p.descripcion}</p>
@@ -543,10 +682,26 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="flex gap-4 mt-3 text-xs text-gray-500">
+                                    <div className="flex gap-4 mt-3 text-xs text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
                                         <span>Inicio: {formatDate(p.fecha_inicio)}</span>
                                         <span>Vence: {formatDate(p.fecha_vencimiento)}</span>
                                         {p.responsable && <span>Resp: {p.responsable}</span>}
+                                    </div>
+                                    <div className="flex justify-end gap-1 mt-3">
+                                        <button
+                                            onClick={() => { setEditingPlan(p); setShowPlanModal(true); }}
+                                            className="p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                            title="Editar"
+                                        >
+                                            <HiOutlinePencilSquare className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingPlan(p)}
+                                            className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                            title="Eliminar"
+                                        >
+                                            <HiOutlineTrash className="h-4 w-4" />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -568,6 +723,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
             {showCumplimientoModal && (
                 <CumplimientoFormModal
                     isOpen={showCumplimientoModal}
+                    autoevaluacionId={autoId}
                     onClose={() => { setShowCumplimientoModal(false); setEditingCumplimiento(null); }}
                     onSuccess={() => { setShowCumplimientoModal(false); setEditingCumplimiento(null); fetchCumplimientos({ autoevaluacion_id: autoId }); }}
                     cumplimiento={editingCumplimiento || undefined}
@@ -619,6 +775,37 @@ const AutoevaluacionEditorPage: React.FC = () => {
                     }}
                 />
             )}
+
+            {/* Confirm Dialogs para delete */}
+            <ConfirmDialog
+                isOpen={!!deletingCumplimiento}
+                title="Eliminar Cumplimiento"
+                message={`¿Estás seguro de que deseas eliminar este cumplimiento? Esta acción no se puede deshacer. ${deletingCumplimiento ? `(Servicio: ${deletingCumplimiento.servicio_sede?.nombre_servicio || 'N/A'})` : ''}`}
+                onConfirm={handleDeleteCumplimiento}
+                onClose={() => setDeletingCumplimiento(null)}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
+
+            <ConfirmDialog
+                isOpen={!!deletingHallazgo}
+                title="Eliminar Hallazgo"
+                message={`¿Estás seguro de que deseas eliminar este hallazgo? Esta acción no se puede deshacer. ${deletingHallazgo ? `(Número: ${deletingHallazgo.numero_hallazgo})` : ''}`}
+                onConfirm={handleDeleteHallazgo}
+                onClose={() => setDeletingHallazgo(null)}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
+
+            <ConfirmDialog
+                isOpen={!!deletingPlan}
+                title="Eliminar Plan de Mejora"
+                message={`¿Estás seguro de que deseas eliminar este plan de mejora? Esta acción no se puede deshacer. ${deletingPlan ? `(Plan: ${deletingPlan.numero_plan})` : ''}`}
+                onConfirm={handleDeletePlan}
+                onClose={() => setDeletingPlan(null)}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
         </div>
     );
 };

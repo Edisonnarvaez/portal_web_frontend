@@ -37,6 +37,7 @@ const HabilitacionPage = () => {
   const [filtroPrestadorServicios, setFiltroPrestadorServicios] = useState('');
   const [filtroAutoevaluacion, setFiltroAutoevaluacion] = useState('');
   const [filtroPrestadorAutoevaluacion, setFiltroPrestadorAutoevaluacion] = useState('');
+  const [filtroPeriodoAutoevaluacion, setFiltroPeriodoAutoevaluacion] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPrestadorModal, setShowPrestadorModal] = useState(false);
   const [enrichedPrestadorNames, setEnrichedPrestadorNames] = useState<Map<string, string>>(new Map());
@@ -172,6 +173,7 @@ const HabilitacionPage = () => {
     setFiltroComplejidad('');
     setFiltroPrestadorServicios('');
     setFiltroPrestadorAutoevaluacion('');
+    setFiltroPeriodoAutoevaluacion('');
     setFiltroAutoevaluacion('');
     setSearchTerm('');
 
@@ -219,14 +221,17 @@ const HabilitacionPage = () => {
       a.numero_autoevaluacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.prestador_codigo?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = !filtroAutoevaluacion || a.estado === filtroAutoevaluacion;
+    const matchesPeriodo = !filtroPeriodoAutoevaluacion || a.periodo === Number(filtroPeriodoAutoevaluacion);
     
     // Comparar prestador_codigo directamente con el filtro
     let matchesPrestador = true;
     if (filtroPrestadorAutoevaluacion) {
-      matchesPrestador = a.prestador_codigo === filtroPrestadorAutoevaluacion;
+      matchesPrestador = 
+        a.prestador_codigo === filtroPrestadorAutoevaluacion ||
+        a.datos_prestador?.id === Number(filtroPrestadorAutoevaluacion);
     }
     
-    return matchesSearch && matchesEstado && matchesPrestador;
+    return matchesSearch && matchesEstado && matchesPrestador && matchesPeriodo;
   });
 
   const loading = activeTab === 'prestadores' ? loadingPrestadores : activeTab === 'servicios' ? loadingServicios : loadingAutoevaluaciones;
@@ -532,6 +537,21 @@ const HabilitacionPage = () => {
                         <option key={p.id} value={p.codigo_reps}>{displayText}</option>
                       );
                     })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Periodo</label>
+                  <select
+                    value={filtroPeriodoAutoevaluacion}
+                    onChange={(e) => setFiltroPeriodoAutoevaluacion(e.target.value)}
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm"
+                  >
+                    <option value="">Todos</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
                   </select>
                 </div>
                 <div>

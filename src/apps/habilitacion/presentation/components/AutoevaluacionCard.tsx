@@ -102,7 +102,7 @@ export const AutoevaluacionCard: React.FC<AutoevaluacionCardProps> = ({
         {onResumen && (
           <button
             onClick={() => onResumen(id)}
-            className="flex-1 min-w-fit px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors flex items-center justify-center gap-1"
+            className="flex-1 min-w-fit px-2 py-1 text-xs bg-blue-100 dark:bg-blue-600 text-blue-700 dark:text-white rounded hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
             title="Ver resumen"
           >
             <HiOutlineSquares2X2 className="w-3 h-3" />
@@ -113,7 +113,7 @@ export const AutoevaluacionCard: React.FC<AutoevaluacionCardProps> = ({
         {onEdit && puedeEditar && (
           <button
             onClick={() => onEdit(id)}
-            className="flex-1 min-w-fit px-2 py-1 text-xs bg-amber-50 dark:bg-amber-900 text-amber-600 dark:text-amber-300 rounded hover:bg-amber-100 dark:hover:bg-amber-800 transition-colors flex items-center justify-center gap-1"
+            className="flex-1 min-w-fit px-2 py-1 text-xs bg-amber-100 dark:bg-amber-600 text-amber-700 dark:text-white rounded hover:bg-amber-200 dark:hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
             title="Editar"
           >
             <HiOutlinePencil className="w-3 h-3" />
@@ -124,7 +124,7 @@ export const AutoevaluacionCard: React.FC<AutoevaluacionCardProps> = ({
         {onValidar && puedeValidar && (
           <button
             onClick={() => onValidar(id)}
-            className="flex-1 min-w-fit px-2 py-1 text-xs bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-300 rounded hover:bg-green-100 dark:hover:bg-green-800 transition-colors flex items-center justify-center gap-1"
+            className="flex-1 min-w-fit px-2 py-1 text-xs bg-green-100 dark:bg-green-600 text-green-700 dark:text-white rounded hover:bg-green-200 dark:hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
             title="Validar"
           >
             <HiOutlineCheckCircle className="w-3 h-3" />
@@ -135,7 +135,7 @@ export const AutoevaluacionCard: React.FC<AutoevaluacionCardProps> = ({
         {onDuplicar && puedeDuplicar && (
           <button
             onClick={() => onDuplicar(id)}
-            className="flex-1 min-w-fit px-2 py-1 text-xs bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors flex items-center justify-center gap-1"
+            className="flex-1 min-w-fit px-2 py-1 text-xs bg-indigo-100 dark:bg-indigo-600 text-indigo-700 dark:text-white rounded hover:bg-indigo-200 dark:hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1"
             title="Duplicar"
           >
             <HiOutlineDocumentDuplicate className="w-3 h-3" />
@@ -146,7 +146,7 @@ export const AutoevaluacionCard: React.FC<AutoevaluacionCardProps> = ({
         {onDelete && (
           <button
             onClick={() => onDelete(id)}
-            className="flex-1 min-w-fit px-2 py-1 text-xs bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded hover:bg-red-100 dark:hover:bg-red-800 transition-colors"
+            className="flex-1 min-w-fit px-2 py-1 text-xs bg-red-100 dark:bg-red-600 text-red-700 dark:text-white rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
             title="Eliminar"
           >
             Eliminar

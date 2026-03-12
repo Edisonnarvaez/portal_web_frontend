@@ -266,14 +266,14 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 
             {/* Info prestador seleccionado */}
             {selectedPrestador && (
-              <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 rounded-lg">
                 <div className="flex gap-2 items-start">
-                  <HiOutlineCheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <HiOutlineCheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-300 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
-                    <p className="font-medium text-blue-900 dark:text-blue-300">{selectedPrestador.company_name}</p>
-                    <p className="text-xs text-blue-700 dark:text-blue-400">Código: {selectedPrestador.codigo_reps}</p>
+                    <p className="font-medium text-blue-900 dark:text-blue-200">{selectedPrestador.company_name}</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">Código: {selectedPrestador.codigo_reps}</p>
                     {selectedPrestador.clase_prestador && (
-                      <p className="text-xs text-blue-700 dark:text-blue-400">Clase: {selectedPrestador.clase_prestador}</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">Clase: {selectedPrestador.clase_prestador}</p>
                     )}
                   </div>
                 </div>
@@ -345,7 +345,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAutoFechaVencimiento}
-                    className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-600 text-blue-700 dark:text-white rounded hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors"
                   >
                     Auto (Hoy + 365 días)
                   </button>

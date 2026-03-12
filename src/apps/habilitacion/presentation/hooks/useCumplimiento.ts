@@ -96,6 +96,19 @@ export const useCumplimiento = () => {
     }
   }, []);
 
+  /**
+   * Obtener criterios de una autoevaluación específica
+   * Útil para llenar dropdown en CumplimientoFormModal
+   */
+  const getCriteriosDeAutoevaluacion = useCallback(async (autoevaluacionId: number) => {
+    try {
+      return await service.getCriteriosDeAutoevaluacion?.(autoevaluacionId) || [];
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener criterios de autoevaluación');
+      throw err;
+    }
+  }, []);
+
   return {
     cumplimientos,
     loading,
@@ -108,6 +121,7 @@ export const useCumplimiento = () => {
     getConPlanMejora,
     getMejorasVencidas,
     getServiciosDeAutoevaluacion,
+    getCriteriosDeAutoevaluacion,
     service,
   };
 };

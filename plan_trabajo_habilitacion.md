@@ -234,7 +234,7 @@ Tras auditar los 79 archivos del módulo de habilitación contra la documentaci�
 - [ ] **Resolver duplicación** de `OrigenTipo` (definida en PlanMejora.ts) y `OrigenTipoValue` (en types/index.ts)
 
 ### 6.5 CriterioEvaluacion (Evaluar)
-- [ ] **Investigar** si `/normativity/criterios-evaluacion/` existe en el backend
+- [ ] **Investigar** si `/normativity/criterios/` existe en el backend
 - [ ] Si NO existe: Marcar `CriterioEvaluacionRepository` como deprecado o remover
 - [ ] Si SÍ existe: Documentar endpoint y mantener
 

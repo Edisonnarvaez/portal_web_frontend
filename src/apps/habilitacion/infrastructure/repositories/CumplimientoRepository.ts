@@ -5,7 +5,10 @@ import type { ICumplimientoRepository } from '../../domain/repositories';
 export class CumplimientoRepository implements ICumplimientoRepository {
   async getAll(filters?: Record<string, any>): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/', { params: filters });
-    return response.data.results || response.data;
+    // Manejar respuesta paginada correctamente
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    return [];
   }
 
   async getById(id: number): Promise<Cumplimiento> {
