@@ -159,3 +159,12 @@ export const ROLE_MESSAGES = {
 } as const;
 
 export type UserRole = keyof typeof ROLE_MESSAGES;
+
+// Complejidad de criterios (específica para evaluación)
+export const COMPLEJIDADES_CRITERIO = [
+  { value: 'BAJA', label: 'Baja', description: 'Criterio de fácil verificación y bajo impacto' },
+  { value: 'MEDIA', label: 'Media', description: 'Criterio de complejidad moderada' },
+  { value: 'ALTA', label: 'Alta', description: 'Criterio complejo que requiere análisis detallado' },
+] as const;
+
+export type ComplejidadCriterio = typeof COMPLEJIDADES_CRITERIO[number]['value'];

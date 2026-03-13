@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     HiOutlineCheckCircle,
     HiOutlineXCircle,
     HiOutlineExclamationTriangle,
-    HiOutlineFunnel,
     HiOutlinePlus,
     HiOutlinePencilSquare,
     HiOutlineTrash,
@@ -51,10 +49,14 @@ const CumplimientoPanelPage: React.FC = () => {
         return cumplimientos.filter(c => {
             const matchEstado = !filtroEstado || c.cumple === filtroEstado;
             const matchAuto = !filtroAutoeval || c.autoevaluacion?.id === Number(filtroAutoeval);
-            const matchSearch = !search ||
-                c.servicio_sede?.nombre_servicio?.toLowerCase().includes(search.toLowerCase()) ||
-                c.criterio?.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-                c.hallazgo?.toLowerCase().includes(search.toLowerCase());
+            const searchLower = search.toLowerCase();
+            const matchSearch = !search || (
+                c.servicio_sede?.nombre_servicio?.toLowerCase().includes(searchLower) ||
+                c.criterio?.codigo?.toLowerCase().includes(searchLower) ||
+                c.criterio?.nombre?.toLowerCase().includes(searchLower) ||
+                c.criterio?.descripcion?.toLowerCase().includes(searchLower) ||
+                c.hallazgo?.toLowerCase().includes(searchLower)
+            );
             return matchEstado && matchAuto && matchSearch;
         });
     }, [cumplimientos, filtroEstado, filtroAutoeval, search]);
@@ -93,7 +95,16 @@ const CumplimientoPanelPage: React.FC = () => {
     const cumplimientoColumns: DataTableColumn<Cumplimiento>[] = useMemo(() => [
         { key: 'autoevaluacion', label: 'Autoevaluación', accessor: r => r.autoevaluacion?.numero_autoevaluacion ?? '', render: r => <span className="font-medium text-gray-900 dark:text-white">{r.autoevaluacion?.numero_autoevaluacion || '—'}</span> },
         { key: 'servicio', label: 'Servicio', accessor: r => r.servicio_sede?.nombre_servicio ?? '', render: r => <span>{r.servicio_sede?.nombre_servicio || '—'}</span> },
-        { key: 'criterio', label: 'Criterio', accessor: r => r.criterio?.nombre ?? '', render: r => <span>{r.criterio?.nombre || '—'}</span> },
+        { key: 'criterio', label: 'Criterio', accessor: r => r.criterio?.codigo ?? '', render: r => (
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 px-2 py-1 rounded w-fit">
+              {r.criterio?.codigo || '—'}
+            </span>
+            <span className="text-sm text-gray-900 dark:text-white">
+              {r.criterio?.nombre || '—'}
+            </span>
+          </div>
+        ) },
         {
             key: 'cumple', label: 'Estado', accessor: r => r.cumple, render: r => (
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEstadoColor(r.cumple)}`}>{getEstadoLabel(r.cumple)}</span>

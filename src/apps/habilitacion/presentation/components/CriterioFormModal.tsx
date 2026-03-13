@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
 import type { Criterio, CriterioCreate } from '../../domain/entities/Criterio';
-import { CATEGORIAS_CRITERIO } from '../../domain/types';
 import { useCriterio } from '../hooks/useCriterio';
 
 interface CriterioFormModalProps {
@@ -21,11 +20,14 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
   const isEdit = !!criterio;
 
   const [formData, setFormData] = useState<Partial<CriterioCreate>>({
-    numero_criterio: '',
+    codigo: '',
+    nombre: '',
     descripcion: '',
-    categoria: '',
-    documento_referencia: '',
-    requisito_normativo: '',
+    complejidad: 'MEDIA',
+    es_mandatorio: false,
+    requiere_evidencia_documental: false,
+    notas_interpretacion: '',
+    estandar_id: undefined,
   });
 
   const [loading, setLoading] = useState(false);
@@ -34,19 +36,25 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
   useEffect(() => {
     if (criterio) {
       setFormData({
-        numero_criterio: criterio.numero_criterio,
+        codigo: criterio.codigo,
+        nombre: criterio.nombre,
         descripcion: criterio.descripcion,
-        categoria: criterio.categoria || '',
-        documento_referencia: criterio.documento_referencia || '',
-        requisito_normativo: criterio.requisito_normativo,
+        complejidad: criterio.complejidad || 'MEDIA',
+        es_mandatorio: criterio.es_mandatorio || false,
+        requiere_evidencia_documental: criterio.requiere_evidencia_documental || false,
+        notas_interpretacion: criterio.notas_interpretacion || '',
+        estandar_id: criterio.estandar_id,
       });
     } else {
       setFormData({
-        numero_criterio: '',
+        codigo: '',
+        nombre: '',
         descripcion: '',
-        categoria: '',
-        documento_referencia: '',
-        requisito_normativo: '',
+        complejidad: 'MEDIA',
+        es_mandatorio: false,
+        requiere_evidencia_documental: false,
+        notas_interpretacion: '',
+        estandar_id: undefined,
       });
     }
     setError('');
@@ -65,8 +73,14 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
     setError('');
 
     try {
-      if (!formData.numero_criterio || !formData.descripcion || !formData.requisito_normativo) {
-        setError('Número de criterio, descripción y requisito normativo son obligatorios');
+      if (!formData.codigo || !formData.nombre) {
+        setError('Código y nombre del criterio son obligatorios');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.es_mandatorio && !formData.descripcion?.trim()) {
+        setError('Los criterios mandatorios requieren una descripción');
         setLoading(false);
         return;
       }
@@ -106,101 +120,170 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
             <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Número de Criterio */}
-            <div>
+          {/* SECCIÓN 1: IDENTIFICACIÓN */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300 mb-4">
+              Identificación del Criterio
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Código */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Código <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="codigo"
+                  value={formData.codigo || ''}
+                  onChange={handleChange}
+                  placeholder="Ej: INF-001"
+                  disabled={isEdit}
+                  className={`w-full px-3 py-2 border rounded-lg ${
+                    isEdit 
+                      ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-700'
+                  } text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500`}
+                  required
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Ej: INF-001, TH-005, SA-002 | {isEdit ? 'No se puede cambiar' : 'Se asigna al crear'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECCIÓN 2: CONTENIDO */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300 mb-4">
+              Contenido del Criterio
+            </h3>
+            
+            {/* Nombre/Título */}
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Número de Criterio <span className="text-red-500">*</span>
+                Nombre/Título <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="numero_criterio"
-                value={formData.numero_criterio || ''}
+                name="nombre"
+                value={formData.nombre || ''}
                 onChange={handleChange}
-                placeholder="Ej: CRI-001"
+                placeholder="Ej: Infraestructura Física"
                 required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Breve descripción del criterio (máx 100 caracteres)
+              </p>
+            </div>
+
+            {/* Descripción Detallada */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Descripción Detallada
+              </label>
+              <textarea
+                name="descripcion"
+                value={formData.descripcion || ''}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Explicación completa de qué trata este criterio, contexto y aplicabilidad..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* Categoría */}
+            {/* Notas de Interpretación */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Categoría
+                Notas de Interpretación (Opcional)
               </label>
-              <select
-                name="categoria"
-                value={formData.categoria || ''}
+              <textarea
+                name="notas_interpretacion"
+                value={formData.notas_interpretacion || ''}
                 onChange={handleChange}
+                rows={3}
+                placeholder="Aclaraciones sobre cómo interpretar y aplicar este criterio..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Seleccionar categoría...</option>
-                {CATEGORIAS_CRITERIO.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 
-          {/* Descripción */}
+          {/* SECCIÓN 3: PROPIEDADES */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Descripción <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="descripcion"
-              value={formData.descripcion || ''}
-              onChange={handleChange}
-              rows={3}
-              required
-              placeholder="Descripción del criterio de habilitación..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            <h3 className="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300 mb-4">
+              Propiedades
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Complejidad */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Complejidad
+                </label>
+                <select
+                  name="complejidad"
+                  value={formData.complejidad || 'MEDIA'}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="BAJA">Baja</option>
+                  <option value="MEDIA">Media</option>
+                  <option value="ALTA">Alta</option>
+                </select>
+              </div>
+            </div>
 
-          {/* Requisito Normativo */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Requisito Normativo <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="requisito_normativo"
-              value={formData.requisito_normativo || ''}
-              onChange={handleChange}
-              rows={3}
-              required
-              placeholder="Referencia a la norma aplicable (Ej: Resolución 3100 de 2019, Art. X)..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            {/* Checkboxes */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="es_mandatorio"
+                  checked={formData.es_mandatorio || false}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    es_mandatorio: e.target.checked
+                  }))}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Criterio Mandatorio
+                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">(Obligatorio para todas las IPS)</span>
+                </span>
+              </label>
 
-          {/* Documento de Referencia */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Documento de Referencia
-            </label>
-            <input
-              type="text"
-              name="documento_referencia"
-              value={formData.documento_referencia || ''}
-              onChange={handleChange}
-              placeholder="Ej: Anexo técnico, Manual de estándares..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            />
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="requiere_evidencia_documental"
+                  checked={formData.requiere_evidencia_documental || false}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    requiere_evidencia_documental: e.target.checked
+                  }))}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Requiere Evidencia Documental
+                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">(Necesita documentación de respaldo)</span>
+                </span>
+              </label>
+            </div>
           </div>
 
           {/* Info criterio existente */}
           {isEdit && criterio && (
             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-xs text-gray-500 dark:text-gray-400 space-y-1">
+              <p>
+                <strong>Código único:</strong> {criterio.codigo}
+              </p>
               <p>
                 <strong>Última actualización:</strong>{' '}
                 {new Date(criterio.fecha_actualizacion).toLocaleDateString('es-CO')}
@@ -220,7 +303,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 transition-colors font-medium"
             >
               {loading ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear Criterio'}
             </button>

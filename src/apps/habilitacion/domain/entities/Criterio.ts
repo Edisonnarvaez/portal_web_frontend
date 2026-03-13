@@ -36,11 +36,19 @@ export interface Criterio {
 }
 
 export interface CriterioCreate {
-  numero_criterio: string;
-  descripcion: string;
-  categoria?: string;
-  documento_referencia?: string;
-  requisito_normativo: string;
+  codigo: string;                               // Primary identifier code (e.g., INF-001)
+  nombre: string;                               // Short title/name
+  descripcion: string;                          // Full description
+  complejidad?: 'BAJA' | 'MEDIA' | 'ALTA';     // Complexity level
+  es_mandatorio?: boolean;                      // Mandatory requirement flag
+  requiere_evidencia_documental?: boolean;      // Requires documentation
+  notas_interpretacion?: string;                // Interpretation notes
+  estandar_id?: number;                         // Optional reference to Estandar
+  // Legacy fields for backward compatibility
+  numero_criterio?: string;                     // Deprecated, use codigo instead
+  categoria?: string;                           // Deprecated
+  documento_referencia?: string;                // Deprecated
+  requisito_normativo?: string;                 // Deprecated
 }
 
 export interface CriterioUpdate extends Partial<CriterioCreate> {

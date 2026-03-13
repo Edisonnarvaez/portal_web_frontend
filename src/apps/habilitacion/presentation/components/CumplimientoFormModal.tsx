@@ -647,7 +647,11 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                       <option value={0}>✓ Seleccione un criterio</option>
                       {criteriosDelHook.map(c => (
                         <option key={c.id} value={c.id}>
-                          #{c.numero_criterio} - {c.descripcion?.substring(0, 50)}
+                          {c.codigo && c.nombre 
+                            ? `${c.codigo} - ${c.nombre}` 
+                            : c.nombre || c.codigo || `Criterio ${c.id}`
+                          }
+                          {c.es_mandatorio ? ' ⚠️' : ''}
                         </option>
                       ))}
                     </select>

@@ -49,7 +49,10 @@ export interface Cumplimiento {
   };
   criterio?: {
     id: number;
+    codigo?: string;
     nombre: string;
+    descripcion?: string;
+    es_mandatorio?: boolean;
   };
   // Formato detallado (desde detail endpoint)
   autoevaluacion_detail?: {
