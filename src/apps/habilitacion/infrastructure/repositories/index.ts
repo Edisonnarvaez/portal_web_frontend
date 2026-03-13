@@ -4,5 +4,6 @@ export * from './ServicioSedeRepository';
 export * from './AutoevaluacionRepository';
 export * from './CumplimientoRepository';
 export * from './CriterioRepository';
+export * from './EstandarRepository';
 export * from './PlanMejoraRepository';
 export * from './HallazgoRepository';

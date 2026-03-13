@@ -53,7 +53,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, getServiciosDeAutoevaluacion } = useCumplimiento();
+  const { create, update, getServiciosDeAutoevaluacion, service } = useCumplimiento();
   const { fetchCriterios, criterios: criteriosDelHook } = useCriterio();
   const isEdit = !!cumplimiento;
 
@@ -80,24 +80,144 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   
   const [criteriosLoading, setCriteriosLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  
+  // Estado para cumplimiento "expandido" con detalles del backend
+  const [expandedCumplimiento, setExpandedCumplimiento] = useState<Cumplimiento | null>(null);
 
   // Detectar si hay cambios sin guardar
   const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(originalData);
 
+  // NUEVO: Fetch automático del cumplimiento completo si viene del list endpoint
   useEffect(() => {
-    if (cumplimiento) {
+    if (!isOpen || !cumplimiento) {
+      setExpandedCumplimiento(null);
+      return;
+    }
+
+    // Si ya tiene servicio_sede_detail, no hace falta hacer fetch
+    if (cumplimiento.servicio_sede_detail || expandedCumplimiento?.id === cumplimiento.id) {
+      setExpandedCumplimiento(cumplimiento as Cumplimiento);
+      return;
+    }
+
+    console.log('🔄 Cumplimiento incompleto, haciendo fetch de detalles... ID:', cumplimiento.id);
+    
+    const fetchFullCumplimiento = async () => {
+      try {
+        const fullCumplimiento = await service.getCumplimiento(cumplimiento.id);
+        console.log('✅ Cumplimiento completo descargado:', fullCumplimiento);
+        console.log('🔍 DETALLES DEL OBJETO COMPLETO:', {
+          hallazgo: fullCumplimiento.hallazgo,
+          plan_mejora: fullCumplimiento.plan_mejora,
+          hallazgo_type: typeof fullCumplimiento.hallazgo,
+          plan_mejora_type: typeof fullCumplimiento.plan_mejora,
+          todas_las_keys: Object.keys(fullCumplimiento)
+        });
+        
+        // ✅ IMPORTANTE: Actualizar formData directamente con los datos completos
+        const updatedData: Partial<CumplimientoCreate> = {
+          autoevaluacion_id: fullCumplimiento.autoevaluacion_detail?.id || fullCumplimiento.autoevaluacion?.id || fullCumplimiento.autoevaluacion_id,
+          servicio_sede_id: fullCumplimiento.servicio_sede_detail?.id || fullCumplimiento.servicio_sede?.id || fullCumplimiento.servicio_sede_id,
+          criterio_id: fullCumplimiento.criterio_detail?.id || fullCumplimiento.criterio?.id || fullCumplimiento.criterio_id,
+          cumple: fullCumplimiento.cumple as any,
+          hallazgo: fullCumplimiento.hallazgo || '',
+          plan_mejora: fullCumplimiento.plan_mejora || '',
+          fecha_compromiso: formatDateForInput(fullCumplimiento.fecha_compromiso),
+        };
+        console.log('✅ FormData actualizado con datos completos:', updatedData);
+        setFormData(updatedData);
+        setOriginalData(updatedData);
+        
+        setExpandedCumplimiento(fullCumplimiento);
+      } catch (err: any) {
+        console.error('❌ Error al traer cumplimiento completo:', err);
+        // Si falla, usar el que ya tenemos
+        setExpandedCumplimiento(cumplimiento as Cumplimiento);
+      }
+    };
+
+    fetchFullCumplimiento();
+  }, [isOpen, cumplimiento?.id, service]);
+
+  // DEBUG: Loguear estado cuando cambian datos importantes
+  useEffect(() => {
+    if (!isOpen) return;
+    console.log('📊 === ESTADO DEL MODAL ===');
+    console.log('Modo:', isEdit ? 'EDICIÓN' : 'CREACIÓN');
+    console.log('Servicios State:', serviciosState, '| Servicios count:', servicios.length);
+    console.log('Criterios count:', criteriosDelHook.length, '| Criterios Loading:', criteriosLoading);
+    console.log('ExpandedCumplimiento:', !!expandedCumplimiento, expandedCumplimiento ? {
+      id: expandedCumplimiento.id,
+      servicio_sede_detail: expandedCumplimiento.servicio_sede_detail,
+      criterio_detail: expandedCumplimiento.criterio_detail,
+      tiene_servicios_disponibles: !!expandedCumplimiento.servicios_disponibles?.length
+    } : null);
+    console.log('FormData:', {
+      servicio_sede_id: formData.servicio_sede_id,
+      criterio_id: formData.criterio_id,
+      cumple: formData.cumple,
+      fecha_compromiso: formData.fecha_compromiso,
+      hallazgo: formData.hallazgo?.substring(0, 50),
+      plan_mejora: formData.plan_mejora?.substring(0, 50),
+    });
+    if (servicios.length > 0) {
+      console.log('Servicios disponibles:', servicios.map((s: any) => `${s.id}: ${s.nombre_servicio || s.nombre}`));
+    }
+    if (criteriosDelHook.length > 0) {
+      console.log('Criterios disponibles:', criteriosDelHook.map((c: any) => `${c.id}: ${c.descripcion?.substring(0, 30)}`));
+    }
+    console.log('=====================');
+  }, [isOpen, servicios, criteriosDelHook, formData, serviciosState, criteriosLoading, isEdit, expandedCumplimiento]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    console.log('🔍 PRIMER USEEFFECT - Inicializando formData');
+    console.log('cumplimiento existe?', !!cumplimiento);
+    console.log('expandedCumplimiento existe?', !!expandedCumplimiento);
+    
+    // Usar expandedCumplimiento si está disponible (tiene detalles), sino usar cumplimiento
+    const cumplimientoToUse = expandedCumplimiento || cumplimiento;
+    
+    if (cumplimientoToUse) {
+      console.log('cumplimiento object:', cumplimientoToUse);
+      console.log('cumplimiento.servicio_sede_detail:', cumplimientoToUse.servicio_sede_detail);
+      console.log('cumplimiento.criterio_detail:', cumplimientoToUse.criterio_detail);
+      
+      // MODO EDICIÓN: Cargar todos los datos del cumplimiento existente
+      // Usar los campos *_detail si están disponibles (desde detail endpoint)
+      // Fallback a los campos simples si están disponibles
+      // Fallback final a los parámetros de props
+      const autoId = cumplimientoToUse.autoevaluacion_detail?.id || cumplimientoToUse.autoevaluacion?.id || cumplimientoToUse.autoevaluacion_id || autoevaluacionId || 0;
+      const servicioId = cumplimientoToUse.servicio_sede_detail?.id || cumplimientoToUse.servicio_sede?.id || cumplimientoToUse.servicio_sede_id || servicioSedeId || 0;
+      const criterioId_val = cumplimientoToUse.criterio_detail?.id || cumplimientoToUse.criterio?.id || cumplimientoToUse.criterio_id || criterioId || 0;
+      
+      console.log('Valores extraídos:', { autoId, servicioId, criterioId_val });
+      console.log('Otros datos:', {
+        hallazgo: cumplimientoToUse.hallazgo,
+        plan_mejora: cumplimientoToUse.plan_mejora,
+        cumple: cumplimientoToUse.cumple,
+      });
+      
       const data: Partial<CumplimientoCreate> = {
-        autoevaluacion_id: cumplimiento.autoevaluacion?.id || autoevaluacionId || 0,
-        servicio_sede_id: cumplimiento.servicio_sede?.id || servicioSedeId || 0,
-        criterio_id: cumplimiento.criterio?.id || criterioId || 0,
-        cumple: cumplimiento.cumple as any,
-        hallazgo: cumplimiento.hallazgo || '',
-        plan_mejora: cumplimiento.plan_mejora || '',
-        fecha_compromiso: formatDateForInput(cumplimiento.fecha_compromiso),
+        autoevaluacion_id: autoId,
+        servicio_sede_id: servicioId,
+        criterio_id: criterioId_val,
+        cumple: cumplimientoToUse.cumple as any,
+        hallazgo: cumplimientoToUse.hallazgo || '',
+        plan_mejora: cumplimientoToUse.plan_mejora || '',
+        fecha_compromiso: formatDateForInput(cumplimientoToUse.fecha_compromiso),
       };
+      
+      console.log('Data a setear:', data);
       setFormData(data);
       setOriginalData(data);
+      // NOTA: Los servicios se cargarán en el segundo useEffect desde servicios_disponibles
     } else {
+      console.log('MODO CREACIÓN - usando props:', { autoevaluacionId, servicioSedeId, criterioId });
+      // MODO CREACIÓN: Usar los IDs de las props
       const data: Partial<CumplimientoCreate> = {
         autoevaluacion_id: autoevaluacionId || 0,
         servicio_sede_id: servicioSedeId || 0,
@@ -110,23 +230,45 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       setFormData(data);
       setOriginalData(data);
     }
+    
     setError('');
     setSuccess('');
     setFormErrors({});
-  }, [cumplimiento, autoevaluacionId, servicioSedeId, criterioId, isOpen]);
+  }, [expandedCumplimiento, cumplimiento, autoevaluacionId, servicioSedeId, criterioId, isOpen]);
 
   // Cargar servicios disponibles para la autoevaluación
   useEffect(() => {
-    if (!isOpen || !autoevaluacionId) {
-      setServicios([]);
-      setServiciosState('idle');
+    if (!isOpen) {
       return;
     }
 
     const loadServicios = async () => {
       try {
+        // Primero: si estamos en modo edición y tenemos servicios_disponibles en el objeto expandido, usarlos
+        if (isEdit && expandedCumplimiento?.servicios_disponibles && expandedCumplimiento.servicios_disponibles.length > 0) {
+          console.log('✅ Cargando servicios desde servicios_disponibles:', expandedCumplimiento.servicios_disponibles);
+          setServicios(expandedCumplimiento.servicios_disponibles as unknown as ServicioSede[]);
+          setServiciosState('success');
+          setServiciosMensaje('');
+          return;
+        }
+
+        // Segundo: si en modo edición pero no tenemos servicios_disponibles, cargar desde API
+        const autoId = isEdit && expandedCumplimiento?.autoevaluacion_detail?.id 
+          ? expandedCumplimiento.autoevaluacion_detail.id 
+          : isEdit && expandedCumplimiento?.autoevaluacion?.id
+          ? expandedCumplimiento.autoevaluacion.id
+          : autoevaluacionId;
+
+        if (!autoId || autoId <= 0) {
+          setServicios([]);
+          setServiciosState('idle');
+          return;
+        }
+
+        console.log('🔄 Cargando servicios desde API para autoId:', autoId);
         setServiciosState('loading');
-        const response = await getServiciosDeAutoevaluacion(autoevaluacionId);
+        const response = await getServiciosDeAutoevaluacion(autoId);
         
         // Estructura mejorada del backend:
         // { autoevaluacion, prestador, servicios, total_servicios }
@@ -138,12 +280,11 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
               `No hay servicios registrados para esta institución. ` +
               `Debe crear al menos un servicio antes de registrar cumplimientos.`
             );
-            setError(''); // Limpiar errores previos
           } else {
+            console.log('✅ Servicios cargados desde API:', response.servicios);
             setServicios(response.servicios);
             setServiciosState('success');
             setServiciosMensaje('');
-            setError('');
           }
         } else if (Array.isArray(response)) {
           // Fallback: si backend retorna array directo
@@ -152,6 +293,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
             setServiciosState('no_servicios');
             setServiciosMensaje('No hay servicios registrados para esta autoevaluación.');
           } else {
+            console.log('✅ Servicios cargados (formato array):', response);
             setServicios(response);
             setServiciosState('success');
             setServiciosMensaje('');
@@ -160,19 +302,17 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
           setServicios([]);
           setServiciosState('error');
           setServiciosMensaje('Formato de respuesta inesperado del servidor.');
-          setError('Error al cargar servicios: formato inválido');
         }
       } catch (err: any) {
-        console.error('Error al cargar servicios:', err);
+        console.error('❌ Error al cargar servicios:', err);
         setServicios([]);
         setServiciosState('error');
         setServiciosMensaje(err.message || 'No se pudieron cargar los servicios.');
-        setError(`Error al cargar servicios: ${err.message}`);
       }
     };
 
     loadServicios();
-  }, [isOpen, autoevaluacionId, getServiciosDeAutoevaluacion]);
+  }, [isOpen, expandedCumplimiento, autoevaluacionId, getServiciosDeAutoevaluacion]);
 
   // Cargar criterios disponibles
   useEffect(() => {
@@ -182,10 +322,12 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
 
     const loadCriterios = async () => {
       try {
+        console.log('🔄 Cargando criterios...');
         setCriteriosLoading(true);
         await fetchCriterios();
+        console.log('✅ Criterios cargados');
       } catch (err) {
-        console.error('Error al cargar criterios:', err);
+        console.error('❌ Error al cargar criterios:', err);
         setError('No se pudieron cargar los criterios. Intenta nuevamente.');
       } finally {
         setCriteriosLoading(false);
@@ -210,6 +352,8 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     else if (name === 'fecha_compromiso' && value) {
       finalValue = formatDateForInput(value);
     }
+    
+    console.log(`📝 Cambio: ${name} = ${finalValue}`);
     
     setFormData((prev) => ({
       ...prev,
@@ -348,6 +492,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     if ((hasUnsavedChanges && !isEdit) || (hasUnsavedChanges && isEdit)) {
       setShowCloseConfirm(true);
     } else {
+      setExpandedCumplimiento(null);
       onClose();
     }
   };
@@ -437,22 +582,28 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                   <>
                     <select
                       name="servicio_sede_id"
-                      value={formData.servicio_sede_id || ''}
+                      value={formData.servicio_sede_id || 0}
                       onChange={handleChange}
                       required
-                      disabled={!!servicioSedeId}
+                      disabled={!isEdit && !!servicioSedeId}
                       className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
                         formErrors.servicio_sede_id
                           ? 'border-red-500 dark:border-red-500'
                           : 'border-gray-300 dark:border-gray-600'
                       }`}
                     >
-                      <option value="">✓ Seleccione un servicio</option>
-                      {servicios.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.nombre_servicio} ({s.codigo_servicio})
-                        </option>
-                      ))}
+                      <option value={0}>✓ Seleccione un servicio</option>
+                      {servicios.map(s => {
+                        // Manejo de ambas estructuras: desde servicios_disponibles y desde getServiciosDeAutoevaluacion
+                        const id = s.id;
+                        const nombre = (s as any).nombre_servicio || (s as any).nombre || '';
+                        const codigo = (s as any).codigo_servicio || (s as any).codigo || '';
+                        return (
+                          <option key={id} value={id}>
+                            {nombre} ({codigo})
+                          </option>
+                        );
+                      })}
                     </select>
                     {formErrors.servicio_sede_id && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1">{formErrors.servicio_sede_id}</p>
@@ -483,17 +634,17 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                   <>
                     <select
                       name="criterio_id"
-                      value={formData.criterio_id || ''}
+                      value={formData.criterio_id || 0}
                       onChange={handleChange}
                       required
-                      disabled={!!criterioId}
+                      disabled={!isEdit && !!criterioId}
                       className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
                         formErrors.criterio_id
                           ? 'border-red-500 dark:border-red-500'
                           : 'border-gray-300 dark:border-gray-600'
                       }`}
                     >
-                      <option value="">✓ Seleccione un criterio</option>
+                      <option value={0}>✓ Seleccione un criterio</option>
                       {criteriosDelHook.map(c => (
                         <option key={c.id} value={c.id}>
                           #{c.numero_criterio} - {c.descripcion?.substring(0, 50)}
@@ -659,6 +810,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         message="Tienes cambios que no se han guardado. ¿Quieres descartar estos cambios?"
         onConfirm={() => {
           setShowCloseConfirm(false);
+          setExpandedCumplimiento(null);
           onClose();
         }}
         onClose={() => setShowCloseConfirm(false)}

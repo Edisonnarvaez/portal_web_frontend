@@ -40,10 +40,15 @@ export interface ServicioSede {
   descripcion?: string | null;
   prestador_headquarters?: string; // Información adicional del backend
   modalidad: ModalidadServicio;
+  modalidad_display?: string;                   // ← COMPUTED/DISPLAY: "Ambulatoria"
   complejidad: ComplejidadServicio;
+  complejidad_display?: string;                 // ← COMPUTED/DISPLAY: "Media"
   estado_habilitacion: EstadoHabilitacionServicio;
+  estado_display?: string;                      // ← COMPUTED/DISPLAY: "Habilitado"
   fecha_habilitacion?: string | null; // ISO date (YYYY-MM-DD)
   fecha_vencimiento?: string | null; // ISO date (YYYY-MM-DD)
+  vencido?: boolean;                            // ← COMPUTED: fecha_vencimiento < today
+  dias_vencimiento?: number | null;             // ← COMPUTED: Days until expiration
   fecha_creacion: string; // ISO datetime
   fecha_actualizacion: string; // ISO datetime
 }

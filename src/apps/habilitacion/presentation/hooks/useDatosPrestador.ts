@@ -7,6 +7,8 @@ import { DatosPrestadorRepository } from '../../infrastructure/repositories';
 
 export const useDatosPrestador = () => {
   const [datos, setDatos] = useState<DatosPrestador[]>([]);
+  const [proximosAVencer, setProximosAVencer] = useState<DatosPrestador[]>([]);
+  const [vencidos, setVencidos] = useState<DatosPrestador[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +21,63 @@ export const useDatosPrestador = () => {
     try {
       const data = await service.getDatosPrestadores(filters);
       setDatos(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al cargar datos');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Fetch a specific provider by ID
+   */
+  const getPrestador = useCallback(async (id: number): Promise<DatosPrestador> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getDatosPrestador(id);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar prestador');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Get providers close to expiration
+   */
+  const getPrestadoresProximosAVencer = useCallback(async (dias?: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getProximosAVencer(dias);
+      setProximosAVencer(data);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener próximos a vencer');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Get expired providers
+   */
+  const getPrestadoresVencidos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getVencidos();
+      setVencidos(data);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener vencidos');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -58,15 +115,6 @@ export const useDatosPrestador = () => {
     }
   }, []);
 
-  const getProximosAVencer = useCallback(async (dias?: number) => {
-    try {
-      return await service.getProximosAVencer(dias);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener próximos a vencer');
-      throw err;
-    }
-  }, []);
-
   const iniciarRenovacion = useCallback(async (id: number) => {
     setLoading(true);
     setError(null);
@@ -79,15 +127,6 @@ export const useDatosPrestador = () => {
       throw err;
     } finally {
       setLoading(false);
-    }
-  }, []);
-
-  const getVencidos = useCallback(async () => {
-    try {
-      return await service.getVencidos();
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener vencidos');
-      throw err;
     }
   }, []);
 
@@ -111,17 +150,20 @@ export const useDatosPrestador = () => {
 
   return {
     datos,
+    proximosAVencer,
+    vencidos,
     loading,
     error,
     fetchDatos,
+    getPrestador,
+    getPrestadoresProximosAVencer,
+    getPrestadoresVencidos,
     create,
     update,
     delete: deleteDatos,
-    getProximosAVencer,
-    getVencidos,
+    iniciarRenovacion,
     getServicios,
     getAutoevaluaciones,
-    iniciarRenovacion,
     service,
   };
 };

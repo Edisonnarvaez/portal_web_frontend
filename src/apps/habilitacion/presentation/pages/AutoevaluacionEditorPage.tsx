@@ -402,6 +402,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                                 <StatusIcon estado={ev?.estado_cumplimiento} />
                                                 <div className="min-w-0">
                                                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{cr.numero_criterio}</p>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{cr.numero_criterio}</p>
                                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{cr.descripcion}</p>
                                                     {cr.categoria && (
                                                         <span className="inline-block mt-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">

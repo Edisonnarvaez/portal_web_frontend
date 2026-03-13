@@ -1,6 +1,15 @@
 import type { EstadoAutoevaluacion } from '../types';
 import type { Cumplimiento } from './Cumplimiento';
 
+/** Breakdown of cumplimientos por estado */
+export interface CumplimientoResumen {
+  total: number;
+  cumple: number;
+  no_cumple: number;
+  parcialmente: number;
+  no_aplica: number;
+}
+
 /** Resumen de planes de mejora y hallazgos vinculados a una autoevaluación */
 export interface MejorasResumen {
   total_planes: number;
@@ -31,7 +40,7 @@ export interface Autoevaluacion {
   planes_mejora_count?: number;
   hallazgos_count?: number;
   mejoras_resumen?: MejorasResumen;
-  cumplimientos_data?: Cumplimiento[];
+  cumplimientos_data?: CumplimientoResumen;      // ← NOW: Breakdown object, not Cumplimiento[]
   observaciones?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;

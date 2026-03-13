@@ -21,6 +21,34 @@ export class CriterioService {
     return this.repository.getById(id);
   }
 
+  /**
+   * Get criterios by complexity level (BAJA, MEDIA, ALTA)
+   */
+  async getCriteriosPorComplejidad(complejidad: 'BAJA' | 'MEDIA' | 'ALTA'): Promise<Criterio[]> {
+    return this.repository.getAll({ complejidad });
+  }
+
+  /**
+   * Get only mandatory criterios
+   */
+  async getCriteriosMandatorios(): Promise<Criterio[]> {
+    return this.repository.getAll({ es_mandatorio: true });
+  }
+
+  /**
+   * Get criterios that require document evidence
+   */
+  async getCriteriosConEvidencia(): Promise<Criterio[]> {
+    return this.repository.getAll({ requiere_evidencia_documental: true });
+  }
+
+  /**
+   * Get criterios by standard (estandar)
+   */
+  async getCriteriosPorEstandar(estandarId: number): Promise<Criterio[]> {
+    return this.repository.getAll({ estandar: estandarId });
+  }
+
   async createCriterio(data: CriterioCreate): Promise<Criterio> {
     return this.repository.create(data);
   }
@@ -56,3 +84,4 @@ export class CriterioService {
     return Math.round((cumplidas / evaluaciones.length) * 100);
   }
 }
+

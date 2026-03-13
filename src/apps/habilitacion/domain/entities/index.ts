@@ -4,6 +4,7 @@ export * from './ServicioSede';
 export * from './Autoevaluacion';
 export * from './Cumplimiento';
 export * from './Criterio';
+export * from './Estandar';
 export * from './PlanMejora';
 export * from './Hallazgo';
 export * from './PaginatedResponse';

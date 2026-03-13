@@ -66,16 +66,15 @@ export const useServicioSede = () => {
   }, [getServiciosByPrestador]);
 
   /**
-   * Obtener servicios próximos a vencer
-   * El servicio filtra automáticamente por los próximos 90 días
+   * Obtener un servicio por ID
    */
-  const getProximosAVencer = useCallback(async (): Promise<ServicioSede[]> => {
+  const getServicio = useCallback(async (id: number): Promise<ServicioSede> => {
     setLoading(true);
     setError(null);
     try {
-      return await service.getProximosAVencer();
+      return await service.getServicio(id);
     } catch (err: any) {
-      const errorMsg = err.message || 'Error al obtener próximos a vencer';
+      const errorMsg = err.message || 'Error al obtener servicio';
       setError(errorMsg);
       throw err;
     } finally {
@@ -97,15 +96,37 @@ export const useServicioSede = () => {
   }, []);
 
   /**
+   * Obtener servicios próximos a vencer
+   * El servicio filtra automáticamente por los próximos 90 días
+   */
+  const getServiciosProximosAVencer = useCallback(async (): Promise<ServicioSede[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      return await service.getProximosAVencer();
+    } catch (err: any) {
+      const errorMsg = err.message || 'Error al obtener próximos a vencer';
+      setError(errorMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
    * Obtener servicios por complejidad
    */
-  const getPorComplejidad = useCallback(async (complejidad: string): Promise<ServicioSede[]> => {
+  const getServiciosPorComplejidad = useCallback(async (complejidad: 'BAJA' | 'MEDIA' | 'ALTA'): Promise<ServicioSede[]> => {
+    setLoading(true);
+    setError(null);
     try {
       return await service.getPorComplejidad(complejidad);
     } catch (err: any) {
       const errorMsg = err.message || 'Error al obtener servicios por complejidad';
       setError(errorMsg);
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -217,11 +238,12 @@ export const useServicioSede = () => {
     
     // Queries
     fetchServicios,
+    getServicio,
     getServiciosByPrestador,
     getServiciosByHeadquarters, // Legacy
-    getProximosAVencer,
+    getServiciosProximosAVencer,
     getCumplimientos,
-    getPorComplejidad,
+    getServiciosPorComplejidad,
     
     // Mutations
     create,

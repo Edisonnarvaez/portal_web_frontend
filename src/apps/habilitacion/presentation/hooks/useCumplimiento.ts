@@ -5,6 +5,9 @@ import { CumplimientoRepository } from '../../infrastructure/repositories';
 
 export const useCumplimiento = () => {
   const [cumplimientos, setCumplimientos] = useState<Cumplimiento[]>([]);
+  const [sinCumplir, setSinCumplir] = useState<Cumplimiento[]>([]);
+  const [conPlanMejora, setConPlanMejora] = useState<Cumplimiento[]>([]);
+  const [mejorasVencidas, setMejorasVencidas] = useState<Cumplimiento[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,8 +20,26 @@ export const useCumplimiento = () => {
     try {
       const data = await service.getCumplimientos(filters);
       setCumplimientos(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al cargar cumplimientos');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Obtener un cumplimiento específico por ID
+   */
+  const getCumplimiento = useCallback(async (id: number): Promise<Cumplimiento> => {
+    setLoading(true);
+    setError(null);
+    try {
+      return await service.getCumplimiento(id);
+    } catch (err: any) {
+      setError(err.message || 'Error al obtener cumplimiento');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -56,30 +77,71 @@ export const useCumplimiento = () => {
     }
   }, []);
 
-  const getSinCumplir = useCallback(async () => {
+  /**
+   * Obtener cumplimientos sin cumplir
+   */
+  const getCumplimientosSinCumplir = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      return await service.getCumplimientosSinCumplir();
+      const data = await service.getCumplimientosSinCumplir();
+      setSinCumplir(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al obtener sin cumplir');
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const getConPlanMejora = useCallback(async () => {
+  /**
+   * @deprecated Usar getCumplimientosSinCumplir() en su lugar
+   */
+  const getSinCumplir = useCallback(async () => {
+    return getCumplimientosSinCumplir();
+  }, [getCumplimientosSinCumplir]);
+
+  /**
+   * Obtener cumplimientos con plan de mejora
+   */
+  const getCumplimientosConPlanMejora = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      return await service.getCumplimientosConPlanMejora();
+      const data = await service.getCumplimientosConPlanMejora();
+      setConPlanMejora(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al obtener con plan mejora');
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
+  /**
+   * @deprecated Usar getCumplimientosConPlanMejora() en su lugar
+   */
+  const getConPlanMejora = useCallback(async () => {
+    return getCumplimientosConPlanMejora();
+  }, [getCumplimientosConPlanMejora]);
+
+  /**
+   * Obtener mejoras vencidas (planes de mejora cuya fecha ha pasado)
+   */
   const getMejorasVencidas = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      return await service.getMejorasVencidas();
+      const data = await service.getMejorasVencidas();
+      setMejorasVencidas(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al obtener mejoras vencidas');
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -111,14 +173,20 @@ export const useCumplimiento = () => {
 
   return {
     cumplimientos,
+    sinCumplir,
+    conPlanMejora,
+    mejorasVencidas,
     loading,
     error,
     fetchCumplimientos,
+    getCumplimiento,
     create,
     update,
     delete: deleteCumplimiento,
-    getSinCumplir,
-    getConPlanMejora,
+    getCumplimientosSinCumplir,
+    getSinCumplir, // Legacy
+    getCumplimientosConPlanMejora,
+    getConPlanMejora, // Legacy
     getMejorasVencidas,
     getServiciosDeAutoevaluacion,
     getCriteriosDeAutoevaluacion,

@@ -21,6 +21,10 @@ export interface Cumplimiento {
     id: number;
     username: string;
   };
+  responsable_mejora_detail?: {
+    id: number;
+    username: string;
+  } | null;
   fecha_compromiso?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
@@ -29,6 +33,12 @@ export interface Cumplimiento {
     nombre?: string;
     url?: string;
   }>;
+  documentos_evidencia_list?: Array<{
+    id: number;
+    nombre?: string;
+    url?: string;
+  }>;
+  // Formato antiguo (desde list endpoint)
   autoevaluacion?: {
     id: number;
     numero_autoevaluacion: string;
@@ -41,6 +51,34 @@ export interface Cumplimiento {
     id: number;
     nombre: string;
   };
+  // Formato detallado (desde detail endpoint)
+  autoevaluacion_detail?: {
+    id: number;
+    numero: string;
+    periodo: number;
+  };
+  servicio_sede_detail?: {
+    id: number;
+    codigo: string;
+    nombre: string;
+  };
+  criterio_detail?: {
+    id: number;
+    codigo: string;
+    nombre: string;
+    complejidad?: string;
+  };
+  servicios_disponibles?: Array<{
+    id: number;
+    codigo: string;
+    nombre: string;
+    modalidad?: string;
+    complejidad?: string;
+    estado?: string;
+  }>;
+  mejora_vencida?: boolean;
+  planes_mejora_vinculados?: any[];
+  hallazgos_vinculados?: any[];
 }
 
 export interface CumplimientoCreate {

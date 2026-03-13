@@ -16,8 +16,81 @@ export const useCriterio = () => {
     try {
       const data = await service.getCriterios(filters);
       setCriterios(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al cargar criterios');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Get criterios filtered by complexity
+   */
+  const getCriteriosPorComplejidad = useCallback(
+    async (complejidad: 'BAJA' | 'MEDIA' | 'ALTA') => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await service.getCriteriosPorComplejidad(complejidad);
+        return data;
+      } catch (err: any) {
+        setError(err.message || 'Error al cargar criterios por complejidad');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  /**
+   * Get only mandatory criterios
+   */
+  const getCriteriosMandatorios = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getCriteriosMandatorios();
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar criterios mandatorios');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Get criterios that require evidence
+   */
+  const getCriteriosConEvidencia = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getCriteriosConEvidencia();
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar criterios con evidencia');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Get criterios by standard
+   */
+  const getCriteriosPorEstandar = useCallback(async (estandarId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getCriteriosPorEstandar(estandarId);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar criterios por estándar');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -29,8 +102,10 @@ export const useCriterio = () => {
     try {
       const data = await service.getEvaluacionesByCriterio(autoevaluacionId);
       setEvaluaciones(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Error al cargar evaluaciones');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -96,11 +171,17 @@ export const useCriterio = () => {
     loading,
     error,
     fetchCriterios,
+    getCriteriosPorComplejidad,
+    getCriteriosMandatorios,
+    getCriteriosConEvidencia,
+    getCriteriosPorEstandar,
     fetchEvaluaciones,
     createCriterio,
     updateCriterio,
     deleteCriterio,
     createEvaluacion,
     updateEvaluacion,
+    service,
   };
 };
+
