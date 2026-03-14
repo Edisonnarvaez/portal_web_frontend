@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
 import type { Criterio, CriterioCreate } from '../../domain/entities/Criterio';
 import { useCriterio } from '../hooks/useCriterio';
@@ -19,16 +19,19 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
   const { createCriterio, updateCriterio } = useCriterio();
   const isEdit = !!criterio;
 
-  const [formData, setFormData] = useState<Partial<CriterioCreate>>({
+  // Memoize default form data
+  const defaultFormData = useMemo(() => ({
     codigo: '',
     nombre: '',
     descripcion: '',
-    complejidad: 'MEDIA',
+    complejidad: 'MEDIA' as const,
     es_mandatorio: false,
     requiere_evidencia_documental: false,
     notas_interpretacion: '',
     estandar_id: undefined,
-  });
+  }), []);
+
+  const [formData, setFormData] = useState<Partial<CriterioCreate>>(defaultFormData);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,28 +49,19 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
         estandar_id: criterio.estandar_id,
       });
     } else {
-      setFormData({
-        codigo: '',
-        nombre: '',
-        descripcion: '',
-        complejidad: 'MEDIA',
-        es_mandatorio: false,
-        requiere_evidencia_documental: false,
-        notas_interpretacion: '',
-        estandar_id: undefined,
-      });
+      setFormData(defaultFormData);
     }
     setError('');
-  }, [criterio, isOpen]);
+  }, [criterio, isOpen, defaultFormData]);
 
-  const handleChange = (
+  const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -99,7 +93,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, isEdit, criterio, updateCriterio, createCriterio, onSuccess, onClose]);
 
   if (!isOpen) return null;
 
@@ -314,4 +308,4 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
   );
 };
 
-export default CriterioFormModal;
+export default React.memo(CriterioFormModal);

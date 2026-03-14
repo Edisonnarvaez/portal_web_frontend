@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { Estandar, EstandarDetail } from '../../domain/entities/Estandar';
 import { EstandarService } from '../../application/services/EstandarService';
 

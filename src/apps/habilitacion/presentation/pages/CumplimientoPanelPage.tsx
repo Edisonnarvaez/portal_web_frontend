@@ -29,7 +29,6 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 const CumplimientoPanelPage: React.FC = () => {
-    const navigate = useNavigate();
     const { cumplimientos, loading, error, fetchCumplimientos, delete: deleteCumplimiento } = useCumplimiento();
     const { autoevaluaciones, fetchAutoevaluaciones } = useAutoevaluacion();
 

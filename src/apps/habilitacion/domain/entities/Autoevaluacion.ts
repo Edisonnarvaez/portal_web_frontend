@@ -1,5 +1,4 @@
 import type { EstadoAutoevaluacion } from '../types';
-import type { Cumplimiento } from './Cumplimiento';
 
 /** Breakdown of cumplimientos por estado */
 export interface CumplimientoResumen {

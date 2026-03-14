@@ -1,68 +1,76 @@
 /**
- * Habilitación Enums
- * Typescript enums for type-safe access to constants
+ * Habilitación Enums (as const objects - compatible con erasableSyntaxOnly)
+ * Type-safe access to constants using const objects instead of enums
  */
 
 /**
  * Complejidad de Criterios
  */
-export enum ComplejidadCriterioEnum {
-  BAJA = 'BAJA',
-  MEDIA = 'MEDIA',
-  ALTA = 'ALTA',
-}
+export const ComplejidadCriterioEnum = {
+  BAJA: 'BAJA',
+  MEDIA: 'MEDIA',
+  ALTA: 'ALTA',
+} as const;
+
+export type ComplejidadCriterioEnum = typeof ComplejidadCriterioEnum[keyof typeof ComplejidadCriterioEnum];
 
 export const complejidadCriterioLabels: Record<ComplejidadCriterioEnum, string> = {
-  [ComplejidadCriterioEnum.BAJA]: 'Baja',
-  [ComplejidadCriterioEnum.MEDIA]: 'Media',
-  [ComplejidadCriterioEnum.ALTA]: 'Alta',
+  BAJA: 'Baja',
+  MEDIA: 'Media',
+  ALTA: 'Alta',
 };
 
 /**
  * Estados de Cumplimiento
  */
-export enum EstadoCumplimientoEnum {
-  CUMPLE = 'CUMPLE',
-  NO_CUMPLE = 'NO_CUMPLE',
-  PARCIALMENTE = 'PARCIALMENTE',
-  NO_APLICA = 'NO_APLICA',
-}
+export const EstadoCumplimientoEnum = {
+  CUMPLE: 'CUMPLE',
+  NO_CUMPLE: 'NO_CUMPLE',
+  PARCIALMENTE: 'PARCIALMENTE',
+  NO_APLICA: 'NO_APLICA',
+} as const;
+
+export type EstadoCumplimientoEnum = typeof EstadoCumplimientoEnum[keyof typeof EstadoCumplimientoEnum];
 
 export const estadoCumplimientoLabels: Record<EstadoCumplimientoEnum, string> = {
-  [EstadoCumplimientoEnum.CUMPLE]: 'Cumple',
-  [EstadoCumplimientoEnum.NO_CUMPLE]: 'No Cumple',
-  [EstadoCumplimientoEnum.PARCIALMENTE]: 'Parcialmente',
-  [EstadoCumplimientoEnum.NO_APLICA]: 'No Aplica',
+  CUMPLE: 'Cumple',
+  NO_CUMPLE: 'No Cumple',
+  PARCIALMENTE: 'Parcialmente',
+  NO_APLICA: 'No Aplica',
 };
 
 export const estadoCumplimientoColors: Record<EstadoCumplimientoEnum, string> = {
-  [EstadoCumplimientoEnum.CUMPLE]: 'bg-green-500 text-white',
-  [EstadoCumplimientoEnum.NO_CUMPLE]: 'bg-red-500 text-white',
-  [EstadoCumplimientoEnum.PARCIALMENTE]: 'bg-yellow-500 text-white',
-  [EstadoCumplimientoEnum.NO_APLICA]: 'bg-gray-500 text-white',
+  CUMPLE: 'bg-green-500 text-white',
+  NO_CUMPLE: 'bg-red-500 text-white',
+  PARCIALMENTE: 'bg-yellow-500 text-white',
+  NO_APLICA: 'bg-gray-500 text-white',
 };
 
 /**
  * Modalidades de Servicio
  */
-export enum ModalidadServicioEnum {
-  INTRAMURAL = 'INTRAMURAL',
-  AMBULATORIA = 'AMBULATORIA',
-  TELEMEDICINA = 'TELEMEDICINA',
-  URGENCIAS = 'URGENCIAS',
-  AMBULANCIA = 'AMBULANCIA',
-}
+export const ModalidadServicioEnum = {
+  INTRAMURAL: 'INTRAMURAL',
+  AMBULATORIA: 'AMBULATORIA',
+  TELEMEDICINA: 'TELEMEDICINA',
+  URGENCIAS: 'URGENCIAS',
+  AMBULANCIA: 'AMBULANCIA',
+} as const;
+
+export type ModalidadServicioEnum = typeof ModalidadServicioEnum[keyof typeof ModalidadServicioEnum];
 
 /**
  * Estados de Autoevaluación
  */
-export enum EstadoAutoevaluacionEnum {
-  BORRADOR = 'BORRADOR',
-  EN_CURSO = 'EN_CURSO',
-  COMPLETADA = 'COMPLETADA',
-  REVISADA = 'REVISADA',
-  VALIDADA = 'VALIDADA',
-}
+export const EstadoAutoevaluacionEnum = {
+  BORRADOR: 'BORRADOR',
+  EN_CURSO: 'EN_CURSO',
+  COMPLETADA: 'COMPLETADA',
+  REVISADA: 'REVISADA',
+  VALIDADA: 'VALIDADA',
+} as const;
+
+export type EstadoAutoevaluacionEnum = typeof EstadoAutoevaluacionEnum[keyof typeof EstadoAutoevaluacionEnum];
 
 /**
  * Helpers para convertir entre enums y valores string

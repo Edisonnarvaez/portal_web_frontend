@@ -3,7 +3,7 @@
  * Constantes específicas para formularios de habilitación
  */
 
-import { COMPLEJIDADES_CRITERIO, COMPLEJIDADES_SERVICIO } from '../../domain/types';
+
 
 // Validación de campos Criterio
 export const CRITERIO_VALIDATION = {
