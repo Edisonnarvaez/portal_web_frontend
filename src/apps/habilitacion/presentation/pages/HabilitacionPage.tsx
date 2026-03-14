@@ -21,8 +21,6 @@ import {
   ESTADOS_AUTOEVALUACION,
 } from '../../domain/types';
 import { getEstadoLabel, getEstadoColor } from '../utils/formatters';
-import { ServicioSedeRepository } from '../../infrastructure/repositories';
-import { DatosPrestadorRepository } from '../../infrastructure/repositories';
 
 const HabilitacionPage = () => {
   const navigate = useNavigate();
@@ -51,6 +49,7 @@ const HabilitacionPage = () => {
     loading: loadingPrestadores,
     error: errorPrestadores,
     fetchDatos: fetchPrestadores,
+    getPrestador,
   } = useDatosPrestador();
 
   const {
@@ -58,6 +57,7 @@ const HabilitacionPage = () => {
     loading: loadingServicios,
     error: errorServicios,
     fetchServicios,
+    getServicio,
   } = useServicioSede();
 
   const {
@@ -84,7 +84,7 @@ const HabilitacionPage = () => {
           fetchCumplimientos(),
         ]);
       } catch (err) {
-        console.error('Error al cargar datos iniciales:', err);
+        // Las tablas y contadores pueden renderizar vacio; evitar bloqueo total de la pantalla.
       }
     };
 
@@ -99,9 +99,8 @@ const HabilitacionPage = () => {
     const loadServiceDetails = async () => {
       try {
         // Cargar detalles de todos los servicios en paralelo
-        const repository = new ServicioSedeRepository();
         const detailsPromises = servicios.map(s => 
-          repository.getById(s.id).catch(() => null)
+          getServicio(s.id).catch(() => null)
         );
         
         const details = await Promise.allSettled(detailsPromises);
@@ -119,14 +118,13 @@ const HabilitacionPage = () => {
         });
         
         setEnrichedPrestadorNames(namesMap);
-        console.log('Nombres_prestador cargados:', namesMap);
       } catch (err) {
-        console.error('Error al cargar detalles de servicios:', err);
+        // Si falla el enriquecimiento, la grilla sigue usando datos base sin bloquear UI.
       }
     };
 
     loadServiceDetails();
-  }, [servicios.length]);
+  }, [servicios.length, getServicio]);
 
   // ========== CARGAR DETALLES DE PRESTADORES PARA EXTRAER NOMBRE Y SEDE ==========
   // El listado de prestadores no devuelve headquarters_detail ni nombre_prestador completos
@@ -136,9 +134,8 @@ const HabilitacionPage = () => {
     const loadPrestadorDetails = async () => {
       try {
         // Cargar detalles de todos los prestadores en paralelo
-        const repository = new DatosPrestadorRepository();
         const detailsPromises = prestadores.map(p => 
-          repository.getById(p.id).catch(() => null)
+          getPrestador(p.id).catch(() => null)
         );
         
         const details = await Promise.allSettled(detailsPromises);
@@ -153,14 +150,13 @@ const HabilitacionPage = () => {
         });
         
         setEnrichedPrestadorDetails(detailsMap);
-        console.log('Detalles de prestadores cargados:', detailsMap);
       } catch (err) {
-        console.error('Error al cargar detalles de prestadores:', err);
+        // Mantener comportamiento degradado: no interrumpir flujo por fallas de enriquecimiento.
       }
     };
 
     loadPrestadorDetails();
-  }, [prestadores.length]);
+  }, [prestadores.length, getPrestador]);
 
   // ========== REFRESCAR CUANDO CAMBIA EL TAB ACTIVO ==========
   // Esto permite que el usuario pueda actualizar el tab actual
@@ -252,8 +248,7 @@ const HabilitacionPage = () => {
         nameMap.set(p.codigo_reps, p.company_name);
       }
     });
-    
-    console.log('Mapa final de nombres de prestador:', Object.fromEntries(nameMap));
+
     return nameMap;
   }, [enrichedPrestadorNames, prestadores]);
 

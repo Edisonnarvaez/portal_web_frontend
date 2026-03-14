@@ -10,6 +10,9 @@ import HallazgosPage from "./presentation/pages/HallazgosPage";
 import ReporteCumplimientoPage from "./presentation/pages/ReporteCumplimientoPage";
 import ComparativaPeriodosPage from "./presentation/pages/ComparativaPeriodosPage";
 import AlertasHabilitacionPage from "./presentation/pages/AlertasHabilitacionPage";
+import EstandaresPage from "./presentation/pages/EstandaresPage";
+import CriteriosPage from "./presentation/pages/CriteriosPage";
+import NormasPage from "./presentation/pages/NormasPage";
 
 const HabilitacionRoutes = () => (
   <Routes>
@@ -23,6 +26,9 @@ const HabilitacionRoutes = () => (
     <Route path="/reportes" element={<ReporteCumplimientoPage />} />
     <Route path="/comparativa" element={<ComparativaPeriodosPage />} />
     <Route path="/alertas" element={<AlertasHabilitacionPage />} />
+    <Route path="/estandares" element={<EstandaresPage />} />
+    <Route path="/criterios" element={<CriteriosPage />} />
+    <Route path="/normas" element={<NormasPage />} />
     <Route path="/" element={<HabilitacionPage />} />
     <Route path="/*" element={<HabilitacionPage />} />
   </Routes>

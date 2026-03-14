@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';
 import type { Criterio, CriterioCreate } from '../../domain/entities/Criterio';
 import { useCriterio } from '../hooks/useCriterio';
+import { useEstandar } from '../hooks/useEstandar';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface CriterioFormModalProps {
   isOpen: boolean;
@@ -16,7 +19,8 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { createCriterio, updateCriterio } = useCriterio();
+  const { createCriterio, updateCriterio, deleteCriterio } = useCriterio();
+  const { estandares, fetchEstandares } = useEstandar();
   const isEdit = !!criterio;
 
   // Memoize default form data
@@ -35,6 +39,16 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchEstandares().catch(() => {
+        // Si falla esta carga, el formulario sigue operando con campos manuales.
+      });
+    }
+
+  }, [isOpen, fetchEstandares]);
 
   useEffect(() => {
     if (criterio) {
@@ -58,8 +72,27 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'estandar_id' ? (value ? Number(value) : undefined) : value,
+    }));
   }, []);
+
+  const handleDelete = useCallback(async () => {
+    if (!criterio?.id) return;
+    setLoading(true);
+    setError('');
+    try {
+      await deleteCriterio(criterio.id);
+      onSuccess?.();
+      onClose?.();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error eliminando criterio'));
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  }, [criterio, deleteCriterio, onSuccess, onClose]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -86,10 +119,8 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
       }
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.detail || err.message || 'Error al guardar criterio';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al guardar criterio'));
     } finally {
       setLoading(false);
     }
@@ -149,6 +180,25 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Ej: INF-001, TH-005, SA-002 | {isEdit ? 'No se puede cambiar' : 'Se asigna al crear'}
                 </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Estándar asociado
+                </label>
+                <select
+                  name="estandar_id"
+                  value={formData.estandar_id || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Sin estándar</option>
+                  {estandares.map(estandar => (
+                    <option key={estandar.id} value={estandar.id}>
+                      {estandar.codigo} - {estandar.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -287,6 +337,16 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
 
           {/* Footer */}
           <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {isEdit && criterio && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 transition-colors font-medium"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -303,6 +363,13 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
             </button>
           </div>
         </form>
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          title="Eliminar Criterio"
+          message={`¿Estás seguro de que deseas eliminar el criterio "${criterio?.nombre || 'sin nombre'}" ? Esta acción no se puede deshacer.`}
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>
   );

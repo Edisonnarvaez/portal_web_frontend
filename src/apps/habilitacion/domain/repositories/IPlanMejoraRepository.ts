@@ -1,14 +1,15 @@
 import type { PlanMejora, PlanMejoraDetail, PlanMejoraCreate, PlanMejoraUpdate, PlanMejoraResumen, PlanMejoraPorOrigen, SoportePlan } from '../entities';
+import type { PlanMejoraFilters } from '../types';
 
 export interface IPlanMejoraRepository {
-  getAll(filters?: Record<string, any>): Promise<PlanMejora[]>;
+  getAll(filters?: PlanMejoraFilters): Promise<PlanMejora[]>;
   getById(id: number): Promise<PlanMejoraDetail>;
   getByAutoevaluacion(autoevaluacionId: number): Promise<PlanMejora[]>;
   create(data: PlanMejoraCreate): Promise<PlanMejora>;
   update(id: number, data: PlanMejoraUpdate): Promise<PlanMejora>;
   delete(id: number): Promise<void>;
   getVencidos(): Promise<PlanMejora[]>;
-  getResumen(filters?: Record<string, any>): Promise<PlanMejoraResumen>;
+  getResumen(filters?: PlanMejoraFilters): Promise<PlanMejoraResumen>;
   getProximosAVencer(dias?: number): Promise<PlanMejora[]>;
   getPorOrigen(): Promise<PlanMejoraPorOrigen[]>;
   // Soportes

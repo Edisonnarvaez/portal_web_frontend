@@ -65,3 +65,16 @@ export interface CriterioEvaluacion {
   porcentaje_cumplimiento?: number;
   fecha_evaluacion: string;
 }
+
+export interface CriterioEvaluacionCreate {
+  criterio_id: number;
+  autoevaluacion_id: number;
+  estado_cumplimiento: EstadoCumplimiento;
+  observaciones?: string;
+  evidencia?: string;
+  porcentaje_cumplimiento?: number;
+}
+
+export interface CriterioEvaluacionUpdate extends Partial<CriterioEvaluacionCreate> {
+  id: number;
+}

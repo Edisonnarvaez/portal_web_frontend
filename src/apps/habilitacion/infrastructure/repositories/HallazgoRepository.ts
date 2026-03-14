@@ -1,15 +1,15 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 import type { Hallazgo, HallazgoDetail, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos, HallazgoPorOrigen } from '../../domain/entities';
 import type { IHallazgoRepository } from '../../domain/repositories';
+import type { HallazgoFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class HallazgoRepository implements IHallazgoRepository {
   private baseUrl = '/mejoras/hallazgos';
 
-  async getAll(filters?: Record<string, any>): Promise<Hallazgo[]> {
+  async getAll(filters?: HallazgoFilters): Promise<Hallazgo[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/`, { params: filters });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<Hallazgo>(response.data);
   }
 
   async getById(id: number): Promise<HallazgoDetail> {
@@ -21,9 +21,7 @@ export class HallazgoRepository implements IHallazgoRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { autoevaluacion: autoevaluacionId }
     });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<Hallazgo>(response.data);
   }
 
   async create(data: HallazgoCreate): Promise<Hallazgo> {
@@ -40,7 +38,7 @@ export class HallazgoRepository implements IHallazgoRepository {
     await axiosInstance.delete(`${this.baseUrl}/${id}/`);
   }
 
-  async getEstadisticas(filters?: Record<string, any>): Promise<EstadisticasHallazgos> {
+  async getEstadisticas(filters?: HallazgoFilters): Promise<EstadisticasHallazgos> {
     const response = await axiosInstance.get(`${this.baseUrl}/estadisticas/`, { params: filters });
     return response.data;
   }
@@ -49,16 +47,14 @@ export class HallazgoRepository implements IHallazgoRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { estado: 'ABIERTO' }
     });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<Hallazgo>(response.data);
   }
 
   async getCriticos(): Promise<Hallazgo[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { severidad: 'CRÍTICA' }
     });
-    return response.data.results || response.data;
+    return parseListResponse<Hallazgo>(response.data);
   }
 
   async getPorOrigen(): Promise<HallazgoPorOrigen[]> {
@@ -68,6 +64,6 @@ export class HallazgoRepository implements IHallazgoRepository {
 
   async getSinPlan(): Promise<Hallazgo[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/sin-plan/`);
-    return response.data.results || response.data;
+    return parseListResponse<Hallazgo>(response.data);
   }
 }

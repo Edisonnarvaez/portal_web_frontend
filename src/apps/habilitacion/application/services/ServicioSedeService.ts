@@ -1,5 +1,6 @@
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../../domain/entities';
 import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
+import type { ServicioSedeFilters } from '../../domain/types';
 import { ServicioSedeRepository } from '../../infrastructure/repositories';
 
 /**
@@ -29,7 +30,7 @@ export class ServicioSedeService {
    * - complejidad: BAJA, MEDIA, ALTA
    * - estado_habilitacion: HABILITADO, EN_PROCESO, SUSPENDIDO, NO_HABILITADO, CANCELADO
    */
-  async getServicios(filters?: Record<string, any>): Promise<ServicioSede[]> {
+  async getServicios(filters?: ServicioSedeFilters): Promise<ServicioSede[]> {
     return this.repository.getAll(filters);
   }
 

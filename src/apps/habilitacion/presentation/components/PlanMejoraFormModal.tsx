@@ -3,6 +3,8 @@ import { HiOutlineXMark } from 'react-icons/hi2';
 import type { PlanMejora, PlanMejoraCreate, OrigenTipo } from '../../domain/entities/PlanMejora';
 import { ESTADOS_PLAN_MEJORA, ORIGENES_TIPO } from '../../domain/types';
 import { usePlanMejora } from '../hooks/usePlanMejora';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface PlanMejoraFormModalProps {
   isOpen: boolean;
@@ -23,7 +25,7 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { createPlan, updatePlan } = usePlanMejora();
+  const { createPlan, updatePlan, deletePlan } = usePlanMejora();
   const isEdit = !!planMejora;
 
   const [formData, setFormData] = useState<Partial<PlanMejoraCreate>>({
@@ -43,6 +45,7 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (planMejora) {
@@ -90,6 +93,22 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
     }));
   };
 
+  const handleDelete = async () => {
+    if (!planMejora?.id) return;
+    setLoading(true);
+    setError('');
+    try {
+      await deletePlan(planMejora.id);
+      onSuccess?.();
+      onClose?.();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error eliminando plan de mejora'));
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -115,10 +134,8 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
       }
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.detail || err.message || 'Error al guardar plan de mejora';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al guardar plan de mejora'));
     } finally {
       setLoading(false);
     }
@@ -382,6 +399,16 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
 
           {/* Footer */}
           <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {isEdit && planMejora && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 transition-colors font-medium"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -398,6 +425,13 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
             </button>
           </div>
         </form>
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          title="Eliminar Plan de Mejora"
+          message={`¿Estás seguro de que deseas eliminar este plan de mejora? Esta acción no se puede deshacer.`}
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>
   );

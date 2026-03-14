@@ -1,7 +1,14 @@
 import { useState, useCallback } from 'react';
-import type { Cumplimiento, CumplimientoCreate, CumplimientoUpdate } from '../../domain/entities';
+import type {
+  Cumplimiento,
+  CumplimientoCreate,
+  CumplimientoUpdate,
+  ServiciosDeAutoevaluacionResponse,
+} from '../../domain/entities';
+import type { CumplimientoFilters } from '../../domain/types';
 import { CumplimientoService } from '../../application/services';
 import { CumplimientoRepository } from '../../infrastructure/repositories';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 export const useCumplimiento = () => {
   const [cumplimientos, setCumplimientos] = useState<Cumplimiento[]>([]);
@@ -14,15 +21,15 @@ export const useCumplimiento = () => {
   const repository = new CumplimientoRepository();
   const service = new CumplimientoService(repository);
 
-  const fetchCumplimientos = useCallback(async (filters?: Record<string, any>) => {
+  const fetchCumplimientos = useCallback(async (filters?: CumplimientoFilters) => {
     setLoading(true);
     setError(null);
     try {
       const data = await service.getCumplimientos(filters);
       setCumplimientos(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar cumplimientos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar cumplimientos'));
       throw err;
     } finally {
       setLoading(false);
@@ -37,8 +44,8 @@ export const useCumplimiento = () => {
     setError(null);
     try {
       return await service.getCumplimiento(id);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener cumplimiento');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener cumplimiento'));
       throw err;
     } finally {
       setLoading(false);
@@ -50,8 +57,8 @@ export const useCumplimiento = () => {
       const newCumplimiento = await service.createCumplimiento(data);
       setCumplimientos(prev => [...prev, newCumplimiento]);
       return newCumplimiento;
-    } catch (err: any) {
-      setError(err.message || 'Error al crear cumplimiento');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear cumplimiento'));
       throw err;
     }
   }, []);
@@ -61,8 +68,8 @@ export const useCumplimiento = () => {
       const updatedCumplimiento = await service.updateCumplimiento(id, data);
       setCumplimientos(prev => prev.map(c => c.id === id ? updatedCumplimiento : c));
       return updatedCumplimiento;
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar cumplimiento');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar cumplimiento'));
       throw err;
     }
   }, []);
@@ -71,8 +78,8 @@ export const useCumplimiento = () => {
     try {
       await service.deleteCumplimiento(id);
       setCumplimientos(prev => prev.filter(c => c.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar cumplimiento');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar cumplimiento'));
       throw err;
     }
   }, []);
@@ -87,8 +94,8 @@ export const useCumplimiento = () => {
       const data = await service.getCumplimientosSinCumplir();
       setSinCumplir(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener sin cumplir');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener sin cumplir'));
       throw err;
     } finally {
       setLoading(false);
@@ -112,8 +119,8 @@ export const useCumplimiento = () => {
       const data = await service.getCumplimientosConPlanMejora();
       setConPlanMejora(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener con plan mejora');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener con plan mejora'));
       throw err;
     } finally {
       setLoading(false);
@@ -137,8 +144,8 @@ export const useCumplimiento = () => {
       const data = await service.getMejorasVencidas();
       setMejorasVencidas(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener mejoras vencidas');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener mejoras vencidas'));
       throw err;
     } finally {
       setLoading(false);
@@ -149,11 +156,11 @@ export const useCumplimiento = () => {
    * Obtener servicios de una autoevaluación específica
    * Útil para llenar dropdown en CumplimientoFormModal
    */
-  const getServiciosDeAutoevaluacion = useCallback(async (autoevaluacionId: number) => {
+  const getServiciosDeAutoevaluacion = useCallback(async (autoevaluacionId: number): Promise<ServiciosDeAutoevaluacionResponse> => {
     try {
       return await service.getServiciosDeAutoevaluacion(autoevaluacionId);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener servicios de autoevaluación');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener servicios de autoevaluación'));
       throw err;
     }
   }, []);
@@ -165,8 +172,8 @@ export const useCumplimiento = () => {
   const getCriteriosDeAutoevaluacion = useCallback(async (autoevaluacionId: number) => {
     try {
       return await service.getCriteriosDeAutoevaluacion?.(autoevaluacionId) || [];
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener criterios de autoevaluación');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener criterios de autoevaluación'));
       throw err;
     }
   }, []);

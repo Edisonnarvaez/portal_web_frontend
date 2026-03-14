@@ -1,15 +1,15 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 import type { PlanMejora, PlanMejoraDetail, PlanMejoraCreate, PlanMejoraUpdate, PlanMejoraResumen, PlanMejoraPorOrigen, SoportePlan } from '../../domain/entities';
 import type { IPlanMejoraRepository } from '../../domain/repositories';
+import type { PlanMejoraFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class PlanMejoraRepository implements IPlanMejoraRepository {
   private baseUrl = '/mejoras/planes-mejora';
 
-  async getAll(filters?: Record<string, any>): Promise<PlanMejora[]> {
+  async getAll(filters?: PlanMejoraFilters): Promise<PlanMejora[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/`, { params: filters });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<PlanMejora>(response.data);
   }
 
   async getById(id: number): Promise<PlanMejoraDetail> {
@@ -21,9 +21,7 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/`, {
       params: { autoevaluacion: autoevaluacionId }
     });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<PlanMejora>(response.data);
   }
 
   async create(data: PlanMejoraCreate): Promise<PlanMejora> {
@@ -42,12 +40,10 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
 
   async getVencidos(): Promise<PlanMejora[]> {
     const response = await axiosInstance.get(`${this.baseUrl}/vencidos/`);
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<PlanMejora>(response.data);
   }
 
-  async getResumen(filters?: Record<string, any>): Promise<PlanMejoraResumen> {
+  async getResumen(filters?: PlanMejoraFilters): Promise<PlanMejoraResumen> {
     const response = await axiosInstance.get(`${this.baseUrl}/resumen/`, { params: filters });
     return response.data;
   }
@@ -56,9 +52,7 @@ export class PlanMejoraRepository implements IPlanMejoraRepository {
     const response = await axiosInstance.get(`${this.baseUrl}/proximos-vencer/`, {
       params: { dias }
     });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<PlanMejora>(response.data);
   }
 
   async getPorOrigen(): Promise<PlanMejoraPorOrigen[]> {

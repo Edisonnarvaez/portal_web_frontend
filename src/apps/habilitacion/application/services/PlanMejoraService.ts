@@ -1,4 +1,5 @@
 import type { PlanMejora, PlanMejoraDetail, PlanMejoraCreate, PlanMejoraUpdate, PlanMejoraResumen, PlanMejoraPorOrigen, SoportePlan } from '../../domain/entities';
+import type { PlanMejoraFilters } from '../../domain/types';
 import { PlanMejoraRepository } from '../../infrastructure/repositories';
 
 export class PlanMejoraService {
@@ -8,7 +9,7 @@ export class PlanMejoraService {
     this.repository = repository || new PlanMejoraRepository();
   }
 
-  async getPlanesDeMejora(filters?: Record<string, any>): Promise<PlanMejora[]> {
+  async getPlanesDeMejora(filters?: PlanMejoraFilters): Promise<PlanMejora[]> {
     return this.repository.getAll(filters);
   }
 
@@ -40,7 +41,7 @@ export class PlanMejoraService {
     return this.repository.getProximosAVencer(dias);
   }
 
-  async getResumen(filters?: Record<string, any>): Promise<PlanMejoraResumen> {
+  async getResumen(filters?: PlanMejoraFilters): Promise<PlanMejoraResumen> {
     return this.repository.getResumen(filters);
   }
 

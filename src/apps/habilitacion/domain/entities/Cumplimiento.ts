@@ -99,3 +99,30 @@ export interface CumplimientoCreate {
 export interface CumplimientoUpdate extends Partial<CumplimientoCreate> {
   id: number;
 }
+
+export interface ServicioDisponibleAutoevaluacion {
+  id: number;
+  codigo?: string;
+  nombre?: string;
+  codigo_servicio?: string;
+  nombre_servicio?: string;
+  modalidad?: string;
+  complejidad?: string;
+  estado?: string;
+}
+
+export interface ServiciosDeAutoevaluacionResponse {
+  autoevaluacion?: {
+    id: number;
+    numero_autoevaluacion?: string;
+    periodo?: number;
+    estado?: string;
+  } | null;
+  prestador?: {
+    id: number;
+    codigo_reps?: string;
+    company_name?: string;
+  } | null;
+  servicios: ServicioDisponibleAutoevaluacion[];
+  total_servicios: number;
+}

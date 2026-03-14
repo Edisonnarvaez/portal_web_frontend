@@ -1,4 +1,10 @@
-import type { Cumplimiento, CumplimientoCreate, CumplimientoUpdate } from '../../domain/entities';
+import type {
+  Cumplimiento,
+  CumplimientoCreate,
+  CumplimientoUpdate,
+  ServiciosDeAutoevaluacionResponse,
+} from '../../domain/entities';
+import type { CumplimientoFilters } from '../../domain/types';
 import { CumplimientoRepository } from '../../infrastructure/repositories';
 
 export class CumplimientoService {
@@ -8,7 +14,7 @@ export class CumplimientoService {
     this.repository = repository;
   }
 
-  async getCumplimientos(filters?: Record<string, any>): Promise<Cumplimiento[]> {
+  async getCumplimientos(filters?: CumplimientoFilters): Promise<Cumplimiento[]> {
     return this.repository.getAll(filters);
   }
 
@@ -44,7 +50,7 @@ export class CumplimientoService {
    * Obtener servicios disponibles para una autoevaluación específica
    * Útil para el dropdown en CumplimientoFormModal
    */
-  async getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<any> {
+  async getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<ServiciosDeAutoevaluacionResponse> {
     return this.repository.getServiciosDeAutoevaluacion(autoevaluacionId);
   }
 
@@ -52,7 +58,7 @@ export class CumplimientoService {
    * Obtener criterios disponibles para una autoevaluación específica
    * Útil para el dropdown en CumplimientoFormModal
    */
-  async getCriteriosDeAutoevaluacion(autoevaluacionId: number): Promise<any> {
+  async getCriteriosDeAutoevaluacion(autoevaluacionId: number): Promise<Cumplimiento[]> {
     // Por ahora, delegamos a getCriterios con filtro
     // En el futuro, esto podría implementarse directamente en el repositorio
     return this.repository.getAll({ autoevaluacion_id: autoevaluacionId });

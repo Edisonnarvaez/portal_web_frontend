@@ -1,13 +1,13 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 import type { Autoevaluacion, AutoevaluacionCreate, AutoevaluacionUpdate, AutoevaluacionResumen } from '../../domain/entities';
 import type { IAutoevaluacionRepository } from '../../domain/repositories';
+import type { AutoevaluacionFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class AutoevaluacionRepository implements IAutoevaluacionRepository {
-  async getAll(filters?: Record<string, any>): Promise<Autoevaluacion[]> {
+  async getAll(filters?: AutoevaluacionFilters): Promise<Autoevaluacion[]> {
     const response = await axiosInstance.get('/habilitacion/autoevaluaciones/', { params: filters });
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<Autoevaluacion>(response.data);
   }
 
   async getById(id: number): Promise<Autoevaluacion> {
@@ -46,8 +46,6 @@ export class AutoevaluacionRepository implements IAutoevaluacionRepository {
 
   async getPorCompletar(): Promise<Autoevaluacion[]> {
     const response = await axiosInstance.get('/habilitacion/autoevaluaciones/por_completar/');
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<Autoevaluacion>(response.data);
   }
 }

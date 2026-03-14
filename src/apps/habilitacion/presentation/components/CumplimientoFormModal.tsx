@@ -5,24 +5,10 @@ import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import { ESTADOS_CUMPLIMIENTO } from '../../domain/types';
 import { useCumplimiento } from '../hooks/useCumplimiento';
 import { useCriterio } from '../hooks/useCriterio';
+import { useAsyncState } from '../hooks/useAsyncState';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
-
-// Función para convertir fecha ISO a formato YYYY-MM-DD
-const formatDateForInput = (dateString?: string): string => {
-  if (!dateString) return '';
-  try {
-    // Si ya está en formato YYYY-MM-DD, devolverlo como está
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return dateString;
-    }
-    // Si es ISO string (YYYY-MM-DDTHH:MM:SSZ), extraer la parte de fecha
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString().split('T')[0];
-  } catch {
-    return '';
-  }
-};
+import { extractErrorMessage } from '../../shared/utils/error';
+import { formatDateForInput } from './utils/formModalUtils';
 
 interface CumplimientoFormModalProps {
   isOpen: boolean;
@@ -53,7 +39,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, getServiciosDeAutoevaluacion, service } = useCumplimiento();
+  const { create, update, delete: deleteCumplimiento, getServiciosDeAutoevaluacion, service } = useCumplimiento();
   const { fetchCriterios, criterios: criteriosDelHook } = useCriterio();
   const isEdit = !!cumplimiento;
 
@@ -71,15 +57,13 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [servicios, setServicios] = useState<ServicioSede[]>([]);
-  
-  // Estados mejorados para servicios
-  const [serviciosState, setServiciosState] = useState<'idle' | 'loading' | 'success' | 'no_servicios' | 'error'>('idle');
-  const [serviciosMensaje, setServiciosMensaje] = useState<string>('');
-  
-  const [criteriosLoading, setCriteriosLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const serviciosAsync = useAsyncState<ServicioSede[]>([]);
+  const criteriosAsync = useAsyncState<boolean>(false);
+  const { state: serviciosState, setLoading: setServiciosLoading, setSuccess: setServiciosSuccess, setError: setServiciosError, reset: resetServicios } = serviciosAsync;
+  const { state: criteriosState, setLoading: setCriteriosLoading, setSuccess: setCriteriosSuccess, setError: setCriteriosError, reset: resetCriterios } = criteriosAsync;
   
   // Estado para cumplimiento "expandido" con detalles del backend
   const [expandedCumplimiento, setExpandedCumplimiento] = useState<Cumplimiento | null>(null);
@@ -100,37 +84,25 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       return;
     }
 
-    console.log('🔄 Cumplimiento incompleto, haciendo fetch de detalles... ID:', cumplimiento.id);
-    
     const fetchFullCumplimiento = async () => {
       try {
         const fullCumplimiento = await service.getCumplimiento(cumplimiento.id);
-        console.log('✅ Cumplimiento completo descargado:', fullCumplimiento);
-        console.log('🔍 DETALLES DEL OBJETO COMPLETO:', {
-          hallazgo: fullCumplimiento.hallazgo,
-          plan_mejora: fullCumplimiento.plan_mejora,
-          hallazgo_type: typeof fullCumplimiento.hallazgo,
-          plan_mejora_type: typeof fullCumplimiento.plan_mejora,
-          todas_las_keys: Object.keys(fullCumplimiento)
-        });
         
         // ✅ IMPORTANTE: Actualizar formData directamente con los datos completos
         const updatedData: Partial<CumplimientoCreate> = {
           autoevaluacion_id: fullCumplimiento.autoevaluacion_detail?.id || fullCumplimiento.autoevaluacion?.id || fullCumplimiento.autoevaluacion_id,
           servicio_sede_id: fullCumplimiento.servicio_sede_detail?.id || fullCumplimiento.servicio_sede?.id || fullCumplimiento.servicio_sede_id,
           criterio_id: fullCumplimiento.criterio_detail?.id || fullCumplimiento.criterio?.id || fullCumplimiento.criterio_id,
-          cumple: fullCumplimiento.cumple as any,
+          cumple: fullCumplimiento.cumple as CumplimientoCreate['cumple'],
           hallazgo: fullCumplimiento.hallazgo || '',
           plan_mejora: fullCumplimiento.plan_mejora || '',
           fecha_compromiso: formatDateForInput(fullCumplimiento.fecha_compromiso),
         };
-        console.log('✅ FormData actualizado con datos completos:', updatedData);
         setFormData(updatedData);
         setOriginalData(updatedData);
         
         setExpandedCumplimiento(fullCumplimiento);
-      } catch (err: any) {
-        console.error('❌ Error al traer cumplimiento completo:', err);
+      } catch (err: unknown) {
         // Si falla, usar el que ya tenemos
         setExpandedCumplimiento(cumplimiento as Cumplimiento);
       }
@@ -139,53 +111,17 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     fetchFullCumplimiento();
   }, [isOpen, cumplimiento?.id, service]);
 
-  // DEBUG: Loguear estado cuando cambian datos importantes
-  useEffect(() => {
-    if (!isOpen) return;
-    console.log('📊 === ESTADO DEL MODAL ===');
-    console.log('Modo:', isEdit ? 'EDICIÓN' : 'CREACIÓN');
-    console.log('Servicios State:', serviciosState, '| Servicios count:', servicios.length);
-    console.log('Criterios count:', criteriosDelHook.length, '| Criterios Loading:', criteriosLoading);
-    console.log('ExpandedCumplimiento:', !!expandedCumplimiento, expandedCumplimiento ? {
-      id: expandedCumplimiento.id,
-      servicio_sede_detail: expandedCumplimiento.servicio_sede_detail,
-      criterio_detail: expandedCumplimiento.criterio_detail,
-      tiene_servicios_disponibles: !!expandedCumplimiento.servicios_disponibles?.length
-    } : null);
-    console.log('FormData:', {
-      servicio_sede_id: formData.servicio_sede_id,
-      criterio_id: formData.criterio_id,
-      cumple: formData.cumple,
-      fecha_compromiso: formData.fecha_compromiso,
-      hallazgo: formData.hallazgo?.substring(0, 50),
-      plan_mejora: formData.plan_mejora?.substring(0, 50),
-    });
-    if (servicios.length > 0) {
-      console.log('Servicios disponibles:', servicios.map((s: any) => `${s.id}: ${s.nombre_servicio || s.nombre}`));
-    }
-    if (criteriosDelHook.length > 0) {
-      console.log('Criterios disponibles:', criteriosDelHook.map((c: any) => `${c.id}: ${c.descripcion?.substring(0, 30)}`));
-    }
-    console.log('=====================');
-  }, [isOpen, servicios, criteriosDelHook, formData, serviciosState, criteriosLoading, isEdit, expandedCumplimiento]);
-
   useEffect(() => {
     if (!isOpen) {
+      resetServicios();
+      resetCriterios();
       return;
     }
-
-    console.log('🔍 PRIMER USEEFFECT - Inicializando formData');
-    console.log('cumplimiento existe?', !!cumplimiento);
-    console.log('expandedCumplimiento existe?', !!expandedCumplimiento);
     
     // Usar expandedCumplimiento si está disponible (tiene detalles), sino usar cumplimiento
     const cumplimientoToUse = expandedCumplimiento || cumplimiento;
     
     if (cumplimientoToUse) {
-      console.log('cumplimiento object:', cumplimientoToUse);
-      console.log('cumplimiento.servicio_sede_detail:', cumplimientoToUse.servicio_sede_detail);
-      console.log('cumplimiento.criterio_detail:', cumplimientoToUse.criterio_detail);
-      
       // MODO EDICIÓN: Cargar todos los datos del cumplimiento existente
       // Usar los campos *_detail si están disponibles (desde detail endpoint)
       // Fallback a los campos simples si están disponibles
@@ -194,35 +130,26 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       const servicioId = cumplimientoToUse.servicio_sede_detail?.id || cumplimientoToUse.servicio_sede?.id || cumplimientoToUse.servicio_sede_id || servicioSedeId || 0;
       const criterioId_val = cumplimientoToUse.criterio_detail?.id || cumplimientoToUse.criterio?.id || cumplimientoToUse.criterio_id || criterioId || 0;
       
-      console.log('Valores extraídos:', { autoId, servicioId, criterioId_val });
-      console.log('Otros datos:', {
-        hallazgo: cumplimientoToUse.hallazgo,
-        plan_mejora: cumplimientoToUse.plan_mejora,
-        cumple: cumplimientoToUse.cumple,
-      });
-      
       const data: Partial<CumplimientoCreate> = {
         autoevaluacion_id: autoId,
         servicio_sede_id: servicioId,
         criterio_id: criterioId_val,
-        cumple: cumplimientoToUse.cumple as any,
+        cumple: cumplimientoToUse.cumple as CumplimientoCreate['cumple'],
         hallazgo: cumplimientoToUse.hallazgo || '',
         plan_mejora: cumplimientoToUse.plan_mejora || '',
         fecha_compromiso: formatDateForInput(cumplimientoToUse.fecha_compromiso),
       };
-      
-      console.log('Data a setear:', data);
+
       setFormData(data);
       setOriginalData(data);
       // NOTA: Los servicios se cargarán en el segundo useEffect desde servicios_disponibles
     } else {
-      console.log('MODO CREACIÓN - usando props:', { autoevaluacionId, servicioSedeId, criterioId });
       // MODO CREACIÓN: Usar los IDs de las props
       const data: Partial<CumplimientoCreate> = {
         autoevaluacion_id: autoevaluacionId || 0,
         servicio_sede_id: servicioSedeId || 0,
         criterio_id: criterioId || 0,
-        cumple: 'CUMPLE' as any,
+        cumple: 'CUMPLE',
         hallazgo: '',
         plan_mejora: '',
         fecha_compromiso: '',
@@ -246,10 +173,8 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       try {
         // Primero: si estamos en modo edición y tenemos servicios_disponibles en el objeto expandido, usarlos
         if (isEdit && expandedCumplimiento?.servicios_disponibles && expandedCumplimiento.servicios_disponibles.length > 0) {
-          console.log('✅ Cargando servicios desde servicios_disponibles:', expandedCumplimiento.servicios_disponibles);
-          setServicios(expandedCumplimiento.servicios_disponibles as unknown as ServicioSede[]);
-          setServiciosState('success');
-          setServiciosMensaje('');
+          // Preferir payload ya resuelto por backend para evitar una llamada adicional.
+          setServiciosSuccess(expandedCumplimiento.servicios_disponibles as unknown as ServicioSede[]);
           return;
         }
 
@@ -261,58 +186,52 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
           : autoevaluacionId;
 
         if (!autoId || autoId <= 0) {
-          setServicios([]);
-          setServiciosState('idle');
+          resetServicios();
           return;
         }
 
-        console.log('🔄 Cargando servicios desde API para autoId:', autoId);
-        setServiciosState('loading');
+        setServiciosLoading();
         const response = await getServiciosDeAutoevaluacion(autoId);
         
         // Estructura mejorada del backend:
         // { autoevaluacion, prestador, servicios, total_servicios }
         if (response && response.servicios) {
           if (response.servicios.length === 0) {
-            setServicios([]);
-            setServiciosState('no_servicios');
-            setServiciosMensaje(
-              `No hay servicios registrados para esta institución. ` +
-              `Debe crear al menos un servicio antes de registrar cumplimientos.`
-            );
+            setServiciosSuccess([]);
           } else {
-            console.log('✅ Servicios cargados desde API:', response.servicios);
-            setServicios(response.servicios);
-            setServiciosState('success');
-            setServiciosMensaje('');
-          }
-        } else if (Array.isArray(response)) {
-          // Fallback: si backend retorna array directo
-          if (response.length === 0) {
-            setServicios([]);
-            setServiciosState('no_servicios');
-            setServiciosMensaje('No hay servicios registrados para esta autoevaluación.');
-          } else {
-            console.log('✅ Servicios cargados (formato array):', response);
-            setServicios(response);
-            setServiciosState('success');
-            setServiciosMensaje('');
+            // Normalizar payload compacto del endpoint a la forma esperada en la UI.
+            const serviciosNormalizados = response.servicios.map((servicio) => ({
+              id: servicio.id,
+              codigo_servicio: servicio.codigo_servicio || servicio.codigo || '',
+              nombre_servicio: servicio.nombre_servicio || servicio.nombre || '',
+              modalidad: (servicio.modalidad as ServicioSede['modalidad']) || 'INTRAMURAL',
+              complejidad: (servicio.complejidad as ServicioSede['complejidad']) || 'BAJA',
+              estado_habilitacion: (servicio.estado as ServicioSede['estado_habilitacion']) || 'EN_PROCESO',
+              fecha_creacion: '',
+              fecha_actualizacion: '',
+            }));
+            setServiciosSuccess(serviciosNormalizados);
           }
         } else {
-          setServicios([]);
-          setServiciosState('error');
-          setServiciosMensaje('Formato de respuesta inesperado del servidor.');
+          setServiciosError(new Error('Formato de respuesta inesperado del servidor.'), 'Formato de respuesta inesperado del servidor.');
         }
-      } catch (err: any) {
-        console.error('❌ Error al cargar servicios:', err);
-        setServicios([]);
-        setServiciosState('error');
-        setServiciosMensaje(err.message || 'No se pudieron cargar los servicios.');
+      } catch (err: unknown) {
+        setServiciosError(err, 'No se pudieron cargar los servicios.');
       }
     };
 
     loadServicios();
-  }, [isOpen, expandedCumplimiento, autoevaluacionId, getServiciosDeAutoevaluacion]);
+  }, [
+    isOpen,
+    expandedCumplimiento,
+    autoevaluacionId,
+    getServiciosDeAutoevaluacion,
+    isEdit,
+    setServiciosSuccess,
+    resetServicios,
+    setServiciosLoading,
+    setServiciosError,
+  ]);
 
   // Cargar criterios disponibles
   useEffect(() => {
@@ -322,27 +241,23 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
 
     const loadCriterios = async () => {
       try {
-        console.log('🔄 Cargando criterios...');
-        setCriteriosLoading(true);
+        setCriteriosLoading();
         await fetchCriterios();
-        console.log('✅ Criterios cargados');
+        setCriteriosSuccess(true);
       } catch (err) {
-        console.error('❌ Error al cargar criterios:', err);
-        setError('No se pudieron cargar los criterios. Intenta nuevamente.');
-      } finally {
-        setCriteriosLoading(false);
+        setCriteriosError(err, 'No se pudieron cargar los criterios. Intenta nuevamente.');
       }
     };
 
     loadCriterios();
-  }, [isOpen, fetchCriterios]);
+  }, [isOpen, fetchCriterios, setCriteriosLoading, setCriteriosSuccess, setCriteriosError]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     
-    let finalValue: any = value;
+    let finalValue: string | number = value;
     
     // Convertir IDs a números
     if (name.endsWith('_id')) {
@@ -352,8 +267,6 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     else if (name === 'fecha_compromiso' && value) {
       finalValue = formatDateForInput(value);
     }
-    
-    console.log(`📝 Cambio: ${name} = ${finalValue}`);
     
     setFormData((prev) => ({
       ...prev,
@@ -431,8 +344,6 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         fecha_compromiso: formData.fecha_compromiso ? formatDateForInput(formData.fecha_compromiso) : undefined,
       } as CumplimientoCreate;
       
-      console.log('📤 Enviando cumplimiento:', JSON.stringify(dataToSend, null, 2));
-      
       if (isEdit && cumplimiento) {
         await update(cumplimiento.id, { id: cumplimiento.id, ...dataToSend });
         setSuccess('Cumplimiento actualizado exitosamente');
@@ -445,20 +356,24 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         onSuccess();
         onClose();
       }, 800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Obtener el mensaje de error más detallado posible
-      const backendErrors = err.response?.data;
+      const backendErrors = (err as { response?: { data?: unknown } })?.response?.data;
+      const backendErrorMap =
+        backendErrors && typeof backendErrors === 'object'
+          ? (backendErrors as Record<string, unknown>)
+          : null;
       let errorMsg = 'Error al guardar cumplimiento';
       
       if (backendErrors) {
         // Verificar si es error de unicidad
-        if (backendErrors.non_field_errors && Array.isArray(backendErrors.non_field_errors)) {
-          errorMsg = backendErrors.non_field_errors[0] + '\n\n💡 Este cumplimiento ya existe. Puedes:\n• Editar el cumplimiento existente\n• Seleccionar otro servicio o criterio';
+        if (backendErrorMap?.non_field_errors && Array.isArray(backendErrorMap.non_field_errors)) {
+          errorMsg = `${String(backendErrorMap.non_field_errors[0])}\n\n💡 Este cumplimiento ya existe. Puedes:\n• Editar el cumplimiento existente\n• Seleccionar otro servicio o criterio`;
         }
         // Si es un objeto con múltiples errores (Django DRF)
-        else if (typeof backendErrors === 'object') {
-          const errorLines = Object.entries(backendErrors)
-            .map(([key, value]: [string, any]) => {
+        else if (backendErrorMap) {
+          const errorLines = Object.entries(backendErrorMap)
+            .map(([key, value]) => {
               if (Array.isArray(value)) {
                 return `${key}: ${value.join(', ')}`;
               }
@@ -468,21 +383,11 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         } else {
           errorMsg = String(backendErrors);
         }
-      } else if (err.response?.data?.detail) {
-        errorMsg = err.response.data.detail;
-      } else if (err.response?.data?.message) {
-        errorMsg = err.response.data.message;
-      } else if (err.message) {
-        errorMsg = err.message;
+      } else {
+        errorMsg = extractErrorMessage(err, errorMsg);
       }
       
       setError(errorMsg);
-      console.error('❌ Error en handleSubmit:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-        formData: formData
-      });
     } finally {
       setLoading(false);
     }
@@ -557,15 +462,17 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Servicio del Prestador <span className="text-red-500">*</span>
                 </label>
-                {serviciosState === 'loading' ? (
+                {serviciosState.status === 'loading' ? (
                   <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
                     Cargando servicios...
                   </div>
-                ) : serviciosState === 'no_servicios' ? (
+                ) : serviciosState.status === 'success' && serviciosState.data.length === 0 ? (
                   <div className="w-full px-4 py-3 border border-orange-300 dark:border-orange-600 rounded-lg bg-orange-50 dark:bg-orange-900/20">
                     <p className="text-sm font-medium text-orange-800 dark:text-orange-300">⚠️ No hay servicios disponibles</p>
-                    <p className="text-xs text-orange-700 dark:text-orange-400 mt-2">{serviciosMensaje}</p>
+                    <p className="text-xs text-orange-700 dark:text-orange-400 mt-2">
+                      No hay servicios registrados para esta institución. Debe crear al menos un servicio antes de registrar cumplimientos.
+                    </p>
                     <a 
                       href="/habilitacion/servicios" 
                       className="inline-block text-xs font-medium text-orange-600 dark:text-orange-400 hover:underline mt-2"
@@ -573,12 +480,12 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                       ➜ Ir a Gestión de Servicios
                     </a>
                   </div>
-                ) : serviciosState === 'error' ? (
+                ) : serviciosState.status === 'error' ? (
                   <div className="w-full px-4 py-3 border border-red-300 dark:border-red-600 rounded-lg bg-red-50 dark:bg-red-900/20">
                     <p className="text-sm font-medium text-red-800 dark:text-red-300">❌ Error al cargar servicios</p>
-                    <p className="text-xs text-red-700 dark:text-red-400 mt-2">{serviciosMensaje}</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 mt-2">{serviciosState.error}</p>
                   </div>
-                ) : serviciosState === 'success' ? (
+                ) : serviciosState.status === 'success' ? (
                   <>
                     <select
                       name="servicio_sede_id"
@@ -593,11 +500,10 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                       }`}
                     >
                       <option value={0}>✓ Seleccione un servicio</option>
-                      {servicios.map(s => {
-                        // Manejo de ambas estructuras: desde servicios_disponibles y desde getServiciosDeAutoevaluacion
+                      {serviciosState.data.map(s => {
                         const id = s.id;
-                        const nombre = (s as any).nombre_servicio || (s as any).nombre || '';
-                        const codigo = (s as any).codigo_servicio || (s as any).codigo || '';
+                        const nombre = s.nombre_servicio || '';
+                        const codigo = s.codigo_servicio || '';
                         return (
                           <option key={id} value={id}>
                             {nombre} ({codigo})
@@ -621,10 +527,14 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Criterio de Evaluación <span className="text-red-500">*</span>
                 </label>
-                {criteriosLoading ? (
+                {criteriosState.status === 'loading' ? (
                   <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
                     Cargando criterios...
+                  </div>
+                ) : criteriosState.status === 'error' ? (
+                  <div className="w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
+                    ⚠️ {criteriosState.error}
                   </div>
                 ) : criteriosDelHook.length === 0 ? (
                   <div className="w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
@@ -779,6 +689,16 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
 
             {/* Footer */}
             <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {isEdit && cumplimiento && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 transition-colors font-medium"
+                >
+                  {loading ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleClose}
@@ -788,7 +708,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={loading || success !== '' || servicios.length === 0 || criteriosDelHook.length === 0}
+                disabled={loading || success !== '' || serviciosState.data.length === 0 || criteriosDelHook.length === 0}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors font-medium flex items-center justify-center gap-2"
               >
                 {loading ? (
@@ -820,6 +740,22 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         onClose={() => setShowCloseConfirm(false)}
         confirmText="Descartar"
         cancelText="Continuar editando"
+      />
+      {/* Confirm dialog para eliminar cumplimiento */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Eliminar Cumplimiento"
+        message="¿Estás seguro de que deseas eliminar este cumplimiento? Esta acción no se puede deshacer."
+        onConfirm={() => {
+          if (cumplimiento?.id) {
+            deleteCumplimiento(cumplimiento.id).then(() => {
+              onSuccess?.();
+              onClose?.();
+            }).catch(() => setError('Error eliminando cumplimiento'));
+          }
+          setShowDeleteConfirm(false);
+        }}
+        onClose={() => setShowDeleteConfirm(false)}
       />
     </>
   );

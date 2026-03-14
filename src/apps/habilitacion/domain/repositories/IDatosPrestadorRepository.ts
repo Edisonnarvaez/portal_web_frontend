@@ -1,9 +1,10 @@
 import type { DatosPrestador, DatosPrestadorCreate, DatosPrestadorUpdate } from '../entities';
 import type { ServicioSede } from '../entities/ServicioSede';
 import type { Autoevaluacion } from '../entities/Autoevaluacion';
+import type { DatosPrestadorFilters } from '../types';
 
 export interface IDatosPrestadorRepository {
-  getAll(filters?: Record<string, any>): Promise<DatosPrestador[]>;
+  getAll(filters?: DatosPrestadorFilters): Promise<DatosPrestador[]>;
   getById(id: number): Promise<DatosPrestador>;
   create(data: DatosPrestadorCreate): Promise<DatosPrestador>;
   update(id: number, data: DatosPrestadorUpdate): Promise<DatosPrestador>;

@@ -9,6 +9,15 @@
 
 Esta solución es un portal web para empresas que requieren un control detallado de sus procesos de habilitacion y documentacion asi como el monitoreo de sus indicadores de gestion. Es una plataforma modular y escalable, pensada para organizaciones que necesitan trazabilidad, gobernanza y control sobre procesos, documentos e indicadores. Está diseñada para facilitar la adopción en empresas de distintos sectores que buscan centralizar la gestión de calidad y administrativa.
 
+### ✅ Estado actual (2026-03-14)
+
+- Módulo `habilitacion` con arquitectura por capas (domain/application/infrastructure/presentation).
+- Integración activa con backend de normatividad (`/normativity/estandares` y `/normativity/criterios`).
+- Nuevas páginas operativas para administración normativa:
+  - `/habilitacion/normas`
+  - `/habilitacion/estandares`
+  - `/habilitacion/criterios`
+
 ### 🎯 Objetivos Principales
 
 - **Gestión Documental**: Sistema completo para la administración de documentos y procesos organizacionales
@@ -259,6 +268,7 @@ interface Indicator {
 - Gestión de pólizas y seguros de responsabilidad civil
 - Autoevaluaciones anuales contra criterios de calidad
 - Registro de cumplimiento de requisitos regulatorios
+- Gestión de normatividad (normas, estándares y criterios) con formularios de creación/edición
 
 **Entidades Principales:**
 ```typescript
@@ -296,6 +306,19 @@ interface Autoevaluacion {
 - Seguimiento de autoevaluaciones
 - Mejoras vencidas pendientes de implementación
 - Cumplimiento de criterios por periodo
+
+**Rutas principales del módulo Habilitación:**
+- `/habilitacion/` Gestión general
+- `/habilitacion/dashboard` Dashboard
+- `/habilitacion/cumplimientos` Cumplimientos
+- `/habilitacion/hallazgos` Hallazgos
+- `/habilitacion/planes-mejora` Planes de mejora
+- `/habilitacion/reportes` Reportes
+- `/habilitacion/comparativa` Comparativa
+- `/habilitacion/alertas` Alertas
+- `/habilitacion/normas` Normas
+- `/habilitacion/estandares` Estándares
+- `/habilitacion/criterios` Criterios
 
 ### 5. 🏢 Proveedores y Terceros
 **Funcionalidades:**

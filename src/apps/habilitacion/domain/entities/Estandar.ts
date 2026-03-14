@@ -18,6 +18,18 @@ export interface Estandar {
   fecha_actualizacion?: string;
 }
 
+export interface EstandarCreate {
+  codigo: string;
+  nombre: string;
+  descripcion?: string | null;
+  estado?: boolean;
+  version_resolucion?: string;
+}
+
+export interface EstandarUpdate extends Partial<EstandarCreate> {
+  id: number;
+}
+
 /**
  * Respuesta del endpoint /api/normativity/estandares/
  */

@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import type { Hallazgo, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos, HallazgoPorOrigen } from '../../domain/entities';
+import type { HallazgoFilters } from '../../domain/types';
 import { HallazgoService } from '../../application/services';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 export const useHallazgo = () => {
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
@@ -17,20 +19,20 @@ export const useHallazgo = () => {
   const getHallazgo = useCallback(async (id: number): Promise<Hallazgo> => {
     try {
       return await service.getHallazgo(id);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener hallazgo');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener hallazgo'));
       throw err;
     }
   }, []);
 
-  const fetchHallazgos = useCallback(async (filters?: Record<string, any>) => {
+  const fetchHallazgos = useCallback(async (filters?: HallazgoFilters) => {
     setLoading(true);
     setError(null);
     try {
       const data = await service.getHallazgos(filters);
       setHallazgos(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar hallazgos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar hallazgos'));
     } finally {
       setLoading(false);
     }
@@ -42,19 +44,19 @@ export const useHallazgo = () => {
     try {
       const data = await service.getHallazgosPorAutoevaluacion(autoevaluacionId);
       setHallazgos(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar hallazgos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar hallazgos'));
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchEstadisticas = useCallback(async (filters?: Record<string, any>) => {
+  const fetchEstadisticas = useCallback(async (filters?: HallazgoFilters) => {
     try {
       const data = await service.getEstadisticas(filters);
       setEstadisticas(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar estadísticas');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar estadísticas'));
     }
   }, []);
 
@@ -62,8 +64,8 @@ export const useHallazgo = () => {
     try {
       const data = await service.getAbiertos();
       setAbiertos(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar hallazgos abiertos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar hallazgos abiertos'));
     }
   }, []);
 
@@ -71,8 +73,8 @@ export const useHallazgo = () => {
     try {
       const data = await service.getCriticos();
       setCriticos(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar hallazgos críticos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar hallazgos críticos'));
     }
   }, []);
 
@@ -81,8 +83,8 @@ export const useHallazgo = () => {
       const newHallazgo = await service.createHallazgo(data);
       setHallazgos(prev => [...prev, newHallazgo]);
       return newHallazgo;
-    } catch (err: any) {
-      setError(err.message || 'Error al crear hallazgo');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear hallazgo'));
       throw err;
     }
   }, []);
@@ -92,8 +94,8 @@ export const useHallazgo = () => {
       const updated = await service.updateHallazgo(id, data);
       setHallazgos(prev => prev.map(h => h.id === id ? updated : h));
       return updated;
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar hallazgo');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar hallazgo'));
       throw err;
     }
   }, []);
@@ -102,8 +104,8 @@ export const useHallazgo = () => {
     try {
       await service.deleteHallazgo(id);
       setHallazgos(prev => prev.filter(h => h.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar hallazgo');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar hallazgo'));
       throw err;
     }
   }, []);
@@ -112,8 +114,8 @@ export const useHallazgo = () => {
     try {
       const data = await service.getPorOrigen();
       setPorOrigen(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar hallazgos por origen');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar hallazgos por origen'));
     }
   }, []);
 
@@ -121,8 +123,8 @@ export const useHallazgo = () => {
     try {
       const data = await service.getSinPlan();
       setSinPlan(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar hallazgos sin plan');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar hallazgos sin plan'));
     }
   }, []);
 

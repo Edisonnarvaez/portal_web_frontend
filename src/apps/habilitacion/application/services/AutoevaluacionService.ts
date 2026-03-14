@@ -1,4 +1,5 @@
 import type { Autoevaluacion, AutoevaluacionCreate, AutoevaluacionUpdate, AutoevaluacionResumen } from '../../domain/entities';
+import type { AutoevaluacionFilters } from '../../domain/types';
 import { AutoevaluacionRepository } from '../../infrastructure/repositories';
 
 export class AutoevaluacionService {
@@ -8,7 +9,7 @@ export class AutoevaluacionService {
     this.repository = repository;
   }
 
-  async getAutoevaluaciones(filters?: Record<string, any>): Promise<Autoevaluacion[]> {
+  async getAutoevaluaciones(filters?: AutoevaluacionFilters): Promise<Autoevaluacion[]> {
     return this.repository.getAll(filters);
   }
 

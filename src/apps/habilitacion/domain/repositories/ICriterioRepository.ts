@@ -1,7 +1,15 @@
-import type { Criterio, CriterioCreate, CriterioUpdate, CriterioEvaluacion } from '../entities';
+import type {
+  Criterio,
+  CriterioCreate,
+  CriterioUpdate,
+  CriterioEvaluacion,
+  CriterioEvaluacionCreate,
+  CriterioEvaluacionUpdate,
+} from '../entities';
+import type { CriterioEvaluacionFilters, CriterioFilters } from '../types';
 
 export interface ICriterioRepository {
-  getAll(filters?: Record<string, any>): Promise<Criterio[]>;
+  getAll(filters?: CriterioFilters): Promise<Criterio[]>;
   getById(id: number): Promise<Criterio>;
   create(data: CriterioCreate): Promise<Criterio>;
   update(id: number, data: CriterioUpdate): Promise<Criterio>;
@@ -10,9 +18,9 @@ export interface ICriterioRepository {
 }
 
 export interface ICriterioEvaluacionRepository {
-  getAll(filters?: Record<string, any>): Promise<CriterioEvaluacion[]>;
+  getAll(filters?: CriterioEvaluacionFilters): Promise<CriterioEvaluacion[]>;
   getByAutoevaluacion(autoevaluacionId: number): Promise<CriterioEvaluacion[]>;
-  create(data: any): Promise<CriterioEvaluacion>;
-  update(id: number, data: any): Promise<CriterioEvaluacion>;
+  create(data: CriterioEvaluacionCreate): Promise<CriterioEvaluacion>;
+  update(id: number, data: CriterioEvaluacionUpdate): Promise<CriterioEvaluacion>;
   delete(id: number): Promise<void>;
 }

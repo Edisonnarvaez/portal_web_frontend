@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../../domain/entities';
 import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
+import type { ServicioSedeFilters } from '../../domain/types';
 import { ServicioSedeService } from '../../application/services';
 import { ServicioSedeRepository } from '../../infrastructure/repositories';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 /**
  * useServicioSede
@@ -22,16 +24,15 @@ export const useServicioSede = () => {
   /**
    * Obtener todos los servicios con filtros opcionales
    */
-  const fetchServicios = useCallback(async (filters?: Record<string, any>) => {
+  const fetchServicios = useCallback(async (filters?: ServicioSedeFilters) => {
     setLoading(true);
     setError(null);
     try {
       const data = await service.getServicios(filters);
       setServicios(data);
       return data;
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al cargar servicios';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar servicios'));
       throw err;
     } finally {
       setLoading(false);
@@ -48,9 +49,8 @@ export const useServicioSede = () => {
       const data = await service.getServiciosByPrestador(prestadorId);
       setServicios(data);
       return data;
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al obtener servicios del prestador';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener servicios del prestador'));
       throw err;
     } finally {
       setLoading(false);
@@ -73,9 +73,8 @@ export const useServicioSede = () => {
     setError(null);
     try {
       return await service.getServicio(id);
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al obtener servicio';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener servicio'));
       throw err;
     } finally {
       setLoading(false);
@@ -88,9 +87,8 @@ export const useServicioSede = () => {
   const getCumplimientos = useCallback(async (id: number): Promise<Cumplimiento[]> => {
     try {
       return await service.getCumplimientos(id);
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al obtener cumplimientos';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener cumplimientos'));
       throw err;
     }
   }, []);
@@ -104,9 +102,8 @@ export const useServicioSede = () => {
     setError(null);
     try {
       return await service.getProximosAVencer();
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al obtener próximos a vencer';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener próximos a vencer'));
       throw err;
     } finally {
       setLoading(false);
@@ -121,9 +118,8 @@ export const useServicioSede = () => {
     setError(null);
     try {
       return await service.getPorComplejidad(complejidad);
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al obtener servicios por complejidad';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener servicios por complejidad'));
       throw err;
     } finally {
       setLoading(false);
@@ -141,9 +137,8 @@ export const useServicioSede = () => {
       setServicios(prev => [...prev, newServicio]);
       setError(null);
       return newServicio;
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al crear servicio';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear servicio'));
       throw err;
     }
   }, []);
@@ -157,9 +152,8 @@ export const useServicioSede = () => {
       setServicios(prev => prev.map(s => s.id === id ? updatedServicio : s));
       setError(null);
       return updatedServicio;
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al actualizar servicio';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar servicio'));
       throw err;
     }
   }, []);
@@ -172,9 +166,8 @@ export const useServicioSede = () => {
       await service.deleteServicio(id);
       setServicios(prev => prev.filter(s => s.id !== id));
       setError(null);
-    } catch (err: any) {
-      const errorMsg = err.message || 'Error al eliminar servicio';
-      setError(errorMsg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar servicio'));
       throw err;
     }
   }, []);

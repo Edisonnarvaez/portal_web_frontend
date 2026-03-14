@@ -4,6 +4,8 @@ import type { ServicioSede, ServicioSedeCreate } from '../../domain/entities/Ser
 import { MODALIDADES_SERVICIO, COMPLEJIDADES_SERVICIO, ESTADOS_HABILITACION_SERVICIO } from '../../domain/types';
 import { useServicioSede } from '../hooks/useServicioSede';
 import { useDatosPrestador } from '../hooks/useDatosPrestador';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface Prestador {
   id: number;
@@ -35,7 +37,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, validarDatos } = useServicioSede();
+  const { create, update, delete: deleteServicio, validarDatos } = useServicioSede();
   const { datos: prestadores, fetchDatos: fetchPrestadores } = useDatosPrestador();
   const isEdit = !!servicio;
 
@@ -54,6 +56,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Cargar prestadores si el modal se abre sin prestador seleccionado
   useEffect(() => {
@@ -64,20 +67,20 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
 
   useEffect(() => {
     if (servicio) {
-      // Extraer prestador_id desde el servicio
-      // El backend puede enviar el ID como prestador_id u obtenerlo del code
-      const preId = servicio.prestador_id || prestador?.id;
+      // Extraer prestador_id desde el servicio usando optional chaining
+      // Intentar múltiples fuentes por si el backend varía en la respuesta
+      const preId = servicio?.prestador_id || servicio?.prestador_detail?.id || prestador?.id;
       
       setFormData({
         prestador_id: preId,
-        codigo_servicio: servicio.codigo_servicio,
-        nombre_servicio: servicio.nombre_servicio,
-        descripcion: servicio.descripcion || '',
-        modalidad: servicio.modalidad,
-        complejidad: servicio.complejidad,
-        estado_habilitacion: servicio.estado_habilitacion,
-        fecha_habilitacion: servicio.fecha_habilitacion || '',
-        fecha_vencimiento: servicio.fecha_vencimiento || '',
+        codigo_servicio: servicio?.codigo_servicio || '',
+        nombre_servicio: servicio?.nombre_servicio || '',
+        descripcion: servicio?.descripcion || '',  // ← FIX: Usar optional chaining
+        modalidad: servicio?.modalidad || 'INTRAMURAL',
+        complejidad: servicio?.complejidad || 'BAJA',
+        estado_habilitacion: servicio?.estado_habilitacion || 'EN_PROCESO',
+        fecha_habilitacion: servicio?.fecha_habilitacion || '',
+        fecha_vencimiento: servicio?.fecha_vencimiento || '',
       });
     } else if (prestador) {
       setFormData(prev => ({
@@ -141,9 +144,26 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Error al guardar el servicio';
-      setError(errorMessage);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al guardar el servicio'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!servicio) return;
+    
+    setLoading(true);
+    setError('');
+    try {
+      await deleteServicio(servicio.id);
+      setShowDeleteConfirm(false);
+      onSuccess();
+      onClose();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar el servicio'));
+      setShowDeleteConfirm(false);
     } finally {
       setLoading(false);
     }
@@ -377,6 +397,16 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {isEdit && servicio && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -395,6 +425,18 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Eliminar Servicio"
+        message={`¿Está seguro de que desea eliminar el servicio "${servicio?.nombre_servicio}"? Esta acción no se puede deshacer.`}
+        onConfirm={handleDelete}
+        onClose={() => setShowDeleteConfirm(false)}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+      />
     </div>
   );
 };

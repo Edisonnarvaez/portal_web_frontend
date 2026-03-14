@@ -6,10 +6,10 @@ import { useDatosPrestador, useServicioSede, useAutoevaluacion, useCumplimiento 
 const DashboardHabilitacionPage = () => {
   const [loading, setLoading] = useState(true);
 
-  const { datos: prestadores, fetchDatos: fetchPrestadores, getProximosAVencer } = useDatosPrestador();
-  const { servicios, fetchServicios, getProximosAVencer: getServiciosProximoAVencer } = useServicioSede();
+  const { datos: prestadores, fetchDatos: fetchPrestadores, getPrestadoresProximosAVencer } = useDatosPrestador();
+  const { servicios, fetchServicios, getServiciosProximosAVencer } = useServicioSede();
   const { autoevaluaciones, fetchAutoevaluaciones } = useAutoevaluacion();
-  const { cumplimientos, fetchCumplimientos, getMejorasVencidas } = useCumplimiento();
+  const { fetchCumplimientos, getMejorasVencidas } = useCumplimiento();
 
   const [proximosVencer, setProximosVencer] = useState<any[]>([]);
   const [serviciosProximosVencer, setServiciosProximosVencer] = useState<any[]>([]);
@@ -26,23 +26,31 @@ const DashboardHabilitacionPage = () => {
           fetchCumplimientos(),
         ]);
 
-        const proximos = await getProximosAVencer(90);
+        const proximos = await getPrestadoresProximosAVencer(90);
         setProximosVencer(proximos);
 
-        const serviciosProximo = await getServiciosProximoAVencer(90);
+        const serviciosProximo = await getServiciosProximosAVencer();
         setServiciosProximosVencer(serviciosProximo);
 
         const mejoras = await getMejorasVencidas();
         setMejorasVencidas(mejoras);
       } catch (err) {
-        console.error('Error cargando dashboard', err);
+        // En fallo parcial, el dashboard mantiene valores por defecto para no romper render.
       } finally {
         setLoading(false);
       }
     };
 
     loadDashboardData();
-  }, []);
+  }, [
+    fetchPrestadores,
+    fetchServicios,
+    fetchAutoevaluaciones,
+    fetchCumplimientos,
+    getPrestadoresProximosAVencer,
+    getServiciosProximosAVencer,
+    getMejorasVencidas,
+  ]);
 
   if (loading) return <LoadingScreen />;
 

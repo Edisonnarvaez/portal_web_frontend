@@ -1,11 +1,20 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
-import type { Criterio, CriterioCreate, CriterioUpdate, CriterioEvaluacion } from '../../domain/entities';
+import type {
+  Criterio,
+  CriterioCreate,
+  CriterioUpdate,
+  CriterioEvaluacion,
+  CriterioEvaluacionCreate,
+  CriterioEvaluacionUpdate,
+} from '../../domain/entities';
 import type { ICriterioRepository, ICriterioEvaluacionRepository } from '../../domain/repositories';
+import type { CriterioEvaluacionFilters, CriterioFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class CriterioRepository implements ICriterioRepository {
-  async getAll(filters?: Record<string, any>): Promise<Criterio[]> {
+  async getAll(filters?: CriterioFilters): Promise<Criterio[]> {
     const response = await axiosInstance.get('/normativity/criterios/', { params: filters });
-    return response.data.results || response.data;
+    return parseListResponse<Criterio>(response.data);
   }
 
   async getById(id: number): Promise<Criterio> {
@@ -31,31 +40,29 @@ export class CriterioRepository implements ICriterioRepository {
     const response = await axiosInstance.get('/normativity/criterios/', {
       params: { categoria }
     });
-    return response.data.results || response.data;
+    return parseListResponse<Criterio>(response.data);
   }
 }
 
 export class CriterioEvaluacionRepository implements ICriterioEvaluacionRepository {
-  async getAll(filters?: Record<string, any>): Promise<CriterioEvaluacion[]> {
+  async getAll(filters?: CriterioEvaluacionFilters): Promise<CriterioEvaluacion[]> {
     const response = await axiosInstance.get('/normativity/criterios/', { params: filters });
-    // Manejar respuesta correctamente (puede ser array directo o { results: [...] })
-    return Array.isArray(response.data) ? response.data : (response.data.results || []);
+    return parseListResponse<CriterioEvaluacion>(response.data);
   }
 
   async getByAutoevaluacion(autoevaluacionId: number): Promise<CriterioEvaluacion[]> {
     const response = await axiosInstance.get('/normativity/criterios/', {
       params: { autoevaluacion: autoevaluacionId }
     });
-    // Manejar respuesta correctamente (puede ser array directo o { results: [...] })
-    return Array.isArray(response.data) ? response.data : (response.data.results || []);
+    return parseListResponse<CriterioEvaluacion>(response.data);
   }
 
-  async create(data: any): Promise<CriterioEvaluacion> {
+  async create(data: CriterioEvaluacionCreate): Promise<CriterioEvaluacion> {
     const response = await axiosInstance.post('/normativity/criterios/', data);
     return response.data;
   }
 
-  async update(id: number, data: any): Promise<CriterioEvaluacion> {
+  async update(id: number, data: CriterioEvaluacionUpdate): Promise<CriterioEvaluacion> {
     const response = await axiosInstance.patch(`/normativity/criterios/${id}/`, data);
     return response.data;
   }

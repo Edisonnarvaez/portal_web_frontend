@@ -86,7 +86,7 @@ const CumplimientoPanelPage: React.FC = () => {
             await deleteCumplimiento(deleteTarget.id);
             setDeleteTarget(null);
         } catch (err) {
-            console.error('Error deleting cumplimiento:', err);
+            // La tabla conserva estado actual para permitir reintento desde UI.
         }
     };
 

@@ -28,6 +28,7 @@ import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import { getEstadoLabel, getEstadoColor, formatDate, diasParaVencimiento, getEstadoVencimiento } from '../utils/formatters';
 import LoadingScreen from '../../../../shared/components/LoadingScreen';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 type Tab = 'info' | 'servicios' | 'autoevaluaciones' | 'cumplimientos';
 
@@ -68,7 +69,6 @@ const PrestadorDetailPage: React.FC = () => {
             setPrestador(data);
             return data;
         } catch (err) {
-            console.error('Error loading prestador:', err);
             setPrestador(null);
             return null;
         }
@@ -79,7 +79,6 @@ const PrestadorDetailPage: React.FC = () => {
             const data = await getServicios(prestadorId);
             setServiciosPrestador(data);
         } catch (err) {
-            console.error('Error loading servicios:', err);
             setServiciosPrestador([]);
         }
     }, [prestadorId]);
@@ -90,7 +89,6 @@ const PrestadorDetailPage: React.FC = () => {
             setAutoevaluacionesPrestador(data);
             return data;
         } catch (err) {
-            console.error('Error loading autoevaluaciones:', err);
             setAutoevaluacionesPrestador([]);
             return [];
         }
@@ -104,12 +102,11 @@ const PrestadorDetailPage: React.FC = () => {
         try {
             const results: Cumplimiento[] = [];
             for (const autoId of autoIds) {
-                const data = await cumplimientoService.getCumplimientos({ autoevaluacion: autoId });
+                const data = await cumplimientoService.getCumplimientos({ autoevaluacion_id: autoId });
                 results.push(...data);
             }
             setCumplimientosPrestador(results);
         } catch (err) {
-            console.error('Error loading cumplimientos:', err);
             setCumplimientosPrestador([]);
         }
     }, [cumplimientoService]);
@@ -143,7 +140,7 @@ const PrestadorDetailPage: React.FC = () => {
             await deletePrestador(prestadorId);
             navigate('/habilitacion/');
         } catch (err) {
-            console.error('Error deleting prestador:', err);
+            // Si falla la eliminacion, permanecer en vista detalle para permitir correccion del usuario.
         }
     };
 
@@ -156,16 +153,8 @@ const PrestadorDetailPage: React.FC = () => {
             setShowServicioDeleteDialog(false);
             setServicioAEliminar(null);
             await loadServicios();
-        } catch (err: any) {
-            // Capturar el mensaje de error del backend
-            const errorMessage = 
-                err.response?.data?.detail || 
-                err.response?.data?.error || 
-                err.message || 
-                'No se puede eliminar este servicio';
-            
-            setServicioDeleteError(errorMessage);
-            console.error('Error deleting servicio:', err);
+        } catch (err: unknown) {
+            setServicioDeleteError(extractErrorMessage(err, 'No se puede eliminar este servicio'));
         }
     };
 

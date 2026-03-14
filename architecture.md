@@ -28,6 +28,41 @@ La API del backend está documentada utilizando OpenAPI/Swagger. Para la especif
 - **Open/Closed Principle**: Extensible sin modificar código existente
 - **Interface Segregation**: Interfaces específicas y cohesivas
 
+### Estado de Implementación (Actualizado 2026-03-14)
+
+El frontend implementa una arquitectura por módulo bajo `src/apps/*` y, para `habilitacion`, aplica una separación en cuatro capas:
+
+- `domain`: entidades, contratos de repositorio y tipos de filtros.
+- `application`: servicios de casos de uso que orquestan repositorios.
+- `infrastructure`: clientes HTTP y repositorios concretos.
+- `presentation`: páginas, componentes y hooks de UI.
+
+#### Integración Backend actualmente activa (habilitación)
+
+- Endpoints de normatividad consumidos:
+    - `GET /normativity/estandares/`
+    - `GET /normativity/estandares/{id}/`
+    - `GET /normativity/estandares/todos/`
+    - `GET /normativity/estandares/{id}/criterios/`
+    - `POST/PATCH/DELETE /normativity/estandares/`
+    - `GET/POST/PATCH/DELETE /normativity/criterios/`
+- Parsing uniforme de listas con utilitario compartido (`parseListResponse<T>`).
+- Manejo centralizado de errores en presentación mediante `extractErrorMessage`.
+
+#### Rutas funcionales del módulo Habilitación
+
+- `/habilitacion/` gestión general (prestadores, servicios, autoevaluaciones)
+- `/habilitacion/dashboard` dashboard ejecutivo
+- `/habilitacion/cumplimientos` panel de cumplimiento
+- `/habilitacion/hallazgos` gestión de hallazgos
+- `/habilitacion/planes-mejora` planes de mejora
+- `/habilitacion/reportes` reportes
+- `/habilitacion/comparativa` comparativa de periodos
+- `/habilitacion/alertas` alertas operativas
+- `/habilitacion/normas` gestión normativa agrupada por resolución
+- `/habilitacion/estandares` creación/edición de estándares
+- `/habilitacion/criterios` creación/edición de criterios
+
 ---
 
 ## 🏛️ Arquitectura de Alto Nivel

@@ -1,14 +1,18 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
-import type { Cumplimiento, CumplimientoCreate, CumplimientoUpdate } from '../../domain/entities';
+import type {
+  Cumplimiento,
+  CumplimientoCreate,
+  CumplimientoUpdate,
+  ServiciosDeAutoevaluacionResponse,
+} from '../../domain/entities';
 import type { ICumplimientoRepository } from '../../domain/repositories';
+import type { CumplimientoFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class CumplimientoRepository implements ICumplimientoRepository {
-  async getAll(filters?: Record<string, any>): Promise<Cumplimiento[]> {
+  async getAll(filters?: CumplimientoFilters): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/', { params: filters });
-    // Manejar respuesta paginada correctamente
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
-    return [];
+    return parseListResponse<Cumplimiento>(response.data);
   }
 
   async getById(id: number): Promise<Cumplimiento> {
@@ -32,17 +36,17 @@ export class CumplimientoRepository implements ICumplimientoRepository {
 
   async getSinCumplir(): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/sin_cumplir/');
-    return response.data.results || response.data;
+    return parseListResponse<Cumplimiento>(response.data);
   }
 
   async getConPlanMejora(): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/con_plan_mejora/');
-    return response.data.results || response.data;
+    return parseListResponse<Cumplimiento>(response.data);
   }
 
   async getMejorasVencidas(): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/mejoras_vencidas/');
-    return response.data.results || response.data;
+    return parseListResponse<Cumplimiento>(response.data);
   }
 
   /**
@@ -50,8 +54,8 @@ export class CumplimientoRepository implements ICumplimientoRepository {
    * GET /api/habilitacion/cumplimientos/servicios_de_autoevaluacion/?autoevaluacion_id={id}
    * Retorna: { autoevaluacion, prestador, servicios, total_servicios }
    */
-  async getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<any> {
-    const response = await axiosInstance.get(
+  async getServiciosDeAutoevaluacion(autoevaluacionId: number): Promise<ServiciosDeAutoevaluacionResponse> {
+    const response = await axiosInstance.get<ServiciosDeAutoevaluacionResponse>(
       '/habilitacion/cumplimientos/servicios_de_autoevaluacion/',
       { params: { autoevaluacion_id: autoevaluacionId } }
     );

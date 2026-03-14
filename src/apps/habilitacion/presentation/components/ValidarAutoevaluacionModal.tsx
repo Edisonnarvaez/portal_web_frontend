@@ -9,6 +9,7 @@ import {
 } from 'react-icons/hi2';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
 import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface ValidarAutoevaluacionModalProps {
   isOpen: boolean;
@@ -107,9 +108,8 @@ const ValidarAutoevaluacionModal: React.FC<ValidarAutoevaluacionModalProps> = ({
     try {
       await onValidar(autoevaluacion.id);
       setValidada(true);
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.error || err?.message || 'Error al validar la autoevaluación';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al validar la autoevaluación'));
     } finally {
       setLoading(false);
     }

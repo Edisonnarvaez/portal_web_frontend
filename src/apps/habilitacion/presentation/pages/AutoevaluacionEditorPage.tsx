@@ -90,32 +90,20 @@ const AutoevaluacionEditorPage: React.FC = () => {
 
     const cumplimientosAuto = useMemo(() => {
         const filtered = cumplimientos.filter(c => c.autoevaluacion_id === autoId);
-        if (filtered.length > 0) {
-            console.log('✓ cumplimientos filtrados por autoevaluacion_id:', filtered.length);
-            return filtered;
-        }
-        console.log('⚠️ No hay cumplimientos para esta autoevaluación. Total en state:', cumplimientos.length);
+        // Si no hay coincidencias, devolver vacío para reflejar estado real de esta autoevaluación.
         return filtered;
     }, [cumplimientos, autoId]);
 
     const hallazgosAuto = useMemo(() => {
         const filtered = hallazgos.filter(h => h.autoevaluacion_id === autoId);
-        if (filtered.length > 0) {
-            console.log('✓ hallazgos filtrados por autoevaluacion_id:', filtered.length);
-            return filtered;
-        }
-        console.log('✓ hallazgos (backend ya filtrado):', hallazgos.length);
-        return hallazgos;
+        // Fallback histórico: si backend ya viene filtrado, mantener dataset original.
+        return filtered.length > 0 ? filtered : hallazgos;
     }, [hallazgos, autoId]);
 
     const planesAuto = useMemo(() => {
         const filtered = planes.filter(p => p.autoevaluacion_id === autoId);
-        if (filtered.length > 0) {
-            console.log('✓ planes filtrados por autoevaluacion_id:', filtered.length);
-            return filtered;
-        }
-        console.log('✓ planes (backend ya filtrado):', planes.length);
-        return planes;
+        // Fallback histórico: si backend ya viene filtrado, mantener dataset original.
+        return filtered.length > 0 ? filtered : planes;
     }, [planes, autoId]);
 
     // Obtener criterios específicos solo de esta autoevaluación
@@ -123,7 +111,6 @@ const AutoevaluacionEditorPage: React.FC = () => {
     const criteriosAuto = useMemo(() => {
         // Asegurar que evaluaciones es siempre un array
         if (!Array.isArray(evaluaciones) || evaluaciones.length === 0) {
-            console.warn('⚠️ evaluaciones vacío, mostrando todos los criterios');
             return criterios;
         }
         
@@ -134,23 +121,18 @@ const AutoevaluacionEditorPage: React.FC = () => {
                 criterioIds.add(e.criterio_id);
             }
         });
-        
-        console.log('✓ criterioIds extraído:', Array.from(criterioIds), 'cantidad:', criterioIds.size);
-        
+
         if (criterioIds.size === 0) {
             // Si no hay criterio_id válidos en evaluaciones, mostrar todos los criterios
-            console.warn('⚠️ No hay criterio_ids válidos en evaluaciones, mostrando TODOS los criterios como fallback');
             return criterios;
         }
         
         // Intentar hacer match
         const filtered = criterios.filter(c => criterioIds.has(c.id));
-        console.log('✓ CRITERIOS FILTRADOS:', filtered.length, 'de', criterios.length);
-        
+
         if (filtered.length === 0) {
             // Si el filtrado retorna vacío, es porque los IDs no coinciden
             // Mostrar todos los criterios como fallback
-            console.warn('⚠️ No coincidieron criterios con las evaluaciones, mostrando TODOS como fallback');
             return criterios;
         }
         
@@ -193,7 +175,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
             setDeletingCumplimiento(null);
             fetchCumplimientos({ autoevaluacion_id: autoId });
         } catch (err) {
-            console.error('Error eliminando cumplimiento:', err);
+            // El modal de confirmación permanece abierto para permitir reintento del usuario.
         }
     };
 
@@ -204,7 +186,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
             setDeletingHallazgo(null);
             fetchHallazgos({ autoevaluacion_id: autoId });
         } catch (err) {
-            console.error('Error eliminando hallazgo:', err);
+            // El modal de confirmación permanece abierto para permitir reintento del usuario.
         }
     };
 
@@ -215,20 +197,9 @@ const AutoevaluacionEditorPage: React.FC = () => {
             setDeletingPlan(null);
             fetchPlanes({ autoevaluacion_id: autoId });
         } catch (err) {
-            console.error('Error eliminando plan de mejora:', err);
+            // El modal de confirmación permanece abierto para permitir reintento del usuario.
         }
     };
-    
-    // DEBUG: Log de estados para diagnosticar problemas
-    console.log('✓ AUTO-PAGE RENDER:', {
-        autoId,
-        criterios_count: criterios.length,
-        evaluaciones_count: evaluaciones.length,
-        criteriosAuto_count: criteriosAuto.length,
-        cumplimientosAuto_count: cumplimientosAuto.length,
-        hallazgosAuto_count: hallazgosAuto.length,
-        planesAuto_count: planesAuto.length,
-    });
 
     const tabs: { key: EditorTab; label: string; count: number }[] = [
         { key: 'criterios', label: 'Criterios', count: criteriosAuto.length },

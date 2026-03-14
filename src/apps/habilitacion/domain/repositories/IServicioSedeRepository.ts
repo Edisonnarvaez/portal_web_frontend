@@ -1,5 +1,6 @@
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate } from '../entities';
 import type { Cumplimiento } from '../entities/Cumplimiento';
+import type { ServicioSedeFilters } from '../types';
 
 /**
  * IServicioSedeRepository
@@ -11,7 +12,7 @@ export interface IServicioSedeRepository {
    * Obtener todos los servicios con filtros opcionales
    * Soporta filtros: prestador, modalidad, complejidad, estado_habilitacion
    */
-  getAll(filters?: Record<string, any>): Promise<ServicioSede[]>;
+  getAll(filters?: ServicioSedeFilters): Promise<ServicioSede[]>;
 
   /**
    * Obtener un servicio específico por ID

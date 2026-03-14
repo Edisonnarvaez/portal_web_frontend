@@ -1,6 +1,15 @@
 import { useState, useCallback } from 'react';
-import type { Criterio, CriterioCreate, CriterioUpdate, CriterioEvaluacion } from '../../domain/entities';
+import type {
+  Criterio,
+  CriterioCreate,
+  CriterioUpdate,
+  CriterioEvaluacion,
+  CriterioEvaluacionCreate,
+  CriterioEvaluacionUpdate,
+} from '../../domain/entities';
+import type { CriterioFilters } from '../../domain/types';
 import { CriterioService } from '../../application/services';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 export const useCriterio = () => {
   const [criterios, setCriterios] = useState<Criterio[]>([]);
@@ -10,15 +19,15 @@ export const useCriterio = () => {
 
   const service = new CriterioService();
 
-  const fetchCriterios = useCallback(async (filters?: Record<string, any>) => {
+  const fetchCriterios = useCallback(async (filters?: CriterioFilters) => {
     setLoading(true);
     setError(null);
     try {
       const data = await service.getCriterios(filters);
       setCriterios(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar criterios');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar criterios'));
       throw err;
     } finally {
       setLoading(false);
@@ -35,8 +44,8 @@ export const useCriterio = () => {
       try {
         const data = await service.getCriteriosPorComplejidad(complejidad);
         return data;
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar criterios por complejidad');
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err, 'Error al cargar criterios por complejidad'));
         throw err;
       } finally {
         setLoading(false);
@@ -54,8 +63,8 @@ export const useCriterio = () => {
     try {
       const data = await service.getCriteriosMandatorios();
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar criterios mandatorios');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar criterios mandatorios'));
       throw err;
     } finally {
       setLoading(false);
@@ -71,8 +80,8 @@ export const useCriterio = () => {
     try {
       const data = await service.getCriteriosConEvidencia();
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar criterios con evidencia');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar criterios con evidencia'));
       throw err;
     } finally {
       setLoading(false);
@@ -88,8 +97,8 @@ export const useCriterio = () => {
     try {
       const data = await service.getCriteriosPorEstandar(estandarId);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar criterios por estándar');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar criterios por estándar'));
       throw err;
     } finally {
       setLoading(false);
@@ -103,8 +112,8 @@ export const useCriterio = () => {
       const data = await service.getEvaluacionesByCriterio(autoevaluacionId);
       setEvaluaciones(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar evaluaciones');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar evaluaciones'));
       throw err;
     } finally {
       setLoading(false);
@@ -116,8 +125,8 @@ export const useCriterio = () => {
       const newCriterio = await service.createCriterio(data);
       setCriterios(prev => [...prev, newCriterio]);
       return newCriterio;
-    } catch (err: any) {
-      setError(err.message || 'Error al crear criterio');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear criterio'));
       throw err;
     }
   }, []);
@@ -127,8 +136,8 @@ export const useCriterio = () => {
       const updated = await service.updateCriterio(id, data);
       setCriterios(prev => prev.map(c => c.id === id ? updated : c));
       return updated;
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar criterio');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar criterio'));
       throw err;
     }
   }, []);
@@ -137,30 +146,30 @@ export const useCriterio = () => {
     try {
       await service.deleteCriterio(id);
       setCriterios(prev => prev.filter(c => c.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar criterio');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar criterio'));
       throw err;
     }
   }, []);
 
-  const createEvaluacion = useCallback(async (data: any) => {
+  const createEvaluacion = useCallback(async (data: CriterioEvaluacionCreate) => {
     try {
       const newEval = await service.createEvaluacion(data);
       setEvaluaciones(prev => [...prev, newEval]);
       return newEval;
-    } catch (err: any) {
-      setError(err.message || 'Error al crear evaluación');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear evaluación'));
       throw err;
     }
   }, []);
 
-  const updateEvaluacion = useCallback(async (id: number, data: any) => {
+  const updateEvaluacion = useCallback(async (id: number, data: CriterioEvaluacionUpdate) => {
     try {
       const updated = await service.updateEvaluacion(id, data);
       setEvaluaciones(prev => prev.map(e => e.id === id ? updated : e));
       return updated;
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar evaluación');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar evaluación'));
       throw err;
     }
   }, []);

@@ -1,4 +1,5 @@
-import type { Estandar, EstandarDetail } from '../../domain/entities/Estandar';
+import type { Estandar, EstandarCreate, EstandarDetail, EstandarUpdate } from '../../domain/entities/Estandar';
+import type { Criterio } from '../../domain/entities/Criterio';
 import { EstandarRepository } from '../../infrastructure/repositories';
 
 export class EstandarService {
@@ -16,7 +17,6 @@ export class EstandarService {
     try {
       return await this.repository.getAll();
     } catch (error) {
-      console.error('Error fetching estandares:', error);
       throw error;
     }
   }
@@ -29,7 +29,6 @@ export class EstandarService {
     try {
       return await this.repository.getAllWithCriterios();
     } catch (error) {
-      console.error('Error fetching full estandares:', error);
       throw error;
     }
   }
@@ -42,7 +41,6 @@ export class EstandarService {
     try {
       return await this.repository.getById(id);
     } catch (error) {
-      console.error(`Error fetching estandar ${id}:`, error);
       throw error;
     }
   }
@@ -51,12 +49,23 @@ export class EstandarService {
    * Get criterios for a specific standard
    * GET /api/normativity/estandares/{id}/criterios/
    */
-  async getCriteriosByEstandar(estandarId: number): Promise<any[]> {
+  async getCriteriosByEstandar(estandarId: number): Promise<Criterio[]> {
     try {
       return await this.repository.getCriteriosByEstandar(estandarId);
     } catch (error) {
-      console.error(`Error fetching criterios for estandar ${estandarId}:`, error);
       throw error;
     }
+  }
+
+  async createEstandar(data: EstandarCreate): Promise<Estandar> {
+    return this.repository.create(data);
+  }
+
+  async updateEstandar(id: number, data: EstandarUpdate): Promise<Estandar> {
+    return this.repository.update(id, data);
+  }
+
+  async deleteEstandar(id: number): Promise<void> {
+    return this.repository.delete(id);
   }
 }

@@ -1,6 +1,7 @@
 import type { DatosPrestador, DatosPrestadorCreate, DatosPrestadorUpdate } from '../../domain/entities';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
+import type { DatosPrestadorFilters } from '../../domain/types';
 import { DatosPrestadorRepository } from '../../infrastructure/repositories';
 
 export class DatosPrestadorService {
@@ -10,7 +11,7 @@ export class DatosPrestadorService {
     this.repository = repository;
   }
 
-  async getDatosPrestadores(filters?: Record<string, any>): Promise<DatosPrestador[]> {
+  async getDatosPrestadores(filters?: DatosPrestadorFilters): Promise<DatosPrestador[]> {
     return this.repository.getAll(filters);
   }
 

@@ -1,4 +1,12 @@
-import type { Criterio, CriterioCreate, CriterioUpdate, CriterioEvaluacion } from '../../domain/entities';
+import type {
+  Criterio,
+  CriterioCreate,
+  CriterioUpdate,
+  CriterioEvaluacion,
+  CriterioEvaluacionCreate,
+  CriterioEvaluacionUpdate,
+} from '../../domain/entities';
+import type { CriterioFilters } from '../../domain/types';
 import { CriterioRepository, CriterioEvaluacionRepository } from '../../infrastructure/repositories';
 
 export class CriterioService {
@@ -13,7 +21,7 @@ export class CriterioService {
     this.evaluacionRepository = evaluacionRepository || new CriterioEvaluacionRepository();
   }
 
-  async getCriterios(filters?: Record<string, any>): Promise<Criterio[]> {
+  async getCriterios(filters?: CriterioFilters): Promise<Criterio[]> {
     return this.repository.getAll(filters);
   }
 
@@ -69,11 +77,11 @@ export class CriterioService {
     return this.evaluacionRepository.getByAutoevaluacion(autoevaluacionId);
   }
 
-  async createEvaluacion(data: any): Promise<CriterioEvaluacion> {
+  async createEvaluacion(data: CriterioEvaluacionCreate): Promise<CriterioEvaluacion> {
     return this.evaluacionRepository.create(data);
   }
 
-  async updateEvaluacion(id: number, data: any): Promise<CriterioEvaluacion> {
+  async updateEvaluacion(id: number, data: CriterioEvaluacionUpdate): Promise<CriterioEvaluacion> {
     return this.evaluacionRepository.update(id, data);
   }
 

@@ -5,6 +5,8 @@ import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
 import { ESTADOS_AUTOEVALUACION } from '../../domain/types';
 import { useAutoevaluacion } from '../hooks/useAutoevaluacion';
 import { useDatosPrestador } from '../hooks/useDatosPrestador';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface AutoevaluacionFormModalProps {
   isOpen: boolean;
@@ -21,7 +23,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, autoevaluaciones } = useAutoevaluacion();
+  const { create, update, delete: deleteAutoevaluacion, autoevaluaciones } = useAutoevaluacion();
   const { datos: prestadores } = useDatosPrestador();
   const isEdit = !!autoevaluacion;
 
@@ -39,6 +41,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [prestadoresFiltered, setPrestadoresFiltered] = useState<PrestadorOption[]>([]);
   const [selectedPrestador, setSelectedPrestador] = useState<DatosPrestador | null>(null);
 
@@ -187,10 +190,8 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
         onSuccess(created);
       }
       onClose();
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.detail || err.message || 'Error al guardar autoevaluación';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al guardar autoevaluación'));
     } finally {
       setLoading(false);
     }
@@ -398,6 +399,16 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 
           {/* Footer */}
           <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {isEdit && autoevaluacion && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 transition-colors font-medium"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -414,6 +425,20 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
             </button>
           </div>
         </form>
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          title="Eliminar Autoevaluación"
+          message="¿Estás seguro de que deseas eliminar esta autoevaluación? Esta acción no se puede deshacer."
+          onConfirm={() => {
+            if (autoevaluacion?.id) {
+              deleteAutoevaluacion(autoevaluacion.id).then(() => {
+                onSuccess?.(autoevaluacion);
+                onClose?.();
+              }).catch(() => setError('Error eliminando autoevaluación'));
+            }
+          }}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>
   );

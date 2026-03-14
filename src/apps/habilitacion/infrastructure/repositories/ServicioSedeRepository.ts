@@ -2,6 +2,8 @@ import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 import type { ServicioSede, ServicioSedeCreate, ServicioSedeUpdate, ServicioSedeListResponse } from '../../domain/entities';
 import type { Cumplimiento } from '../../domain/entities/Cumplimiento';
 import type { IServicioSedeRepository } from '../../domain/repositories';
+import type { ServicioSedeFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 /**
  * ServicioSedeRepository
@@ -15,11 +17,11 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
    * GET /api/habilitacion/servicios/
    * Parámetros soportados: prestador, modalidad, complejidad, estado_habilitacion
    */
-  async getAll(filters?: Record<string, any>): Promise<ServicioSede[]> {
+  async getAll(filters?: ServicioSedeFilters): Promise<ServicioSede[]> {
     const response = await axiosInstance.get<ServicioSedeListResponse>('/habilitacion/servicios/', {
       params: filters
     });
-    return response.data.results || response.data;
+    return parseListResponse<ServicioSede>(response.data);
   }
 
   /**
@@ -68,7 +70,7 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
     const response = await axiosInstance.get<ServicioSedeListResponse>('/habilitacion/servicios/', {
       params: { prestador: prestadorId }
     });
-    return response.data.results || response.data;
+    return parseListResponse<ServicioSede>(response.data);
   }
 
   /**
@@ -79,7 +81,7 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
     const response = await axiosInstance.get<ServicioSedeListResponse>(
       '/habilitacion/servicios/proximos_a_vencer/'
     );
-    return response.data.results || response.data;
+    return parseListResponse<ServicioSede>(response.data);
   }
 
   /**
@@ -87,10 +89,10 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
    * GET /api/habilitacion/servicios/{id}/cumplimientos/
    */
   async getCumplimientos(id: number): Promise<Cumplimiento[]> {
-    const response = await axiosInstance.get<{ results: Cumplimiento[] }>(
+    const response = await axiosInstance.get<{ results?: Cumplimiento[] } | Cumplimiento[]>(
       `/habilitacion/servicios/${id}/cumplimientos/`
     );
-    return response.data.results || response.data;
+    return parseListResponse<Cumplimiento>(response.data);
   }
 
   /**
@@ -104,7 +106,7 @@ export class ServicioSedeRepository implements IServicioSedeRepository {
         params: { complejidad }
       }
     );
-    return response.data.results || response.data;
+    return parseListResponse<ServicioSede>(response.data);
   }
 
   /**

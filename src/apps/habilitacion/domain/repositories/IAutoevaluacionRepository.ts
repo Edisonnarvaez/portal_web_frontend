@@ -1,7 +1,8 @@
 import type { Autoevaluacion, AutoevaluacionCreate, AutoevaluacionUpdate, AutoevaluacionResumen } from '../entities';
+import type { AutoevaluacionFilters } from '../types';
 
 export interface IAutoevaluacionRepository {
-  getAll(filters?: Record<string, any>): Promise<Autoevaluacion[]>;
+  getAll(filters?: AutoevaluacionFilters): Promise<Autoevaluacion[]>;
   getById(id: number): Promise<Autoevaluacion>;
   create(data: AutoevaluacionCreate): Promise<Autoevaluacion>;
   update(id: number, data: AutoevaluacionUpdate): Promise<Autoevaluacion>;

@@ -4,6 +4,8 @@ import type { Hallazgo, HallazgoCreate } from '../../domain/entities/Hallazgo';
 import type { OrigenTipo } from '../../domain/entities/PlanMejora';
 import { TIPOS_HALLAZGO, SEVERIDADES_HALLAZGO, ESTADOS_HALLAZGO, ORIGENES_TIPO } from '../../domain/types';
 import { useHallazgo } from '../hooks/useHallazgo';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface HallazgoFormModalProps {
   isOpen: boolean;
@@ -28,7 +30,7 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { createHallazgo, updateHallazgo } = useHallazgo();
+  const { createHallazgo, updateHallazgo, deleteHallazgo } = useHallazgo();
   const isEdit = !!hallazgo;
 
   const [formData, setFormData] = useState<Partial<HallazgoCreate>>({
@@ -48,6 +50,7 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (hallazgo) {
@@ -95,6 +98,22 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
     }));
   };
 
+  const handleDelete = async () => {
+    if (!hallazgo?.id) return;
+    setLoading(true);
+    setError('');
+    try {
+      await deleteHallazgo(hallazgo.id);
+      onSuccess?.();
+      onClose?.();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error eliminando hallazgo'));
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -120,10 +139,8 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
       }
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.detail || err.message || 'Error al guardar hallazgo';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al guardar hallazgo'));
     } finally {
       setLoading(false);
     }
@@ -395,6 +412,16 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
 
           {/* Footer */}
           <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {isEdit && hallazgo && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 transition-colors font-medium"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -411,6 +438,13 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
             </button>
           </div>
         </form>
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          title="Eliminar Hallazgo"
+          message={`¿Estás seguro de que deseas eliminar este hallazgo? Esta acción no se puede deshacer.`}
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>
   );

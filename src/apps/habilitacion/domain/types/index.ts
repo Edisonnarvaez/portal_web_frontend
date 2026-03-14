@@ -168,3 +168,5 @@ export const COMPLEJIDADES_CRITERIO = [
 ] as const;
 
 export type ComplejidadCriterio = typeof COMPLEJIDADES_CRITERIO[number]['value'];
+
+export * from './filters';

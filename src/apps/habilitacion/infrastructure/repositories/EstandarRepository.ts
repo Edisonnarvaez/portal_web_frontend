@@ -1,15 +1,18 @@
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
-import type { Estandar, EstandarDetail } from '../../domain/entities';
+import type { Estandar, EstandarCreate, EstandarDetail, EstandarUpdate } from '../../domain/entities';
+import type { Criterio } from '../../domain/entities/Criterio';
 import type { IEstandarRepository } from '../../domain/repositories';
+import type { EstandarFilters } from '../../domain/types';
+import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class EstandarRepository implements IEstandarRepository {
   /**
    * Get all standards (simplified list)
    * GET /api/normativity/estandares/
    */
-  async getAll(filters?: Record<string, any>): Promise<Estandar[]> {
+  async getAll(filters?: EstandarFilters): Promise<Estandar[]> {
     const response = await axiosInstance.get('/normativity/estandares/', { params: filters });
-    return response.data.results || response.data;
+    return parseListResponse<Estandar>(response.data);
   }
 
   /**
@@ -27,15 +30,29 @@ export class EstandarRepository implements IEstandarRepository {
    */
   async getAllWithCriterios(): Promise<Estandar[]> {
     const response = await axiosInstance.get('/normativity/estandares/todos/');
-    return Array.isArray(response.data) ? response.data : (response.data.results || []);
+    return parseListResponse<Estandar>(response.data);
   }
 
   /**
    * Get criterios for a specific standard
    * GET /api/normativity/estandares/{id}/criterios/
    */
-  async getCriteriosByEstandar(estandarId: number): Promise<any[]> {
+  async getCriteriosByEstandar(estandarId: number): Promise<Criterio[]> {
     const response = await axiosInstance.get(`/normativity/estandares/${estandarId}/criterios/`);
-    return Array.isArray(response.data) ? response.data : (response.data.results || []);
+    return parseListResponse<Criterio>(response.data);
+  }
+
+  async create(data: EstandarCreate): Promise<Estandar> {
+    const response = await axiosInstance.post('/normativity/estandares/', data);
+    return response.data;
+  }
+
+  async update(id: number, data: EstandarUpdate): Promise<Estandar> {
+    const response = await axiosInstance.patch(`/normativity/estandares/${id}/`, data);
+    return response.data;
+  }
+
+  async delete(id: number): Promise<void> {
+    await axiosInstance.delete(`/normativity/estandares/${id}/`);
   }
 }

@@ -13,6 +13,7 @@ import {
   HiOutlineRocketLaunch,
 } from 'react-icons/hi2';
 import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface RenovacionWizardProps {
   isOpen: boolean;
@@ -50,9 +51,8 @@ const RenovacionWizard: React.FC<RenovacionWizardProps> = ({
       const updated = await onIniciarRenovacion(prestador.id);
       setResultado(updated);
       setStep('resultado');
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.error || err?.message || 'Error al iniciar la renovación';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al iniciar la renovación'));
     } finally {
       setLoading(false);
     }

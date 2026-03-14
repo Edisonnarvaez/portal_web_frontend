@@ -1,4 +1,5 @@
 import type { Hallazgo, HallazgoDetail, HallazgoCreate, HallazgoUpdate, EstadisticasHallazgos, HallazgoPorOrigen } from '../../domain/entities';
+import type { HallazgoFilters } from '../../domain/types';
 import { HallazgoRepository } from '../../infrastructure/repositories';
 
 export class HallazgoService {
@@ -8,7 +9,7 @@ export class HallazgoService {
     this.repository = repository || new HallazgoRepository();
   }
 
-  async getHallazgos(filters?: Record<string, any>): Promise<Hallazgo[]> {
+  async getHallazgos(filters?: HallazgoFilters): Promise<Hallazgo[]> {
     return this.repository.getAll(filters);
   }
 
@@ -32,7 +33,7 @@ export class HallazgoService {
     return this.repository.delete(id);
   }
 
-  async getEstadisticas(filters?: Record<string, any>): Promise<EstadisticasHallazgos> {
+  async getEstadisticas(filters?: HallazgoFilters): Promise<EstadisticasHallazgos> {
     return this.repository.getEstadisticas(filters);
   }
 

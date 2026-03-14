@@ -2,8 +2,10 @@ import { useState, useCallback } from 'react';
 import type { DatosPrestador, DatosPrestadorCreate, DatosPrestadorUpdate } from '../../domain/entities';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
+import type { DatosPrestadorFilters } from '../../domain/types';
 import { DatosPrestadorService } from '../../application/services';
 import { DatosPrestadorRepository } from '../../infrastructure/repositories';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 export const useDatosPrestador = () => {
   const [datos, setDatos] = useState<DatosPrestador[]>([]);
@@ -15,15 +17,15 @@ export const useDatosPrestador = () => {
   const repository = new DatosPrestadorRepository();
   const service = new DatosPrestadorService(repository);
 
-  const fetchDatos = useCallback(async (filters?: Record<string, any>) => {
+  const fetchDatos = useCallback(async (filters?: DatosPrestadorFilters) => {
     setLoading(true);
     setError(null);
     try {
       const data = await service.getDatosPrestadores(filters);
       setDatos(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar datos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar datos'));
       throw err;
     } finally {
       setLoading(false);
@@ -39,8 +41,8 @@ export const useDatosPrestador = () => {
     try {
       const data = await service.getDatosPrestador(id);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar prestador');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar prestador'));
       throw err;
     } finally {
       setLoading(false);
@@ -57,8 +59,8 @@ export const useDatosPrestador = () => {
       const data = await service.getProximosAVencer(dias);
       setProximosAVencer(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener próximos a vencer');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener próximos a vencer'));
       throw err;
     } finally {
       setLoading(false);
@@ -75,8 +77,8 @@ export const useDatosPrestador = () => {
       const data = await service.getVencidos();
       setVencidos(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener vencidos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener vencidos'));
       throw err;
     } finally {
       setLoading(false);
@@ -88,8 +90,8 @@ export const useDatosPrestador = () => {
       const newData = await service.createDatosPrestador(data);
       setDatos(prev => [...prev, newData]);
       return newData;
-    } catch (err: any) {
-      setError(err.message || 'Error al crear datos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear datos'));
       throw err;
     }
   }, []);
@@ -99,8 +101,8 @@ export const useDatosPrestador = () => {
       const updatedData = await service.updateDatosPrestador(id, data);
       setDatos(prev => prev.map(d => d.id === id ? updatedData : d));
       return updatedData;
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar datos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar datos'));
       throw err;
     }
   }, []);
@@ -109,8 +111,8 @@ export const useDatosPrestador = () => {
     try {
       await service.deleteDatosPrestador(id);
       setDatos(prev => prev.filter(d => d.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar datos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar datos'));
       throw err;
     }
   }, []);
@@ -122,8 +124,8 @@ export const useDatosPrestador = () => {
       const updated = await service.iniciarRenovacion(id);
       setDatos(prev => prev.map(d => d.id === id ? updated : d));
       return updated;
-    } catch (err: any) {
-      setError(err.message || 'Error al iniciar renovación');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al iniciar renovación'));
       throw err;
     } finally {
       setLoading(false);
@@ -133,8 +135,8 @@ export const useDatosPrestador = () => {
   const getServicios = useCallback(async (id: number): Promise<ServicioSede[]> => {
     try {
       return await service.getServicios(id);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener servicios del prestador');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener servicios del prestador'));
       throw err;
     }
   }, []);
@@ -142,8 +144,8 @@ export const useDatosPrestador = () => {
   const getAutoevaluaciones = useCallback(async (id: number): Promise<Autoevaluacion[]> => {
     try {
       return await service.getAutoevaluaciones(id);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener autoevaluaciones del prestador');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener autoevaluaciones del prestador'));
       throw err;
     }
   }, []);

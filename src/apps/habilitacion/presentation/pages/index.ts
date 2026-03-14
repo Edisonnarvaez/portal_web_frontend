@@ -11,3 +11,6 @@ export { default as HallazgosPage } from './HallazgosPage';
 export { default as ReporteCumplimientoPage } from './ReporteCumplimientoPage';
 export { default as ComparativaPeriodosPage } from './ComparativaPeriodosPage';
 export { default as AlertasHabilitacionPage } from './AlertasHabilitacionPage';
+export { default as EstandaresPage } from './EstandaresPage';
+export { default as CriteriosPage } from './CriteriosPage';
+export { default as NormasPage } from './NormasPage';

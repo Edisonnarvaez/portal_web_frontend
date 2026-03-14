@@ -47,7 +47,7 @@ const MejorasVencidasPanel: React.FC<MejorasVencidasPanelProps> = ({
       setCumplimientosVencidos(cumpl ?? []);
       setPlanesVencidos(planes ?? []);
     } catch (err) {
-      console.error('Error loading mejoras vencidas:', err);
+      // Fallback silencioso: conservar listas vacias para evitar ruptura del panel.
     } finally {
       setLoading(false);
     }

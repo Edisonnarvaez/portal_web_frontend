@@ -4,6 +4,8 @@ import { CLASES_PRESTADOR, ESTADOS_HABILITACION_PRESTADOR } from '../../domain/t
 import type { DatosPrestador, DatosPrestadorCreate } from '../../domain/entities/DatosPrestador';
 import { useDatosPrestador } from '../hooks/useDatosPrestador';
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface Headquarter {
   id: number;
@@ -19,7 +21,8 @@ interface PrestadorFormModalProps {
 }
 
 const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestador, headquartersId, onClose, onSuccess }) => {
-  const { create, update } = useDatosPrestador();
+  const { create, update, delete: deleteDatos } = useDatosPrestador();
+  const isEdit = !!prestador;
   const [sedes, setSedes] = useState<Headquarter[]>([]);
   const [loadingSedes, setLoadingSedes] = useState(false);
   const [formData, setFormData] = useState<Partial<DatosPrestadorCreate>>(
@@ -56,6 +59,7 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (isOpen && !headquartersId) {
@@ -88,8 +92,8 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
         await create(formData as DatosPrestadorCreate);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Error al guardar');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al guardar'));
     } finally {
       setLoading(false);
     }
@@ -269,6 +273,16 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {isEdit && prestador && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 transition-colors font-medium"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -285,6 +299,20 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
             </button>
           </div>
         </form>
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          title="Eliminar Prestador"
+          message="¿Estás seguro de que deseas eliminar este prestador? Esta acción no se puede deshacer."
+          onConfirm={() => {
+            if (prestador?.id) {
+              deleteDatos(prestador.id).then(() => {
+                onSuccess?.();
+                onClose?.();
+              }).catch(() => setError('Error eliminando prestador'));
+            }
+          }}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>
   );

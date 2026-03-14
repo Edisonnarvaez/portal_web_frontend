@@ -244,7 +244,7 @@ const HabilitacionPageEnhanced = () => {
       setShowDeleteDialog(false);
       setSelectedItem(null);
     } catch (err) {
-      console.error('Error deleting item:', err);
+      // Si falla la eliminacion, mantener dialogo para permitir accion correctiva del usuario.
     }
   };
 

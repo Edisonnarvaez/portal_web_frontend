@@ -8,6 +8,7 @@ import {
   HiOutlineExclamationTriangle,
 } from 'react-icons/hi2';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 interface DuplicarAutoevaluacionModalProps {
   isOpen: boolean;
@@ -34,9 +35,8 @@ const DuplicarAutoevaluacionModal: React.FC<DuplicarAutoevaluacionModalProps> = 
     try {
       const nueva = await onDuplicar(autoevaluacion.id);
       setResultado(nueva);
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.error || err?.message || 'Error al duplicar la autoevaluación';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al duplicar la autoevaluación'));
     } finally {
       setLoading(false);
     }

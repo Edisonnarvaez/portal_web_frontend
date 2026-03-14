@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import type { PlanMejora, PlanMejoraCreate, PlanMejoraUpdate, PlanMejoraResumen, PlanMejoraPorOrigen, SoportePlan } from '../../domain/entities';
+import type { PlanMejoraFilters } from '../../domain/types';
 import { PlanMejoraService } from '../../application/services';
+import { extractErrorMessage } from '../../shared/utils/error';
 
 export const usePlanMejora = () => {
   const [planes, setPlanes] = useState<PlanMejora[]>([]);
@@ -17,20 +19,20 @@ export const usePlanMejora = () => {
   const getPlanDeMejora = useCallback(async (id: number): Promise<PlanMejora> => {
     try {
       return await service.getPlanDeMejora(id);
-    } catch (err: any) {
-      setError(err.message || 'Error al obtener plan de mejora');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al obtener plan de mejora'));
       throw err;
     }
   }, []);
 
-  const fetchPlanes = useCallback(async (filters?: Record<string, any>) => {
+  const fetchPlanes = useCallback(async (filters?: PlanMejoraFilters) => {
     setLoading(true);
     setError(null);
     try {
       const data = await service.getPlanesDeMejora(filters);
       setPlanes(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar planes de mejora');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar planes de mejora'));
     } finally {
       setLoading(false);
     }
@@ -42,19 +44,19 @@ export const usePlanMejora = () => {
     try {
       const data = await service.getPorAutoevaluacion(autoevaluacionId);
       setPlanes(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar planes');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar planes'));
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchResumen = useCallback(async (filters?: Record<string, any>) => {
+  const fetchResumen = useCallback(async (filters?: PlanMejoraFilters) => {
     try {
       const data = await service.getResumen(filters);
       setResumen(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar resumen');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar resumen'));
     }
   }, []);
 
@@ -62,8 +64,8 @@ export const usePlanMejora = () => {
     try {
       const data = await service.getProximosAVencer(dias);
       setProximosVencer(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar próximos a vencer');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar próximos a vencer'));
     }
   }, []);
 
@@ -71,8 +73,8 @@ export const usePlanMejora = () => {
     try {
       const data = await service.getVencidos();
       setVencidos(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar vencidos');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar vencidos'));
     }
   }, []);
 
@@ -81,8 +83,8 @@ export const usePlanMejora = () => {
       const newPlan = await service.createPlanDeMejora(data);
       setPlanes(prev => [...prev, newPlan]);
       return newPlan;
-    } catch (err: any) {
-      setError(err.message || 'Error al crear plan');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al crear plan'));
       throw err;
     }
   }, []);
@@ -92,8 +94,8 @@ export const usePlanMejora = () => {
       const updated = await service.updatePlanDeMejora(id, data);
       setPlanes(prev => prev.map(p => p.id === id ? updated : p));
       return updated;
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar plan');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al actualizar plan'));
       throw err;
     }
   }, []);
@@ -102,8 +104,8 @@ export const usePlanMejora = () => {
     try {
       await service.deletePlanDeMejora(id);
       setPlanes(prev => prev.filter(p => p.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar plan');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar plan'));
       throw err;
     }
   }, []);
@@ -112,8 +114,8 @@ export const usePlanMejora = () => {
     try {
       const data = await service.getPorOrigen();
       setPorOrigen(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar planes por origen');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar planes por origen'));
     }
   }, []);
 
@@ -122,8 +124,8 @@ export const usePlanMejora = () => {
       const data = await service.getSoportes(planId);
       setSoportes(data);
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar soportes');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar soportes'));
       throw err;
     }
   }, []);
@@ -133,8 +135,8 @@ export const usePlanMejora = () => {
       const newSoporte = await service.uploadSoporte(planId, formData);
       setSoportes(prev => [...prev, newSoporte]);
       return newSoporte;
-    } catch (err: any) {
-      setError(err.message || 'Error al subir soporte');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al subir soporte'));
       throw err;
     }
   }, []);
@@ -143,8 +145,8 @@ export const usePlanMejora = () => {
     try {
       await service.deleteSoporte(planId, soporteId);
       setSoportes(prev => prev.filter(s => s.id !== soporteId));
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar soporte');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al eliminar soporte'));
       throw err;
     }
   }, []);
