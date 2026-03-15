@@ -73,6 +73,14 @@ const getCumplimientoAutoevaluacionId = (cumplimiento: Cumplimiento): number =>
   resolveEntityId(cumplimiento.autoevaluacion_detail, cumplimiento.autoevaluacion, cumplimiento.autoevaluacion_id);
 
 const extractDocumentoIds = (documentos: unknown): number[] => {
+  if (typeof documentos === 'string') {
+    const ids = documentos
+      .split(',')
+      .map((value) => Number(value.trim()))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    return Array.from(new Set(ids));
+  }
+
   if (!Array.isArray(documentos)) return [];
 
   const ids = documentos
@@ -80,6 +88,14 @@ const extractDocumentoIds = (documentos: unknown): number[] => {
     .filter((id) => id > 0);
 
   return Array.from(new Set(ids));
+};
+
+const getCumplimientoDocumentoIds = (cumplimiento: Partial<Cumplimiento> & { documentos_evidencia_ids?: unknown }): number[] => {
+  return extractDocumentoIds(
+    cumplimiento.documentos_evidencia_list ??
+      cumplimiento.documentos_evidencia ??
+      cumplimiento.documentos_evidencia_ids,
+  );
 };
 
 const toDocumentList = (raw: unknown): Document[] => {
@@ -192,9 +208,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
           hallazgo: fullCumplimiento.hallazgo || '',
           plan_mejora: fullCumplimiento.plan_mejora || '',
           fecha_compromiso: formatDateForInput(fullCumplimiento.fecha_compromiso),
-          documentos_evidencia: extractDocumentoIds(
-            fullCumplimiento.documentos_evidencia_list || fullCumplimiento.documentos_evidencia,
-          ),
+          documentos_evidencia: getCumplimientoDocumentoIds(fullCumplimiento),
         };
         setFormData(updatedData);
         setOriginalData(updatedData);
@@ -251,9 +265,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         hallazgo: cumplimientoToUse.hallazgo || '',
         plan_mejora: cumplimientoToUse.plan_mejora || '',
         fecha_compromiso: formatDateForInput(cumplimientoToUse.fecha_compromiso),
-        documentos_evidencia: extractDocumentoIds(
-          cumplimientoToUse.documentos_evidencia_list || cumplimientoToUse.documentos_evidencia,
-        ),
+        documentos_evidencia: getCumplimientoDocumentoIds(cumplimientoToUse),
       };
 
       setFormData(data);
@@ -623,6 +635,19 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       let errorMsg = 'Error al guardar cumplimiento';
       
       if (backendErrors) {
+        const documentosError = backendErrorMap?.documentos_evidencia;
+
+        if (Array.isArray(documentosError) && documentosError.some((item) => String(item).includes('Clave primaria'))) {
+          const seleccionados = documentosSeleccionados.join(', ') || 'ninguno';
+          errorMsg =
+            `documentos_evidencia: ${String(documentosError[0])}` +
+            `\n\nIDs enviados: [${seleccionados}]` +
+            `\n\nDiagnóstico probable:` +
+            `\n• El documento existe en el módulo de procesos, pero el serializer de cumplimiento no lo acepta en su queryset.` +
+            `\n• Revisa que el backend de cumplimiento filtre estado con los mismos códigos que procesos (ej. VIG vs VIGENTE) y activo=true.`;
+        }
+        // Verificar si es error de unicidad
+        else
         // Verificar si es error de unicidad
         if (backendErrorMap?.non_field_errors && Array.isArray(backendErrorMap.non_field_errors)) {
           errorMsg = `${String(backendErrorMap.non_field_errors[0])}\n\n💡 Este cumplimiento ya existe. Puedes:\n• Editar el cumplimiento existente\n• Seleccionar otro servicio o criterio`;
