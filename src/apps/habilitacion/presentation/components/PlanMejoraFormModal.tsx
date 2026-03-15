@@ -5,6 +5,7 @@ import { ESTADOS_PLAN_MEJORA, ORIGENES_TIPO } from '../../domain/types';
 import { usePlanMejora } from '../hooks/usePlanMejora';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface PlanMejoraFormModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
   onSuccess,
 }) => {
   const { createPlan, updatePlan, deletePlan } = usePlanMejora();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!planMejora;
 
   const [formData, setFormData] = useState<Partial<PlanMejoraCreate>>({
@@ -99,6 +101,7 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
     setError('');
     try {
       await deletePlan(planMejora.id);
+      notifySuccess('Plan de mejora eliminado satisfactoriamente');
       onSuccess?.();
       onClose?.();
     } catch (err: unknown) {
@@ -129,8 +132,10 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
 
       if (isEdit && planMejora) {
         await updatePlan(planMejora.id, { id: planMejora.id, ...formData });
+        notifySuccess('Plan de mejora actualizado satisfactoriamente');
       } else {
         await createPlan(formData as PlanMejoraCreate);
+        notifySuccess('Plan de mejora creado satisfactoriamente');
       }
       onSuccess();
       onClose();

@@ -4,6 +4,7 @@ import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import type { Estandar, EstandarCreate } from '../../domain/entities/Estandar';
 import { useEstandar } from '../hooks/useEstandar';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface EstandarFormModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface EstandarFormModalProps {
 
 const EstandarFormModal: React.FC<EstandarFormModalProps> = ({ isOpen, estandar, onClose, onSuccess }) => {
   const { createEstandar, updateEstandar, deleteEstandar } = useEstandar();
+  const { notifySuccess } = useNotifications();
   const isEdit = Boolean(estandar);
 
   const initialForm = useMemo<EstandarCreate>(
@@ -70,8 +72,10 @@ const EstandarFormModal: React.FC<EstandarFormModalProps> = ({ isOpen, estandar,
     try {
       if (isEdit && estandar) {
         await updateEstandar(estandar.id, { id: estandar.id, ...formData });
+        notifySuccess('Estandar actualizado satisfactoriamente');
       } else {
         await createEstandar(formData);
+        notifySuccess('Estandar creado satisfactoriamente');
       }
       onSuccess();
       onClose();
@@ -89,6 +93,7 @@ const EstandarFormModal: React.FC<EstandarFormModalProps> = ({ isOpen, estandar,
     setError('');
     try {
       await deleteEstandar(estandar.id);
+      notifySuccess('Estandar eliminado satisfactoriamente');
       onSuccess();
       onClose();
     } catch (err: unknown) {

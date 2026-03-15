@@ -6,6 +6,7 @@ import { TIPOS_HALLAZGO, SEVERIDADES_HALLAZGO, ESTADOS_HALLAZGO, ORIGENES_TIPO }
 import { useHallazgo } from '../hooks/useHallazgo';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface HallazgoFormModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
   onSuccess,
 }) => {
   const { createHallazgo, updateHallazgo, deleteHallazgo } = useHallazgo();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!hallazgo;
 
   const [formData, setFormData] = useState<Partial<HallazgoCreate>>({
@@ -104,6 +106,7 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
     setError('');
     try {
       await deleteHallazgo(hallazgo.id);
+      notifySuccess('Hallazgo eliminado satisfactoriamente');
       onSuccess?.();
       onClose?.();
     } catch (err: unknown) {
@@ -134,8 +137,10 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
 
       if (isEdit && hallazgo) {
         await updateHallazgo(hallazgo.id, { id: hallazgo.id, ...formData });
+        notifySuccess('Hallazgo actualizado satisfactoriamente');
       } else {
         await createHallazgo(formData as HallazgoCreate);
+        notifySuccess('Hallazgo creado satisfactoriamente');
       }
       onSuccess();
       onClose();

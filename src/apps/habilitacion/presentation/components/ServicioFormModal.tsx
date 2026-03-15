@@ -6,6 +6,7 @@ import { useServicioSede } from '../hooks/useServicioSede';
 import { useDatosPrestador } from '../hooks/useDatosPrestador';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface Prestador {
   id: number;
@@ -37,8 +38,9 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, delete: deleteServicio, validarDatos } = useServicioSede();
+  const { create, update, delete: deleteServicio, validarDatos, getServicio } = useServicioSede();
   const { datos: prestadores, fetchDatos: fetchPrestadores } = useDatosPrestador();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!servicio;
 
   const [formData, setFormData] = useState<Partial<ServicioSedeCreate>>({
@@ -66,31 +68,60 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
   }, [isOpen, prestador, servicio, fetchPrestadores]);
 
   useEffect(() => {
-    if (servicio) {
-      // Extraer prestador_id desde el servicio usando optional chaining
-      // Intentar múltiples fuentes por si el backend varía en la respuesta
-      const preId = servicio?.prestador_id || servicio?.prestador_detail?.id || prestador?.id;
-      
-      setFormData({
-        prestador_id: preId,
-        codigo_servicio: servicio?.codigo_servicio || '',
-        nombre_servicio: servicio?.nombre_servicio || '',
-        descripcion: servicio?.descripcion || '',  // ← FIX: Usar optional chaining
-        modalidad: servicio?.modalidad || 'INTRAMURAL',
-        complejidad: servicio?.complejidad || 'BAJA',
-        estado_habilitacion: servicio?.estado_habilitacion || 'EN_PROCESO',
-        fecha_habilitacion: servicio?.fecha_habilitacion || '',
-        fecha_vencimiento: servicio?.fecha_vencimiento || '',
-      });
-    } else if (prestador) {
-      setFormData(prev => ({
-        ...prev,
-        prestador_id: prestador.id,
-      }));
+    let isActive = true;
+
+    const loadFormData = async () => {
+      if (servicio) {
+        // En edición cargamos detalle por ID para asegurar campos completos (ej. descripcion)
+        let source = servicio;
+        try {
+          const detail = await getServicio(servicio.id);
+          source = detail || servicio;
+        } catch {
+          // Fallback al objeto recibido por props
+        }
+
+        if (!isActive) return;
+
+        const preId = source.prestador_id || source.prestador_detail?.id || prestador?.id;
+        setFormData({
+          prestador_id: preId,
+          codigo_servicio: source.codigo_servicio || '',
+          nombre_servicio: source.nombre_servicio || '',
+          descripcion: source.descripcion || '',
+          modalidad: source.modalidad || 'INTRAMURAL',
+          complejidad: source.complejidad || 'BAJA',
+          estado_habilitacion: source.estado_habilitacion || 'EN_PROCESO',
+          fecha_habilitacion: source.fecha_habilitacion || '',
+          fecha_vencimiento: source.fecha_vencimiento || '',
+        });
+      } else {
+        setFormData({
+          prestador_id: prestador?.id || undefined,
+          codigo_servicio: '',
+          nombre_servicio: '',
+          descripcion: '',
+          modalidad: 'INTRAMURAL',
+          complejidad: 'BAJA',
+          estado_habilitacion: 'EN_PROCESO',
+          fecha_habilitacion: new Date().toISOString().split('T')[0],
+          fecha_vencimiento: '',
+        });
+      }
+
+      if (!isActive) return;
+      setError('');
+      setFieldErrors({});
+    };
+
+    if (isOpen) {
+      loadFormData();
     }
-    setError('');
-    setFieldErrors({});
-  }, [servicio, prestador, isOpen]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [servicio, prestador, isOpen, getServicio]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -138,8 +169,10 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
 
       if (isEdit && servicio) {
         await update(servicio.id, { id: servicio.id, ...formData });
+        notifySuccess('Servicio actualizado satisfactoriamente');
       } else {
         await create(formData as ServicioSedeCreate);
+        notifySuccess('Servicio creado satisfactoriamente');
       }
 
       onSuccess();
@@ -158,6 +191,7 @@ const ServicioFormModal: React.FC<ServicioFormModalProps> = ({
     setError('');
     try {
       await deleteServicio(servicio.id);
+      notifySuccess('Servicio eliminado satisfactoriamente');
       setShowDeleteConfirm(false);
       onSuccess();
       onClose();

@@ -10,9 +10,9 @@ export const CRITERIO_VALIDATION = {
   codigo: {
     minLength: 3,
     maxLength: 20,
-    pattern: /^[A-Z0-9\-]+$/,
-    patternError: 'Código debe contener solo mayúsculas, números y guiones (ej: INF-001)',
-    placeholder: 'Ej: INF-001, TH-005',
+    pattern: /^\d+\.\d+$/,
+    patternError: 'Código debe tener formato N.N (ej: 1.1, 2.3)',
+    placeholder: 'Ej: 1.1, 2.3',
   },
   nombre: {
     minLength: 3,
@@ -81,7 +81,7 @@ export const VALIDATION_MESSAGES = {
 // Ayuda y hints para formularios
 export const FORM_HINTS = {
   criterio: {
-    codigo: 'Código único que identifica el criterio. Ej: INF-001 (infraestructura), TH-005 (talento humano). No se puede cambiar después de crear.',
+    codigo: 'Código único del criterio en formato N.N (ej: 1.1, 2.3). No se puede cambiar después de crear.',
     nombre: 'Nombre corto y descriptivo del criterio. Es lo que ven los usuarios en listas y dropdown ',
     descripcion: 'Descripción detallada que explica qué se evalúa con este criterio y por qué es importante.',
     complejidad: 'Define el nivel de dificultad para verificar este criterio',

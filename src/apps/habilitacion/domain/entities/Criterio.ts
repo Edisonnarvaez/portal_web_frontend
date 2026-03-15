@@ -19,7 +19,7 @@ export interface Criterio {
   nombre: string;                               // From backend 'nombre'
   descripcion: string;
   estandar_id?: number;                         // FK to Estandar
-  estandar?: EstandarReference;                 // Simplified Estandar reference object
+  estandar?: EstandarReference | number;        // Can arrive nested object or numeric ID
   estandar_display?: string;                    // Display: "INF - Infraestructura Física"
   complejidad?: 'BAJA' | 'MEDIA' | 'ALTA';     // Engineering complexity
   complejidad_display?: string;                 // Display version

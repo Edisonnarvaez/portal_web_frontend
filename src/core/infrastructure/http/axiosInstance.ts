@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const apiBaseUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/`;
+
 const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/`,
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,7 +36,7 @@ axiosInstance.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          const response = await axios.post('/token/refresh/', {
+          const response = await axios.post(`${apiBaseUrl}token/refresh/`, {
             refresh: refreshToken
           });
 

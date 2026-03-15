@@ -6,6 +6,7 @@ import { useDatosPrestador } from '../hooks/useDatosPrestador';
 import axiosInstance from '../../../../core/infrastructure/http/axiosInstance';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface Headquarter {
   id: number;
@@ -22,6 +23,7 @@ interface PrestadorFormModalProps {
 
 const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestador, headquartersId, onClose, onSuccess }) => {
   const { create, update, delete: deleteDatos } = useDatosPrestador();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!prestador;
   const [sedes, setSedes] = useState<Headquarter[]>([]);
   const [loadingSedes, setLoadingSedes] = useState(false);
@@ -88,14 +90,35 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
     try {
       if (prestador) {
         await update(prestador.id, { id: prestador.id, ...formData });
+        notifySuccess('Prestador actualizado satisfactoriamente');
       } else {
         await create(formData as DatosPrestadorCreate);
+        notifySuccess('Prestador creado satisfactoriamente');
       }
       onSuccess();
+      onClose();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, 'Error al guardar'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!prestador?.id) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      await deleteDatos(prestador.id);
+      notifySuccess('Prestador eliminado satisfactoriamente');
+      onSuccess?.();
+      onClose?.();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error eliminando prestador'));
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -303,14 +326,7 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
           isOpen={showDeleteConfirm}
           title="Eliminar Prestador"
           message="¿Estás seguro de que deseas eliminar este prestador? Esta acción no se puede deshacer."
-          onConfirm={() => {
-            if (prestador?.id) {
-              deleteDatos(prestador.id).then(() => {
-                onSuccess?.();
-                onClose?.();
-              }).catch(() => setError('Error eliminando prestador'));
-            }
-          }}
+          onConfirm={handleDelete}
           onClose={() => setShowDeleteConfirm(false)}
         />
       </div>

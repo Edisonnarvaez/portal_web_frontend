@@ -7,6 +7,7 @@ import { useAutoevaluacion } from '../hooks/useAutoevaluacion';
 import { useDatosPrestador } from '../hooks/useDatosPrestador';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface AutoevaluacionFormModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 }) => {
   const { create, update, delete: deleteAutoevaluacion, autoevaluaciones } = useAutoevaluacion();
   const { datos: prestadores } = useDatosPrestador();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!autoevaluacion;
 
   interface PrestadorOption extends DatosPrestador {}
@@ -184,9 +186,11 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
 
       if (isEdit && autoevaluacion) {
         const updated = await update(autoevaluacion.id, { id: autoevaluacion.id, ...formData });
+        notifySuccess('Autoevaluacion actualizada satisfactoriamente');
         onSuccess(updated);
       } else {
         const created = await create(formData as AutoevaluacionCreate);
+        notifySuccess('Autoevaluacion creada satisfactoriamente');
         onSuccess(created);
       }
       onClose();
@@ -202,6 +206,24 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
   // Generar opciones de año (últimos 5 + próximos 2)
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 8 }, (_, i) => currentYear - 5 + i);
+
+  const handleDelete = async () => {
+    if (!autoevaluacion?.id) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      await deleteAutoevaluacion(autoevaluacion.id);
+      notifySuccess('Autoevaluacion eliminada satisfactoriamente');
+      onSuccess?.(autoevaluacion);
+      onClose?.();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error eliminando autoevaluacion'));
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -429,14 +451,7 @@ const AutoevaluacionFormModal: React.FC<AutoevaluacionFormModalProps> = ({
           isOpen={showDeleteConfirm}
           title="Eliminar Autoevaluación"
           message="¿Estás seguro de que deseas eliminar esta autoevaluación? Esta acción no se puede deshacer."
-          onConfirm={() => {
-            if (autoevaluacion?.id) {
-              deleteAutoevaluacion(autoevaluacion.id).then(() => {
-                onSuccess?.(autoevaluacion);
-                onClose?.();
-              }).catch(() => setError('Error eliminando autoevaluación'));
-            }
-          }}
+          onConfirm={handleDelete}
           onClose={() => setShowDeleteConfirm(false)}
         />
       </div>

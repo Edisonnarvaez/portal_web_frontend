@@ -37,7 +37,11 @@ const CriteriosPage: React.FC = () => {
 
       const matchEstandar =
         !filtroEstandar ||
-        String(item.estandar_id || item.estandar?.id || '') === filtroEstandar;
+        String(
+          item.estandar_id ||
+          (typeof item.estandar === 'number' ? item.estandar : item.estandar?.id) ||
+          ''
+        ) === filtroEstandar;
 
       const matchComplejidad = !filtroComplejidad || item.complejidad === filtroComplejidad;
 
@@ -51,8 +55,8 @@ const CriteriosPage: React.FC = () => {
     {
       key: 'estandar',
       label: 'Estándar',
-      accessor: r => r.estandar_display || r.estandar?.nombre || '—',
-      render: r => <span>{r.estandar_display || r.estandar?.nombre || '—'}</span>,
+      accessor: r => r.estandar_display || (typeof r.estandar === 'object' ? r.estandar?.nombre : '') || '—',
+      render: r => <span>{r.estandar_display || (typeof r.estandar === 'object' ? r.estandar?.nombre : '') || '—'}</span>,
     },
     {
       key: 'complejidad',

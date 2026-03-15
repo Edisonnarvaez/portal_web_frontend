@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { HiOutlineXMark, HiOutlineExclamationTriangle, HiOutlineCheckCircle } from 'react-icons/hi2';
 import type { Cumplimiento, CumplimientoCreate } from '../../domain/entities/Cumplimiento';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
@@ -9,6 +9,7 @@ import { useAsyncState } from '../hooks/useAsyncState';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
 import { formatDateForInput } from './utils/formModalUtils';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface CumplimientoFormModalProps {
   isOpen: boolean;
@@ -30,6 +31,36 @@ interface FormErrors {
   fecha_compromiso?: string;
 }
 
+const resolveEntityId = (...values: unknown[]): number => {
+  for (const value of values) {
+    if (typeof value === 'number' && value > 0) return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+    }
+    if (value && typeof value === 'object' && 'id' in (value as Record<string, unknown>)) {
+      const nestedId = (value as { id?: unknown }).id;
+      if (typeof nestedId === 'number' && nestedId > 0) return nestedId;
+      if (typeof nestedId === 'string') {
+        const parsed = Number(nestedId);
+        if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+      }
+    }
+  }
+  return 0;
+};
+
+const normalizeServicioOption = (servicio: any): ServicioSede => ({
+  id: Number(servicio.id) || 0,
+  codigo_servicio: servicio.codigo_servicio || servicio.codigo || '',
+  nombre_servicio: servicio.nombre_servicio || servicio.nombre || '',
+  modalidad: (servicio.modalidad as ServicioSede['modalidad']) || 'INTRAMURAL',
+  complejidad: (servicio.complejidad as ServicioSede['complejidad']) || 'BAJA',
+  estado_habilitacion: (servicio.estado_habilitacion || servicio.estado) as ServicioSede['estado_habilitacion'] || 'EN_PROCESO',
+  fecha_creacion: servicio.fecha_creacion || '',
+  fecha_actualizacion: servicio.fecha_actualizacion || '',
+});
+
 const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   isOpen,
   cumplimiento,
@@ -39,8 +70,9 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, delete: deleteCumplimiento, getServiciosDeAutoevaluacion, service } = useCumplimiento();
+  const { create, update, delete: deleteCumplimiento, getServiciosDeAutoevaluacion, getCumplimiento } = useCumplimiento();
   const { fetchCriterios, criterios: criteriosDelHook } = useCriterio();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!cumplimiento;
 
   const [formData, setFormData] = useState<Partial<CumplimientoCreate>>({
@@ -60,7 +92,8 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-  const serviciosAsync = useAsyncState<ServicioSede[]>([]);
+  const initialServicios = useMemo<ServicioSede[]>(() => [], []);
+  const serviciosAsync = useAsyncState<ServicioSede[]>(initialServicios);
   const criteriosAsync = useAsyncState<boolean>(false);
   const { state: serviciosState, setLoading: setServiciosLoading, setSuccess: setServiciosSuccess, setError: setServiciosError, reset: resetServicios } = serviciosAsync;
   const { state: criteriosState, setLoading: setCriteriosLoading, setSuccess: setCriteriosSuccess, setError: setCriteriosError, reset: resetCriterios } = criteriosAsync;
@@ -86,13 +119,28 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
 
     const fetchFullCumplimiento = async () => {
       try {
-        const fullCumplimiento = await service.getCumplimiento(cumplimiento.id);
+        const fullCumplimiento = await getCumplimiento(cumplimiento.id);
         
         // ✅ IMPORTANTE: Actualizar formData directamente con los datos completos
         const updatedData: Partial<CumplimientoCreate> = {
-          autoevaluacion_id: fullCumplimiento.autoevaluacion_detail?.id || fullCumplimiento.autoevaluacion?.id || fullCumplimiento.autoevaluacion_id,
-          servicio_sede_id: fullCumplimiento.servicio_sede_detail?.id || fullCumplimiento.servicio_sede?.id || fullCumplimiento.servicio_sede_id,
-          criterio_id: fullCumplimiento.criterio_detail?.id || fullCumplimiento.criterio?.id || fullCumplimiento.criterio_id,
+          autoevaluacion_id: resolveEntityId(
+            fullCumplimiento.autoevaluacion_detail,
+            fullCumplimiento.autoevaluacion,
+            fullCumplimiento.autoevaluacion_id,
+            autoevaluacionId
+          ),
+          servicio_sede_id: resolveEntityId(
+            fullCumplimiento.servicio_sede_detail,
+            fullCumplimiento.servicio_sede,
+            fullCumplimiento.servicio_sede_id,
+            servicioSedeId
+          ),
+          criterio_id: resolveEntityId(
+            fullCumplimiento.criterio_detail,
+            fullCumplimiento.criterio,
+            fullCumplimiento.criterio_id,
+            criterioId
+          ),
           cumple: fullCumplimiento.cumple as CumplimientoCreate['cumple'],
           hallazgo: fullCumplimiento.hallazgo || '',
           plan_mejora: fullCumplimiento.plan_mejora || '',
@@ -109,7 +157,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     };
 
     fetchFullCumplimiento();
-  }, [isOpen, cumplimiento?.id, service]);
+  }, [isOpen, cumplimiento?.id, getCumplimiento]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -126,9 +174,24 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       // Usar los campos *_detail si están disponibles (desde detail endpoint)
       // Fallback a los campos simples si están disponibles
       // Fallback final a los parámetros de props
-      const autoId = cumplimientoToUse.autoevaluacion_detail?.id || cumplimientoToUse.autoevaluacion?.id || cumplimientoToUse.autoevaluacion_id || autoevaluacionId || 0;
-      const servicioId = cumplimientoToUse.servicio_sede_detail?.id || cumplimientoToUse.servicio_sede?.id || cumplimientoToUse.servicio_sede_id || servicioSedeId || 0;
-      const criterioId_val = cumplimientoToUse.criterio_detail?.id || cumplimientoToUse.criterio?.id || cumplimientoToUse.criterio_id || criterioId || 0;
+      const autoId = resolveEntityId(
+        cumplimientoToUse.autoevaluacion_detail,
+        cumplimientoToUse.autoevaluacion,
+        cumplimientoToUse.autoevaluacion_id,
+        autoevaluacionId
+      );
+      const servicioId = resolveEntityId(
+        cumplimientoToUse.servicio_sede_detail,
+        cumplimientoToUse.servicio_sede,
+        cumplimientoToUse.servicio_sede_id,
+        servicioSedeId
+      );
+      const criterioId_val = resolveEntityId(
+        cumplimientoToUse.criterio_detail,
+        cumplimientoToUse.criterio,
+        cumplimientoToUse.criterio_id,
+        criterioId
+      );
       
       const data: Partial<CumplimientoCreate> = {
         autoevaluacion_id: autoId,
@@ -174,16 +237,16 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         // Primero: si estamos en modo edición y tenemos servicios_disponibles en el objeto expandido, usarlos
         if (isEdit && expandedCumplimiento?.servicios_disponibles && expandedCumplimiento.servicios_disponibles.length > 0) {
           // Preferir payload ya resuelto por backend para evitar una llamada adicional.
-          setServiciosSuccess(expandedCumplimiento.servicios_disponibles as unknown as ServicioSede[]);
+          setServiciosSuccess(expandedCumplimiento.servicios_disponibles.map(normalizeServicioOption));
           return;
         }
 
         // Segundo: si en modo edición pero no tenemos servicios_disponibles, cargar desde API
-        const autoId = isEdit && expandedCumplimiento?.autoevaluacion_detail?.id 
-          ? expandedCumplimiento.autoevaluacion_detail.id 
-          : isEdit && expandedCumplimiento?.autoevaluacion?.id
-          ? expandedCumplimiento.autoevaluacion.id
-          : autoevaluacionId;
+        const autoId = resolveEntityId(
+          expandedCumplimiento?.autoevaluacion_detail,
+          expandedCumplimiento?.autoevaluacion,
+          autoevaluacionId
+        );
 
         if (!autoId || autoId <= 0) {
           resetServicios();
@@ -200,16 +263,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
             setServiciosSuccess([]);
           } else {
             // Normalizar payload compacto del endpoint a la forma esperada en la UI.
-            const serviciosNormalizados = response.servicios.map((servicio) => ({
-              id: servicio.id,
-              codigo_servicio: servicio.codigo_servicio || servicio.codigo || '',
-              nombre_servicio: servicio.nombre_servicio || servicio.nombre || '',
-              modalidad: (servicio.modalidad as ServicioSede['modalidad']) || 'INTRAMURAL',
-              complejidad: (servicio.complejidad as ServicioSede['complejidad']) || 'BAJA',
-              estado_habilitacion: (servicio.estado as ServicioSede['estado_habilitacion']) || 'EN_PROCESO',
-              fecha_creacion: '',
-              fecha_actualizacion: '',
-            }));
+            const serviciosNormalizados = response.servicios.map(normalizeServicioOption);
             setServiciosSuccess(serviciosNormalizados);
           }
         } else {
@@ -347,9 +401,11 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       if (isEdit && cumplimiento) {
         await update(cumplimiento.id, { id: cumplimiento.id, ...dataToSend });
         setSuccess('Cumplimiento actualizado exitosamente');
+        notifySuccess('Cumplimiento actualizado satisfactoriamente');
       } else {
         await create(dataToSend);
         setSuccess('Cumplimiento registrado exitosamente');
+        notifySuccess('Cumplimiento creado satisfactoriamente');
       }
       
       setTimeout(() => {
@@ -399,6 +455,24 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     } else {
       setExpandedCumplimiento(null);
       onClose();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!cumplimiento?.id) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      await deleteCumplimiento(cumplimiento.id);
+      notifySuccess('Cumplimiento eliminado satisfactoriamente');
+      onSuccess?.();
+      onClose?.();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error eliminando cumplimiento'));
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -502,8 +576,8 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                       <option value={0}>✓ Seleccione un servicio</option>
                       {serviciosState.data.map(s => {
                         const id = s.id;
-                        const nombre = s.nombre_servicio || '';
-                        const codigo = s.codigo_servicio || '';
+                        const nombre = s.nombre_servicio || (s as any).nombre || '';
+                        const codigo = s.codigo_servicio || (s as any).codigo || '';
                         return (
                           <option key={id} value={id}>
                             {nombre} ({codigo})
@@ -746,15 +820,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         isOpen={showDeleteConfirm}
         title="Eliminar Cumplimiento"
         message="¿Estás seguro de que deseas eliminar este cumplimiento? Esta acción no se puede deshacer."
-        onConfirm={() => {
-          if (cumplimiento?.id) {
-            deleteCumplimiento(cumplimiento.id).then(() => {
-              onSuccess?.();
-              onClose?.();
-            }).catch(() => setError('Error eliminando cumplimiento'));
-          }
-          setShowDeleteConfirm(false);
-        }}
+        onConfirm={handleDelete}
         onClose={() => setShowDeleteConfirm(false)}
       />
     </>

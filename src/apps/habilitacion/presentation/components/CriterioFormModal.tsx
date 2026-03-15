@@ -5,6 +5,7 @@ import { useCriterio } from '../hooks/useCriterio';
 import { useEstandar } from '../hooks/useEstandar';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
+import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
 interface CriterioFormModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
 }) => {
   const { createCriterio, updateCriterio, deleteCriterio } = useCriterio();
   const { estandares, fetchEstandares } = useEstandar();
+  const { notifySuccess } = useNotifications();
   const isEdit = !!criterio;
 
   // Memoize default form data
@@ -60,7 +62,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
         es_mandatorio: criterio.es_mandatorio || false,
         requiere_evidencia_documental: criterio.requiere_evidencia_documental || false,
         notas_interpretacion: criterio.notas_interpretacion || '',
-        estandar_id: criterio.estandar_id,
+        estandar_id: criterio.estandar_id || (typeof criterio.estandar === 'number' ? criterio.estandar : criterio.estandar?.id),
       });
     } else {
       setFormData(defaultFormData);
@@ -84,6 +86,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
     setError('');
     try {
       await deleteCriterio(criterio.id);
+      notifySuccess('Criterio eliminado satisfactoriamente');
       onSuccess?.();
       onClose?.();
     } catch (err: unknown) {
@@ -92,7 +95,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
       setLoading(false);
       setShowDeleteConfirm(false);
     }
-  }, [criterio, deleteCriterio, onSuccess, onClose]);
+  }, [criterio, deleteCriterio, onSuccess, onClose, notifySuccess]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -106,6 +109,12 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
         return;
       }
 
+      if (!/^\d+\.\d+$/.test(formData.codigo.trim())) {
+        setError('El código debe tener formato N.N (ej: 1.1, 2.3)');
+        setLoading(false);
+        return;
+      }
+
       if (formData.es_mandatorio && !formData.descripcion?.trim()) {
         setError('Los criterios mandatorios requieren una descripción');
         setLoading(false);
@@ -114,8 +123,10 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
 
       if (isEdit && criterio) {
         await updateCriterio(criterio.id, { id: criterio.id, ...formData });
+        notifySuccess('Criterio actualizado satisfactoriamente');
       } else {
         await createCriterio(formData as CriterioCreate);
+        notifySuccess('Criterio creado satisfactoriamente');
       }
       onSuccess();
       onClose();
@@ -124,7 +135,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [formData, isEdit, criterio, updateCriterio, createCriterio, onSuccess, onClose]);
+  }, [formData, isEdit, criterio, updateCriterio, createCriterio, onSuccess, onClose, notifySuccess]);
 
   if (!isOpen) return null;
 
@@ -168,7 +179,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
                   name="codigo"
                   value={formData.codigo || ''}
                   onChange={handleChange}
-                  placeholder="Ej: INF-001"
+                  placeholder="Ej: 1.1"
                   disabled={isEdit}
                   className={`w-full px-3 py-2 border rounded-lg ${
                     isEdit 
@@ -178,7 +189,7 @@ const CriterioFormModal: React.FC<CriterioFormModalProps> = ({
                   required
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Ej: INF-001, TH-005, SA-002 | {isEdit ? 'No se puede cambiar' : 'Se asigna al crear'}
+                  Ej: 1.1, 2.3, 7.2 | {isEdit ? 'No se puede cambiar' : 'Se asigna al crear'}
                 </p>
               </div>
 
