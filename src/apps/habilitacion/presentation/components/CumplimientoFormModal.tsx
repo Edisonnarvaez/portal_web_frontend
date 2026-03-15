@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { HiOutlineXMark, HiOutlineExclamationTriangle, HiOutlineCheckCircle } from 'react-icons/hi2';
 import type { Cumplimiento, CumplimientoCreate } from '../../domain/entities/Cumplimiento';
 import type { ServicioSede } from '../../domain/entities/ServicioSede';
+import type { Document } from '../../../procesos/domain/entities/Document';
 import { ESTADOS_CUMPLIMIENTO } from '../../domain/types';
 import { useCumplimiento } from '../hooks/useCumplimiento';
 import { useCriterio } from '../hooks/useCriterio';
@@ -10,6 +11,7 @@ import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
 import { formatDateForInput } from './utils/formModalUtils';
 import { useNotifications } from '../../../../shared/hooks/useNotifications';
+import { DocumentRepository } from '../../../procesos/infrastructure/repositories/DocumentRepository';
 
 interface CumplimientoFormModalProps {
   isOpen: boolean;
@@ -61,6 +63,44 @@ const normalizeServicioOption = (servicio: any): ServicioSede => ({
   fecha_actualizacion: servicio.fecha_actualizacion || '',
 });
 
+const getCumplimientoServicioId = (cumplimiento: Cumplimiento): number =>
+  resolveEntityId(cumplimiento.servicio_sede_detail, cumplimiento.servicio_sede, cumplimiento.servicio_sede_id);
+
+const getCumplimientoCriterioId = (cumplimiento: Cumplimiento): number =>
+  resolveEntityId(cumplimiento.criterio_detail, cumplimiento.criterio, cumplimiento.criterio_id);
+
+const getCumplimientoAutoevaluacionId = (cumplimiento: Cumplimiento): number =>
+  resolveEntityId(cumplimiento.autoevaluacion_detail, cumplimiento.autoevaluacion, cumplimiento.autoevaluacion_id);
+
+const extractDocumentoIds = (documentos: unknown): number[] => {
+  if (!Array.isArray(documentos)) return [];
+
+  const ids = documentos
+    .map((doc) => resolveEntityId(doc, (doc as { id?: unknown })?.id))
+    .filter((id) => id > 0);
+
+  return Array.from(new Set(ids));
+};
+
+const toDocumentList = (raw: unknown): Document[] => {
+  if (Array.isArray(raw)) return raw as Document[];
+  if (raw && typeof raw === 'object') {
+    const payload = raw as { results?: unknown[]; data?: unknown[]; items?: unknown[] };
+    if (Array.isArray(payload.results)) return payload.results as Document[];
+    if (Array.isArray(payload.data)) return payload.data as Document[];
+    if (Array.isArray(payload.items)) return payload.items as Document[];
+  }
+  return [];
+};
+
+const isDocumentoVigente = (doc: Document): boolean => {
+  const estado = String(doc.estado || '').trim().toUpperCase();
+
+  // Compatibilidad con distintas convenciones del backend.
+  // Procesos usa códigos (VIG/OBS/ARC), pero algunos endpoints devuelven texto.
+  return estado === 'VIG' || estado === 'VIGENTE' || (!estado && doc.activo === true);
+};
+
 const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   isOpen,
   cumplimiento,
@@ -70,7 +110,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { create, update, delete: deleteCumplimiento, getServiciosDeAutoevaluacion, getCumplimiento } = useCumplimiento();
+  const { create, update, delete: deleteCumplimiento, getServiciosDeAutoevaluacion, getCumplimiento, service } = useCumplimiento();
   const { fetchCriterios, criterios: criteriosDelHook } = useCriterio();
   const { notifySuccess } = useNotifications();
   const isEdit = !!cumplimiento;
@@ -92,6 +132,12 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [criteriosEvaluadosPorServicio, setCriteriosEvaluadosPorServicio] = useState<Set<string>>(new Set());
+  const [documentosDisponibles, setDocumentosDisponibles] = useState<Document[]>([]);
+  const [loadingDocumentos, setLoadingDocumentos] = useState(false);
+  const [errorDocumentos, setErrorDocumentos] = useState('');
+  const [filtroDocumentoTexto, setFiltroDocumentoTexto] = useState('');
+  const [filtroDocumentoTipo, setFiltroDocumentoTipo] = useState('');
   const initialServicios = useMemo<ServicioSede[]>(() => [], []);
   const serviciosAsync = useAsyncState<ServicioSede[]>(initialServicios);
   const criteriosAsync = useAsyncState<boolean>(false);
@@ -100,6 +146,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
   
   // Estado para cumplimiento "expandido" con detalles del backend
   const [expandedCumplimiento, setExpandedCumplimiento] = useState<Cumplimiento | null>(null);
+  const documentRepository = useMemo(() => new DocumentRepository(), []);
 
   // Detectar si hay cambios sin guardar
   const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(originalData);
@@ -145,6 +192,9 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
           hallazgo: fullCumplimiento.hallazgo || '',
           plan_mejora: fullCumplimiento.plan_mejora || '',
           fecha_compromiso: formatDateForInput(fullCumplimiento.fecha_compromiso),
+          documentos_evidencia: extractDocumentoIds(
+            fullCumplimiento.documentos_evidencia_list || fullCumplimiento.documentos_evidencia,
+          ),
         };
         setFormData(updatedData);
         setOriginalData(updatedData);
@@ -201,6 +251,9 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         hallazgo: cumplimientoToUse.hallazgo || '',
         plan_mejora: cumplimientoToUse.plan_mejora || '',
         fecha_compromiso: formatDateForInput(cumplimientoToUse.fecha_compromiso),
+        documentos_evidencia: extractDocumentoIds(
+          cumplimientoToUse.documentos_evidencia_list || cumplimientoToUse.documentos_evidencia,
+        ),
       };
 
       setFormData(data);
@@ -216,6 +269,7 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         hallazgo: '',
         plan_mejora: '',
         fecha_compromiso: '',
+        documentos_evidencia: [],
       };
       setFormData(data);
       setOriginalData(data);
@@ -306,6 +360,121 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
     loadCriterios();
   }, [isOpen, fetchCriterios, setCriteriosLoading, setCriteriosSuccess, setCriteriosError]);
 
+  // Cargar documentos disponibles para asociar como soporte/evidencia.
+  useEffect(() => {
+    if (!isOpen) {
+      setDocumentosDisponibles([]);
+      setErrorDocumentos('');
+      return;
+    }
+
+    const loadDocumentos = async () => {
+      try {
+        setLoadingDocumentos(true);
+        setErrorDocumentos('');
+        const response = await documentRepository.getAll();
+        setDocumentosDisponibles(toDocumentList(response).filter(isDocumentoVigente));
+      } catch {
+        setDocumentosDisponibles([]);
+        setErrorDocumentos('No se pudieron cargar los documentos para evidencia.');
+      } finally {
+        setLoadingDocumentos(false);
+      }
+    };
+
+    loadDocumentos();
+  }, [isOpen, documentRepository]);
+
+  // Cargar pares (servicio, criterio) ya evaluados para la autoevaluación activa.
+  useEffect(() => {
+    if (!isOpen) {
+      setCriteriosEvaluadosPorServicio(new Set());
+      return;
+    }
+
+    const loadEvaluados = async () => {
+      const autoId = resolveEntityId(
+        expandedCumplimiento?.autoevaluacion_detail,
+        expandedCumplimiento?.autoevaluacion,
+        formData.autoevaluacion_id,
+        autoevaluacionId,
+      );
+
+      if (!autoId || autoId <= 0) {
+        setCriteriosEvaluadosPorServicio(new Set());
+        return;
+      }
+
+      try {
+        const data = await service.getCumplimientos({ autoevaluacion_id: autoId });
+        const editId = cumplimiento?.id;
+        const pairs = new Set<string>();
+
+        data.forEach((item) => {
+          if (editId && item.id === editId) return;
+
+          // Asegurar por frontend que solo se consideren cumplimientos de la autoevaluación actual,
+          // incluso si el backend retorna datos no filtrados.
+          const itemAutoId = getCumplimientoAutoevaluacionId(item);
+          if (!itemAutoId || itemAutoId !== autoId) return;
+
+          const servicioId = getCumplimientoServicioId(item);
+          const critId = getCumplimientoCriterioId(item);
+          if (servicioId > 0 && critId > 0) {
+            pairs.add(`${servicioId}-${critId}`);
+          }
+        });
+
+        setCriteriosEvaluadosPorServicio(pairs);
+      } catch {
+        setCriteriosEvaluadosPorServicio(new Set());
+      }
+    };
+
+    loadEvaluados();
+  }, [
+    isOpen,
+    service,
+    autoevaluacionId,
+    formData.autoevaluacion_id,
+    expandedCumplimiento,
+    cumplimiento?.id,
+  ]);
+
+  const servicioSeleccionadoId = Number(formData.servicio_sede_id || 0);
+  const criterioSeleccionadoId = Number(formData.criterio_id || 0);
+  const selectedPairKey = `${servicioSeleccionadoId}-${criterioSeleccionadoId}`;
+  const selectedPairAlreadyEvaluated =
+    servicioSeleccionadoId > 0 &&
+    criterioSeleccionadoId > 0 &&
+    criteriosEvaluadosPorServicio.has(selectedPairKey);
+
+  const documentosSeleccionados = (formData.documentos_evidencia || []) as number[];
+  const criterioSeleccionado = useMemo(
+    () => criteriosDelHook.find((c) => c.id === criterioSeleccionadoId),
+    [criteriosDelHook, criterioSeleccionadoId],
+  );
+
+  const tiposDocumentoDisponibles = useMemo(() => {
+    const tipos = new Set<string>();
+    documentosDisponibles.forEach((doc) => {
+      if (doc.tipo_documento) tipos.add(doc.tipo_documento);
+    });
+    return Array.from(tipos).sort((a, b) => a.localeCompare(b));
+  }, [documentosDisponibles]);
+
+  const documentosFiltrados = useMemo(() => {
+    const text = filtroDocumentoTexto.trim().toLowerCase();
+    return documentosDisponibles.filter((doc) => {
+      const matchTipo = !filtroDocumentoTipo || doc.tipo_documento === filtroDocumentoTipo;
+      const matchText =
+        !text ||
+        doc.codigo_documento?.toLowerCase().includes(text) ||
+        doc.nombre_documento?.toLowerCase().includes(text);
+      return matchTipo && matchText;
+    });
+  }, [documentosDisponibles, filtroDocumentoTexto, filtroDocumentoTipo]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -334,6 +503,22 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         [name]: undefined,
       }));
     }
+  };
+
+  const toggleDocumento = (documentoId: number) => {
+    setFormData((prev) => {
+      const current = new Set((prev.documentos_evidencia || []) as number[]);
+      if (current.has(documentoId)) {
+        current.delete(documentoId);
+      } else {
+        current.add(documentoId);
+      }
+
+      return {
+        ...prev,
+        documentos_evidencia: Array.from(current),
+      };
+    });
   };
 
   // Validar campos del formulario
@@ -387,6 +572,15 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
       return;
     }
 
+    if (selectedPairAlreadyEvaluated) {
+      setFormErrors((prev) => ({
+        ...prev,
+        criterio_id: 'Este criterio ya fue evaluado para el servicio seleccionado en esta autoevaluación.',
+      }));
+      setError('Ya existe un cumplimiento para este servicio y criterio en la autoevaluación actual.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -397,13 +591,20 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
         ...formData,
         fecha_compromiso: formData.fecha_compromiso ? formatDateForInput(formData.fecha_compromiso) : undefined,
       } as CumplimientoCreate;
+
+      // Compatibilidad: algunos backends esperan *_ids para relaciones M2M.
+      const payload: CumplimientoCreate & { documentos_evidencia_ids?: number[] } = {
+        ...dataToSend,
+        documentos_evidencia: documentosSeleccionados,
+        documentos_evidencia_ids: documentosSeleccionados,
+      };
       
       if (isEdit && cumplimiento) {
-        await update(cumplimiento.id, { id: cumplimiento.id, ...dataToSend });
+        await update(cumplimiento.id, { id: cumplimiento.id, ...payload });
         setSuccess('Cumplimiento actualizado exitosamente');
         notifySuccess('Cumplimiento actualizado satisfactoriamente');
       } else {
-        await create(dataToSend);
+        await create(payload);
         setSuccess('Cumplimiento registrado exitosamente');
         notifySuccess('Cumplimiento creado satisfactoriamente');
       }
@@ -629,18 +830,37 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
                       }`}
                     >
                       <option value={0}>✓ Seleccione un criterio</option>
-                      {criteriosDelHook.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.codigo && c.nombre 
-                            ? `${c.codigo} - ${c.nombre}` 
-                            : c.nombre || c.codigo || `Criterio ${c.id}`
-                          }
-                          {c.es_mandatorio ? ' ⚠️' : ''}
-                        </option>
-                      ))}
+                      {criteriosDelHook.map(c => {
+                        const alreadyEvaluated =
+                          servicioSeleccionadoId > 0 &&
+                          criteriosEvaluadosPorServicio.has(`${servicioSeleccionadoId}-${c.id}`);
+
+                        return (
+                          <option
+                            key={c.id}
+                            value={c.id}
+                            disabled={!isEdit && alreadyEvaluated}
+                          >
+                            {c.codigo && c.nombre
+                              ? `${c.codigo} - ${c.nombre}`
+                              : c.nombre || c.codigo || `Criterio ${c.id}`}
+                            {alreadyEvaluated ? ' ⚠️ Ya evaluado en este servicio' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                     {formErrors.criterio_id && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1">{formErrors.criterio_id}</p>
+                    )}
+                    {!servicioSeleccionadoId && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Selecciona primero un servicio para validar si el criterio ya fue evaluado.
+                      </p>
+                    )}
+                    {selectedPairAlreadyEvaluated && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                        ⚠️ Este criterio ya tiene evaluación para el servicio seleccionado en esta autoevaluación.
+                      </p>
                     )}
                   </>
                 )}
@@ -673,6 +893,82 @@ const CumplimientoFormModal: React.FC<CumplimientoFormModalProps> = ({
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Selecciona "No Cumple" o "Parcialmente" para describir hallazgos y plan de mejora
+              </p>
+            </div>
+
+            {/* Soportes documentales */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Documentos de Soporte / Evidencia
+              </label>
+
+              {loadingDocumentos ? (
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                  Cargando documentos...
+                </div>
+              ) : errorDocumentos ? (
+                <p className="text-xs text-red-600 dark:text-red-400">{errorDocumentos}</p>
+              ) : documentosDisponibles.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  No hay documentos disponibles para asociar. Puedes crearlos en Gestión de Documentos.
+                </p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      value={filtroDocumentoTexto}
+                      onChange={(e) => setFiltroDocumentoTexto(e.target.value)}
+                      placeholder="Buscar por código o nombre"
+                      className="md:col-span-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    <select
+                      value={filtroDocumentoTipo}
+                      onChange={(e) => setFiltroDocumentoTipo(e.target.value)}
+                      className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Todos los tipos</option>
+                      {tiposDocumentoDisponibles.map((tipo) => (
+                        <option key={tipo} value={tipo}>{tipo}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="max-h-44 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 space-y-1 bg-white dark:bg-gray-700">
+                    {documentosFiltrados.map((documento) => {
+                      const checked = documentosSeleccionados.includes(documento.id);
+                      return (
+                        <label
+                          key={documento.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleDocumento(documento.id)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                            {documento.codigo_documento} - {documento.nombre_documento} (v{documento.version})
+                          </span>
+                        </label>
+                      );
+                    })}
+                    {documentosFiltrados.length === 0 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 px-2 py-2">
+                        No hay documentos que coincidan con los filtros.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Seleccionados: {documentosSeleccionados.length}
+                {criterioSeleccionado?.requiere_evidencia_documental
+                  ? ' · Este criterio requiere evidencia documental.'
+                  : ''}
               </p>
             </div>
 

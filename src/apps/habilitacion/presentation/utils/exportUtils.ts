@@ -9,6 +9,10 @@ import type { PlanMejora } from '../../domain/entities/PlanMejora';
 import type { Hallazgo } from '../../domain/entities/Hallazgo';
 import { getEstadoLabel, formatDate } from './formatters';
 
+const getCumplimientoAutoevaluacionNumero = (c: Cumplimiento): string => {
+  return c.autoevaluacion?.numero_autoevaluacion || c.autoevaluacion_detail?.numero || 'N/A';
+};
+
 // ─── Excel Exports ──────────────────────────────────────────────
 
 export const exportCumplimientosExcel = (
@@ -16,7 +20,7 @@ export const exportCumplimientosExcel = (
   autoevaluacion?: Autoevaluacion,
 ) => {
   const data = cumplimientos.map((c) => ({
-    'Autoevaluación': c.autoevaluacion?.numero_autoevaluacion || 'N/A',
+    'Autoevaluación': getCumplimientoAutoevaluacionNumero(c),
     'Servicio': c.servicio_sede?.nombre_servicio || 'N/A',
     'Criterio': c.criterio?.nombre || 'N/A',
     'Estado': getEstadoLabel(c.cumple),
@@ -217,7 +221,7 @@ export const exportCumplimientosPDF = (
 
   // Tabla de cumplimientos
   const tableData = cumplimientos.map((c) => [
-    c.autoevaluacion?.numero_autoevaluacion || 'N/A',
+    getCumplimientoAutoevaluacionNumero(c),
     c.servicio_sede?.nombre_servicio || 'N/A',
     c.criterio?.nombre || 'N/A',
     getEstadoLabel(c.cumple),
@@ -252,11 +256,12 @@ export const exportCumplimientosPDF = (
 
 export const exportReportePrestadorPDF = (
   prestador: DatosPrestador,
-  cumplimientos: Cumplimiento[],
+  _cumplimientos: Cumplimiento[],
   planes: PlanMejora[],
   hallazgos: Hallazgo[],
   resumen?: AutoevaluacionResumen,
 ) => {
+  void _cumplimientos;
   const doc = new jsPDF();
 
   // Encabezado

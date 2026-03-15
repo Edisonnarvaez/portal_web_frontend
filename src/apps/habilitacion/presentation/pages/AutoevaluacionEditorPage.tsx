@@ -13,6 +13,7 @@ import {
     HiOutlineDocumentDuplicate,
     HiOutlineShieldCheck,
     HiOutlineTrash,
+    HiOutlineEye,
 } from 'react-icons/hi2';
 import {
     useAutoevaluacion,
@@ -27,6 +28,7 @@ import {
     HallazgoFormModal,
     PlanMejoraFormModal,
     AutoevaluacionFormModal,
+    CumplimientoDetailModal,
     DuplicarAutoevaluacionModal,
     ValidarAutoevaluacionModal,
     MejorasVencidasPanel,
@@ -50,12 +52,15 @@ const AutoevaluacionEditorPage: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<EditorTab>('criterios');
     const [filtroCategoria, setFiltroCategoria] = useState('');
+    const [filtroServicioCriterio, setFiltroServicioCriterio] = useState('');
     const [filtroCumplimiento, setFiltroCumplimiento] = useState('');
     const [showEditAutoModal, setShowEditAutoModal] = useState(false);
     const [showCumplimientoModal, setShowCumplimientoModal] = useState(false);
+    const [showCumplimientoDetailModal, setShowCumplimientoDetailModal] = useState(false);
     const [showHallazgoModal, setShowHallazgoModal] = useState(false);
     const [showPlanModal, setShowPlanModal] = useState(false);
     const [editingCumplimiento, setEditingCumplimiento] = useState<any>(null);
+    const [viewingCumplimiento, setViewingCumplimiento] = useState<any>(null);
     const [editingHallazgo, setEditingHallazgo] = useState<any>(null);
     const [editingPlan, setEditingPlan] = useState<any>(null);
     const [deletingCumplimiento, setDeletingCumplimiento] = useState<any>(null);
@@ -139,9 +144,81 @@ const AutoevaluacionEditorPage: React.FC = () => {
         return filtered;
     }, [criterios, evaluaciones]);
 
+    const normalizeToken = (value?: string) =>
+        (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[_-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toUpperCase();
+
+    const getCriterioCategoria = (criterio: any): string => {
+        const categoria = criterio?.categoria;
+        if (typeof categoria === 'string' && categoria.trim()) return categoria;
+
+        const estandarNombre = typeof criterio?.estandar === 'object' ? criterio?.estandar?.nombre : undefined;
+        if (typeof estandarNombre === 'string' && estandarNombre.trim()) return estandarNombre;
+
+        if (typeof criterio?.estandar_display === 'string' && criterio.estandar_display.trim()) {
+            return criterio.estandar_display;
+        }
+
+        return '';
+    };
+
+    const categoriasCriterio = useMemo(() => {
+        const base = CATEGORIAS_CRITERIO.map((c) => ({ value: c.value, label: c.label }));
+        const baseNorm = new Set(base.map((c) => normalizeToken(c.value)));
+
+        const extras: Array<{ value: string; label: string }> = [];
+        for (const criterio of criteriosAuto) {
+            const categoria = getCriterioCategoria(criterio);
+            if (!categoria) continue;
+
+            const normalized = normalizeToken(categoria);
+            if (!normalized || baseNorm.has(normalized)) continue;
+            if (extras.some((x) => normalizeToken(x.value) === normalized)) continue;
+
+            extras.push({ value: categoria, label: categoria });
+        }
+
+        return [...base, ...extras];
+    }, [criteriosAuto]);
+
+    const getCumplimientoServicioId = (cumplimiento: any): number | undefined => {
+        return cumplimiento.servicio_sede_id || cumplimiento.servicio_sede?.id || cumplimiento.servicio_sede_detail?.id;
+    };
+
+    const serviciosCriterio = useMemo(() => {
+        const map = new Map<number, string>();
+
+        for (const cumplimiento of cumplimientosAuto) {
+            const servicioId = getCumplimientoServicioId(cumplimiento);
+            if (!servicioId) continue;
+
+            const servicioNombre =
+                cumplimiento.servicio_nombre ||
+                cumplimiento.servicio_sede?.nombre_servicio ||
+                cumplimiento.servicio_sede_detail?.nombre ||
+                `Servicio ${servicioId}`;
+
+            if (!map.has(servicioId)) {
+                map.set(servicioId, servicioNombre);
+            }
+        }
+
+        return Array.from(map.entries())
+            .map(([id, nombre]) => ({ id, nombre }))
+            .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }, [cumplimientosAuto]);
+
     const criteriosFiltrados = useMemo(() => {
         let list = criteriosAuto;
-        if (filtroCategoria) list = list.filter(c => c.categoria === filtroCategoria);
+        if (filtroCategoria) {
+            const filtroNormalizado = normalizeToken(filtroCategoria);
+            list = list.filter((criterio) => normalizeToken(getCriterioCategoria(criterio)) === filtroNormalizado);
+        }
         return list;
     }, [criteriosAuto, filtroCategoria]);
 
@@ -164,8 +241,41 @@ const AutoevaluacionEditorPage: React.FC = () => {
         return { total, cumple, noCumple, parcial, noAplica, pct };
     }, [cumplimientosAuto]);
 
-    const getEvaluacionForCriterio = (criterioId: number): CriterioEvaluacion | undefined =>
-        evaluaciones.find(e => e.criterio_id === criterioId);
+    const getEvaluacionForCriterio = (criterioId: number): CriterioEvaluacion | undefined => {
+        const evaluacionDirecta = evaluaciones.find(e => e.criterio_id === criterioId);
+        if (evaluacionDirecta && !filtroServicioCriterio) return evaluacionDirecta;
+
+        // Fallback: derivar estado desde cumplimientos, soportando múltiples servicios.
+        let cumplimientosDelCriterio = cumplimientosAuto.filter(
+            (c) => c.criterio_id === criterioId || c.criterio?.id === criterioId,
+        );
+
+        if (filtroServicioCriterio) {
+            cumplimientosDelCriterio = cumplimientosDelCriterio.filter(
+                (c) => String(getCumplimientoServicioId(c) || '') === filtroServicioCriterio,
+            );
+        }
+
+        if (cumplimientosDelCriterio.length === 0) {
+            return evaluacionDirecta;
+        }
+
+        const estadosUnicos = Array.from(new Set(cumplimientosDelCriterio.map((c) => c.cumple).filter(Boolean)));
+        const estado = estadosUnicos.length === 1 ? estadosUnicos[0] : 'PARCIALMENTE';
+
+        return {
+            id: cumplimientosDelCriterio[0].id,
+            criterio_id: criterioId,
+            autoevaluacion_id: autoId,
+            estado_cumplimiento: estado as CriterioEvaluacion['estado_cumplimiento'],
+            observaciones:
+                estadosUnicos.length > 1
+                    ? 'Evaluado con diferentes resultados según el servicio.'
+                    : cumplimientosDelCriterio[0].hallazgo || cumplimientosDelCriterio[0].plan_mejora,
+            fecha_evaluacion:
+                cumplimientosDelCriterio[0].fecha_actualizacion || cumplimientosDelCriterio[0].fecha_creacion,
+        } as CriterioEvaluacion;
+    };
 
     // Handlers para delete
     const handleDeleteCumplimiento = async () => {
@@ -349,8 +459,18 @@ const AutoevaluacionEditorPage: React.FC = () => {
                             className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                             <option value="">Todas las categorías</option>
-                            {CATEGORIAS_CRITERIO.map(c => (
+                            {categoriasCriterio.map(c => (
                                 <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={filtroServicioCriterio}
+                            onChange={(e) => setFiltroServicioCriterio(e.target.value)}
+                            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                            <option value="">Todos los servicios</option>
+                            {serviciosCriterio.map((servicio) => (
+                                <option key={servicio.id} value={String(servicio.id)}>{servicio.nombre}</option>
                             ))}
                         </select>
                     </div>
@@ -366,15 +486,20 @@ const AutoevaluacionEditorPage: React.FC = () => {
                         <div className="space-y-3">
                             {criteriosFiltrados.map(cr => {
                                 const ev = getEvaluacionForCriterio(cr.id);
+                                const criterioCodigo = cr.codigo || cr.numero_criterio || 'Sin código';
+                                const criterioNombre = cr.nombre || 'Sin nombre';
                                 return (
                                     <div key={cr.id} className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 hover:shadow transition-shadow">
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                             <div className="flex items-start gap-3 flex-1">
                                                 <StatusIcon estado={ev?.estado_cumplimiento} />
                                                 <div className="min-w-0">
-                                                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{cr.numero_criterio}</p>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{cr.numero_criterio}</p>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{cr.descripcion}</p>
+                                                    <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                        {criterioCodigo} - {criterioNombre}
+                                                    </p>
+                                                    {cr.descripcion && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{cr.descripcion}</p>
+                                                    )}
                                                     {cr.categoria && (
                                                         <span className="inline-block mt-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
                                                             {getEstadoLabel(cr.categoria)}
@@ -526,6 +651,13 @@ const AutoevaluacionEditorPage: React.FC = () => {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => { setViewingCumplimiento(c); setShowCumplimientoDetailModal(true); }}
+                                                        className="p-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                                        title="Ver detalle"
+                                                    >
+                                                        <HiOutlineEye className="h-4 w-4" />
+                                                    </button>
                                                     <button
                                                         onClick={() => { setEditingCumplimiento(c); setShowCumplimientoModal(true); }}
                                                         className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -702,6 +834,17 @@ const AutoevaluacionEditorPage: React.FC = () => {
                 />
             )}
 
+            {showCumplimientoDetailModal && (
+                <CumplimientoDetailModal
+                    isOpen={showCumplimientoDetailModal}
+                    cumplimiento={viewingCumplimiento || undefined}
+                    onClose={() => {
+                        setShowCumplimientoDetailModal(false);
+                        setViewingCumplimiento(null);
+                    }}
+                />
+            )}
+
             {showHallazgoModal && (
                 <HallazgoFormModal
                     isOpen={showHallazgoModal}
@@ -788,7 +931,9 @@ const StatusIcon: React.FC<{ estado?: string }> = ({ estado }) => {
     switch (estado) {
         case 'CUMPLE': return <HiOutlineCheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />;
         case 'NO_CUMPLE': return <HiOutlineXCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />;
-        case 'PARCIAL': return <HiOutlineExclamationTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />;
+        case 'PARCIAL':
+        case 'PARCIALMENTE':
+            return <HiOutlineExclamationTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />;
         default: return <HiOutlineListBullet className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />;
     }
 };

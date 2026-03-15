@@ -10,6 +10,17 @@ import type { CumplimientoFilters } from '../../domain/types';
 import { parseListResponse } from '../../shared/utils/apiResponse';
 
 export class CumplimientoRepository implements ICumplimientoRepository {
+  private normalizePayload<T extends CumplimientoCreate | CumplimientoUpdate>(data: T): T {
+    const evidencias = (data as CumplimientoCreate).documentos_evidencia;
+    if (!Array.isArray(evidencias)) return data;
+
+    return {
+      ...data,
+      documentos_evidencia: evidencias,
+      documentos_evidencia_ids: evidencias,
+    } as T;
+  }
+
   async getAll(filters?: CumplimientoFilters): Promise<Cumplimiento[]> {
     const response = await axiosInstance.get('/habilitacion/cumplimientos/', { params: filters });
     return parseListResponse<Cumplimiento>(response.data);
@@ -21,12 +32,12 @@ export class CumplimientoRepository implements ICumplimientoRepository {
   }
 
   async create(data: CumplimientoCreate): Promise<Cumplimiento> {
-    const response = await axiosInstance.post('/habilitacion/cumplimientos/', data);
+    const response = await axiosInstance.post('/habilitacion/cumplimientos/', this.normalizePayload(data));
     return response.data;
   }
 
   async update(id: number, data: CumplimientoUpdate): Promise<Cumplimiento> {
-    const response = await axiosInstance.patch(`/habilitacion/cumplimientos/${id}/`, data);
+    const response = await axiosInstance.patch(`/habilitacion/cumplimientos/${id}/`, this.normalizePayload(data));
     return response.data;
   }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     HiOutlinePencilSquare,
@@ -62,6 +62,10 @@ const PrestadorDetailPage: React.FC = () => {
     const { } = useAutoevaluacion();
     const { service: cumplimientoService } = useCumplimiento();
 
+    const getCumplimientoAutoevaluacionId = (cumplimiento: Cumplimiento): number | undefined => {
+        return cumplimiento.autoevaluacion?.id || cumplimiento.autoevaluacion_detail?.id || cumplimiento.autoevaluacion_id;
+    };
+
     // ── Data loading functions ──
     const loadPrestador = useCallback(async () => {
         try {
@@ -100,12 +104,17 @@ const PrestadorDetailPage: React.FC = () => {
             return;
         }
         try {
-            const results: Cumplimiento[] = [];
-            for (const autoId of autoIds) {
-                const data = await cumplimientoService.getCumplimientos({ autoevaluacion_id: autoId });
-                results.push(...data);
-            }
-            setCumplimientosPrestador(results);
+            const autoIdsSet = new Set(autoIds);
+            const data = await cumplimientoService.getCumplimientos();
+
+            const filtered = data.filter((cumplimiento) => {
+                const autoId = getCumplimientoAutoevaluacionId(cumplimiento);
+                return autoId ? autoIdsSet.has(autoId) : false;
+            });
+
+            // Evita registros repetidos que generan keys duplicadas en tablas.
+            const uniqueById = Array.from(new Map(filtered.map((cumplimiento) => [cumplimiento.id, cumplimiento])).values());
+            setCumplimientosPrestador(uniqueById);
         } catch (err) {
             setCumplimientosPrestador([]);
         }
@@ -157,6 +166,10 @@ const PrestadorDetailPage: React.FC = () => {
             setServicioDeleteError(extractErrorMessage(err, 'No se puede eliminar este servicio'));
         }
     };
+
+    const autoevaluacionNumeroById = useMemo(() => {
+        return new Map(autoevaluacionesPrestador.map((a) => [a.id, a.numero_autoevaluacion]));
+    }, [autoevaluacionesPrestador]);
 
     if (loading) return <LoadingScreen />;
     if (!prestador) {
@@ -426,7 +439,12 @@ const PrestadorDetailPage: React.FC = () => {
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                     {cumplimientosPrestador.map(c => (
                                         <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                            <td className="px-4 py-3 text-gray-900 dark:text-white">{c.autoevaluacion?.numero_autoevaluacion || '—'}</td>
+                                            <td className="px-4 py-3 text-gray-900 dark:text-white">
+                                                {c.autoevaluacion?.numero_autoevaluacion
+                                                    || c.autoevaluacion_detail?.numero
+                                                    || (c.autoevaluacion_id ? autoevaluacionNumeroById.get(c.autoevaluacion_id) : undefined)
+                                                    || '—'}
+                                            </td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.servicio_sede?.nombre_servicio || c.servicio_nombre || '—'}</td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{c.criterio?.nombre || c.criterio_nombre || '—'}</td>
                                             <td className="px-4 py-3">

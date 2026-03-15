@@ -55,7 +55,9 @@ const MejorasVencidasPanel: React.FC<MejorasVencidasPanelProps> = ({
 
   const filteredCumplimientos = useMemo(() => {
     if (!autoevaluacionId) return cumplimientosVencidos;
-    return cumplimientosVencidos.filter((c: any) => c.autoevaluacion?.id === autoevaluacionId);
+    return cumplimientosVencidos.filter(
+      (c: any) => (c.autoevaluacion?.id || c.autoevaluacion_detail?.id || c.autoevaluacion_id) === autoevaluacionId,
+    );
   }, [cumplimientosVencidos, autoevaluacionId]);
 
   const filteredPlanes = useMemo(() => {
@@ -170,7 +172,9 @@ const MejorasVencidasPanel: React.FC<MejorasVencidasPanelProps> = ({
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                     {filteredCumplimientos.map((c: any) => (
                       <tr key={c.id} className="hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
-                        <td className="px-3 py-2 text-gray-900 dark:text-white">{c.autoevaluacion?.numero_autoevaluacion || '—'}</td>
+                        <td className="px-3 py-2 text-gray-900 dark:text-white">
+                          {c.autoevaluacion?.numero_autoevaluacion || c.autoevaluacion_detail?.numero || '—'}
+                        </td>
                         <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{c.servicio_sede?.nombre_servicio || '—'}</td>
                         <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{c.criterio?.nombre || '—'}</td>
                         <td className="px-3 py-2">

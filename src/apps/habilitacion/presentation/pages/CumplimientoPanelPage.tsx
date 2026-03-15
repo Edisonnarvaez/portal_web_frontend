@@ -44,10 +44,22 @@ const CumplimientoPanelPage: React.FC = () => {
         fetchAutoevaluaciones();
     }, []);
 
+    const getAutoevaluacionId = (c: Cumplimiento): number | undefined => {
+        return c.autoevaluacion?.id || c.autoevaluacion_detail?.id || c.autoevaluacion_id;
+    };
+
+    const getAutoevaluacionNumero = (c: Cumplimiento): string | undefined => {
+        const fromLookup = c.autoevaluacion_id
+            ? autoevaluaciones.find((a) => a.id === c.autoevaluacion_id)?.numero_autoevaluacion
+            : undefined;
+
+        return c.autoevaluacion?.numero_autoevaluacion || c.autoevaluacion_detail?.numero || fromLookup;
+    };
+
     const filtered = useMemo(() => {
         return cumplimientos.filter(c => {
             const matchEstado = !filtroEstado || c.cumple === filtroEstado;
-            const matchAuto = !filtroAutoeval || c.autoevaluacion?.id === Number(filtroAutoeval);
+            const matchAuto = !filtroAutoeval || getAutoevaluacionId(c) === Number(filtroAutoeval);
             const searchLower = search.toLowerCase();
             const matchSearch = !search || (
                 c.servicio_sede?.nombre_servicio?.toLowerCase().includes(searchLower) ||
@@ -58,7 +70,7 @@ const CumplimientoPanelPage: React.FC = () => {
             );
             return matchEstado && matchAuto && matchSearch;
         });
-    }, [cumplimientos, filtroEstado, filtroAutoeval, search]);
+    }, [cumplimientos, filtroEstado, filtroAutoeval, search, autoevaluaciones]);
 
     /* ─── stats ─── */
     const stats = useMemo(() => {
@@ -92,7 +104,7 @@ const CumplimientoPanelPage: React.FC = () => {
 
     /* ── DataTable columns ── */
     const cumplimientoColumns: DataTableColumn<Cumplimiento>[] = useMemo(() => [
-        { key: 'autoevaluacion', label: 'Autoevaluación', accessor: r => r.autoevaluacion?.numero_autoevaluacion ?? '', render: r => <span className="font-medium text-gray-900 dark:text-white">{r.autoevaluacion?.numero_autoevaluacion || '—'}</span> },
+                { key: 'autoevaluacion', label: 'Autoevaluación', accessor: r => getAutoevaluacionNumero(r) ?? '', render: r => <span className="font-medium text-gray-900 dark:text-white">{getAutoevaluacionNumero(r) || '—'}</span> },
         { key: 'servicio', label: 'Servicio', accessor: r => r.servicio_sede?.nombre_servicio ?? '', render: r => <span>{r.servicio_sede?.nombre_servicio || '—'}</span> },
         { key: 'criterio', label: 'Criterio', accessor: r => r.criterio?.codigo ?? '', render: r => (
           <div className="flex flex-col gap-1">
@@ -112,7 +124,7 @@ const CumplimientoPanelPage: React.FC = () => {
         { key: 'hallazgo', label: 'Hallazgo', accessor: r => r.hallazgo ?? '', render: r => <span className="max-w-[140px] truncate block">{r.hallazgo || '—'}</span> },
         { key: 'responsable', label: 'Responsable', accessor: r => (r.responsable_mejora as any)?.username ?? '', render: r => <span>{(r.responsable_mejora as any)?.username || '—'}</span> },
         { key: 'compromiso', label: 'Compromiso', accessor: r => r.fecha_compromiso ?? '', render: r => <span className="text-gray-500">{formatDate(r.fecha_compromiso)}</span> },
-    ], []);
+    ], [autoevaluaciones]);
 
     if (loading && cumplimientos.length === 0) return <LoadingScreen />;
 
