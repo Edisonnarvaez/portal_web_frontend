@@ -7,11 +7,21 @@ import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
 import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
+interface SelectOption {
+  value: number;
+  label: string;
+  autoevaluacionId?: number;
+}
+
 interface PlanMejoraFormModalProps {
   isOpen: boolean;
   planMejora?: PlanMejora;
   autoevaluacionId?: number;
   criterioId?: number;
+  autoevaluacionOptions?: SelectOption[];
+  criterioOptions?: SelectOption[];
+  auditoriaOptions?: SelectOption[];
+  resultadoIndicadorOptions?: SelectOption[];
   origenTipo?: OrigenTipo;
   onClose: () => void;
   onSuccess: () => void;
@@ -22,6 +32,10 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
   planMejora,
   autoevaluacionId,
   criterioId,
+  autoevaluacionOptions,
+  criterioOptions,
+  auditoriaOptions,
+  resultadoIndicadorOptions,
   origenTipo: defaultOrigenTipo,
   onClose,
   onSuccess,
@@ -48,6 +62,47 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const withSelectedOption = (
+    options: SelectOption[] | undefined,
+    selectedValue: number | undefined,
+    fallbackLabel: string,
+  ): SelectOption[] => {
+    const base = options || [];
+    if (!selectedValue) return base;
+    if (base.some((opt) => opt.value === selectedValue)) return base;
+    return [...base, { value: selectedValue, label: fallbackLabel }];
+  };
+
+  const autoevaluacionSelectOptions = withSelectedOption(
+    autoevaluacionOptions,
+    formData.autoevaluacion,
+    `Autoevaluación #${formData.autoevaluacion}`,
+  );
+
+  const criteriosBase = (criterioOptions || []).filter((opt) => {
+    if (!formData.autoevaluacion) return true;
+    if (!opt.autoevaluacionId) return true;
+    return opt.autoevaluacionId === formData.autoevaluacion;
+  });
+
+  const criterioSelectOptions = withSelectedOption(
+    criteriosBase,
+    formData.criterio,
+    `Criterio #${formData.criterio}`,
+  );
+
+  const auditoriaSelectOptions = withSelectedOption(
+    auditoriaOptions,
+    formData.auditoria,
+    `Auditoría #${formData.auditoria}`,
+  );
+
+  const resultadoIndicadorSelectOptions = withSelectedOption(
+    resultadoIndicadorOptions,
+    formData.resultado_indicador,
+    `Resultado #${formData.resultado_indicador}`,
+  );
 
   useEffect(() => {
     if (planMejora) {
@@ -130,11 +185,59 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
         return;
       }
 
+      if (formData.fecha_vencimiento <= formData.fecha_inicio) {
+        setError('La fecha de vencimiento debe ser posterior a la fecha de inicio');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.origen_tipo) {
+        setError('El origen del plan es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.origen_tipo === 'HABILITACION' && !formData.autoevaluacion) {
+        setError('Para origen HABILITACION, el ID de Autoevaluación es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.origen_tipo === 'AUDITORIA' && !formData.auditoria) {
+        setError('Para origen AUDITORIA, el ID de Auditoría es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.origen_tipo === 'INDICADOR' && !formData.resultado_indicador) {
+        setError('Para origen INDICADOR, el ID de Resultado Indicador es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      const payload: Partial<PlanMejoraCreate> = { ...formData };
+
+      // Mantiene consistencia con validaciones del backend por origen.
+      if (payload.origen_tipo === 'HABILITACION') {
+        payload.auditoria = undefined;
+        payload.resultado_indicador = undefined;
+      } else if (payload.origen_tipo === 'AUDITORIA') {
+        payload.autoevaluacion = undefined;
+        payload.criterio = undefined;
+        payload.cumplimiento = undefined;
+        payload.resultado_indicador = undefined;
+      } else if (payload.origen_tipo === 'INDICADOR') {
+        payload.autoevaluacion = undefined;
+        payload.criterio = undefined;
+        payload.cumplimiento = undefined;
+        payload.auditoria = undefined;
+      }
+
       if (isEdit && planMejora) {
-        await updatePlan(planMejora.id, { id: planMejora.id, ...formData });
+        await updatePlan(planMejora.id, { id: planMejora.id, ...payload });
         notifySuccess('Plan de mejora actualizado satisfactoriamente');
       } else {
-        await createPlan(formData as PlanMejoraCreate);
+        await createPlan(payload as PlanMejoraCreate);
         notifySuccess('Plan de mejora creado satisfactoriamente');
       }
       onSuccess();
@@ -239,14 +342,29 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID Autoevaluación
               </label>
-              <input
-                type="number"
-                name="autoevaluacion"
-                value={formData.autoevaluacion || ''}
-                onChange={handleChange}
-                disabled={!!autoevaluacionId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
+              {autoevaluacionSelectOptions.length > 0 ? (
+                <select
+                  name="autoevaluacion"
+                  value={formData.autoevaluacion || ''}
+                  onChange={handleChange}
+                  disabled={!!autoevaluacionId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                >
+                  {!formData.autoevaluacion && <option value="">Selecciona una autoevaluación</option>}
+                  {autoevaluacionSelectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="autoevaluacion"
+                  value={formData.autoevaluacion || ''}
+                  onChange={handleChange}
+                  disabled={!!autoevaluacionId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+              )}
             </div>
             )}
 
@@ -256,14 +374,91 @@ const PlanMejoraFormModal: React.FC<PlanMejoraFormModalProps> = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID Criterio
               </label>
-              <input
-                type="number"
-                name="criterio"
-                value={formData.criterio || ''}
-                onChange={handleChange}
-                disabled={!!criterioId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
+              {criterioSelectOptions.length > 0 ? (
+                <select
+                  name="criterio"
+                  value={formData.criterio || ''}
+                  onChange={handleChange}
+                  disabled={!!criterioId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                >
+                  <option value="">Sin criterio</option>
+                  {criterioSelectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="criterio"
+                  value={formData.criterio || ''}
+                  onChange={handleChange}
+                  disabled={!!criterioId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+              )}
+            </div>
+            )}
+
+            {/* ID Auditoría */}
+            {formData.origen_tipo === 'AUDITORIA' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                ID Auditoría <span className="text-red-500">*</span>
+              </label>
+              {auditoriaSelectOptions.length > 0 ? (
+                <select
+                  name="auditoria"
+                  value={formData.auditoria || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  {!formData.auditoria && <option value="">Selecciona una auditoría</option>}
+                  {auditoriaSelectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="auditoria"
+                  value={formData.auditoria || ''}
+                  onChange={handleChange}
+                  placeholder="ID de la auditoría"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+            </div>
+            )}
+
+            {/* ID Resultado Indicador */}
+            {formData.origen_tipo === 'INDICADOR' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                ID Resultado Indicador <span className="text-red-500">*</span>
+              </label>
+              {resultadoIndicadorSelectOptions.length > 0 ? (
+                <select
+                  name="resultado_indicador"
+                  value={formData.resultado_indicador || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  {!formData.resultado_indicador && <option value="">Selecciona un resultado</option>}
+                  {resultadoIndicadorSelectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="resultado_indicador"
+                  value={formData.resultado_indicador || ''}
+                  onChange={handleChange}
+                  placeholder="ID del resultado indicador"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                />
+              )}
             </div>
             )}
 

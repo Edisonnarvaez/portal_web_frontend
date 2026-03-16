@@ -21,6 +21,7 @@ import {
     useCriterio,
     useHallazgo,
     usePlanMejora,
+    useDatosPrestador,
 } from '../hooks';
 import type { CriterioEvaluacion } from '../../domain/entities/Criterio';
 import {
@@ -74,6 +75,7 @@ const AutoevaluacionEditorPage: React.FC = () => {
     const { cumplimientos, loading: lc, fetchCumplimientos, delete: deleteCumplimiento } = useCumplimiento();
     const { hallazgos, loading: lh, fetchHallazgos, deleteHallazgo } = useHallazgo();
     const { planes, loading: lp, fetchPlanes, deletePlan } = usePlanMejora();
+    const { datos: prestadores, fetchDatos } = useDatosPrestador();
 
     const autoevaluacion = useMemo(() => autoevaluaciones.find(a => a.id === autoId), [autoevaluaciones, autoId]);
 
@@ -81,11 +83,21 @@ const AutoevaluacionEditorPage: React.FC = () => {
         fetchAutoevaluaciones();
         fetchCriterios();
         fetchEvaluaciones(autoId);
+        fetchDatos();
         // Usar los parámetros correctos del backend
         fetchCumplimientos({ autoevaluacion_id: autoId });
         fetchHallazgos({ autoevaluacion_id: autoId });
         fetchPlanes({ autoevaluacion_id: autoId });
     }, [autoId]);
+
+    const currentPrestadorId = useMemo(() => {
+        const fromAutoevaluacion = autoevaluacion?.datos_prestador?.id || autoevaluacion?.datos_prestador_detail?.id;
+        if (fromAutoevaluacion) return fromAutoevaluacion;
+
+        if (!autoevaluacion?.prestador_codigo) return undefined;
+        const match = prestadores.find((p) => p.codigo_reps === autoevaluacion.prestador_codigo);
+        return match?.id;
+    }, [autoevaluacion, prestadores]);
 
     const loading = la || lcr || lc || lh || lp;
 
@@ -848,6 +860,41 @@ const AutoevaluacionEditorPage: React.FC = () => {
             {showHallazgoModal && (
                 <HallazgoFormModal
                     isOpen={showHallazgoModal}
+                    autoevaluacionId={autoId}
+                    datosPrestadorId={currentPrestadorId}
+                    autoevaluacionOptions={[
+                        {
+                            value: autoId,
+                            label: autoevaluacion?.numero_autoevaluacion || `Autoevaluación #${autoId}`,
+                        },
+                    ]}
+                    datosPrestadorOptions={
+                        currentPrestadorId
+                            ? [
+                                {
+                                    value: currentPrestadorId,
+                                    label:
+                                        autoevaluacion?.datos_prestador?.codigo_reps ||
+                                        autoevaluacion?.datos_prestador_detail?.codigo_reps ||
+                                        autoevaluacion?.prestador_codigo ||
+                                        `Prestador #${currentPrestadorId}`,
+                                },
+                            ]
+                            : []
+                    }
+                    prestadorByAutoevaluacion={{
+                        [autoId]: currentPrestadorId || 0,
+                    }}
+                    criterioOptions={criteriosAuto.map((cr: any) => ({
+                        value: cr.id,
+                        label: `${cr.codigo || cr.numero_criterio || 'SIN-COD'} - ${cr.nombre || 'Sin nombre'}`,
+                        autoevaluacionId: autoId,
+                    }))}
+                    planMejoraOptions={planesAuto.map((p: any) => ({
+                        value: p.id,
+                        label: `${p.numero_plan} - ${p.descripcion || 'Sin descripción'}`,
+                        autoevaluacionId: autoId,
+                    }))}
                     onClose={() => { setShowHallazgoModal(false); setEditingHallazgo(null); }}
                     onSuccess={() => { setShowHallazgoModal(false); setEditingHallazgo(null); fetchHallazgos({ autoevaluacion_id: autoId }); }}
                     hallazgo={editingHallazgo || undefined}
@@ -857,6 +904,18 @@ const AutoevaluacionEditorPage: React.FC = () => {
             {showPlanModal && (
                 <PlanMejoraFormModal
                     isOpen={showPlanModal}
+                    autoevaluacionId={autoId}
+                    autoevaluacionOptions={[
+                        {
+                            value: autoId,
+                            label: autoevaluacion?.numero_autoevaluacion || `Autoevaluación #${autoId}`,
+                        },
+                    ]}
+                    criterioOptions={criteriosAuto.map((cr: any) => ({
+                        value: cr.id,
+                        label: `${cr.codigo || cr.numero_criterio || 'SIN-COD'} - ${cr.nombre || 'Sin nombre'}`,
+                        autoevaluacionId: autoId,
+                    }))}
                     onClose={() => { setShowPlanModal(false); setEditingPlan(null); }}
                     onSuccess={() => { setShowPlanModal(false); setEditingPlan(null); fetchPlanes({ autoevaluacion_id: autoId }); }}
                     planMejora={editingPlan || undefined}

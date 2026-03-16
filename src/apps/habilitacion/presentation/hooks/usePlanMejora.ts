@@ -73,8 +73,10 @@ export const usePlanMejora = () => {
     try {
       const data = await service.getVencidos();
       setVencidos(data);
+      return data;
     } catch (err: unknown) {
       setError(extractErrorMessage(err, 'Error al cargar vencidos'));
+      throw err;
     }
   }, []);
 

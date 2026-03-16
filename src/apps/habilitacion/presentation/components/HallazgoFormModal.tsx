@@ -8,6 +8,12 @@ import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { extractErrorMessage } from '../../shared/utils/error';
 import { useNotifications } from '../../../../shared/hooks/useNotifications';
 
+interface SelectOption {
+  value: number;
+  label: string;
+  autoevaluacionId?: number;
+}
+
 interface HallazgoFormModalProps {
   isOpen: boolean;
   hallazgo?: Hallazgo;
@@ -15,6 +21,11 @@ interface HallazgoFormModalProps {
   datosPrestadorId?: number;
   criterioId?: number;
   planMejoraId?: number;
+  autoevaluacionOptions?: SelectOption[];
+  datosPrestadorOptions?: SelectOption[];
+  criterioOptions?: SelectOption[];
+  planMejoraOptions?: SelectOption[];
+  prestadorByAutoevaluacion?: Record<number, number>;
   origenTipo?: OrigenTipo;
   onClose: () => void;
   onSuccess: () => void;
@@ -27,6 +38,11 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
   datosPrestadorId,
   criterioId,
   planMejoraId,
+  autoevaluacionOptions,
+  datosPrestadorOptions,
+  criterioOptions,
+  planMejoraOptions,
+  prestadorByAutoevaluacion,
   origenTipo: defaultOrigenTipo,
   onClose,
   onSuccess,
@@ -53,6 +69,61 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const withSelectedOption = (
+    options: SelectOption[] | undefined,
+    selectedValue: number | undefined,
+    fallbackLabel: string,
+  ): SelectOption[] => {
+    const base = options || [];
+    if (!selectedValue) return base;
+    if (base.some((opt) => opt.value === selectedValue)) return base;
+    return [...base, { value: selectedValue, label: fallbackLabel }];
+  };
+
+  const autoevaluacionSelectOptions = withSelectedOption(
+    autoevaluacionOptions,
+    formData.autoevaluacion,
+    `Autoevaluación #${formData.autoevaluacion}`,
+  );
+
+  const criterioSelectOptions = withSelectedOption(
+    criterioOptions,
+    formData.criterio,
+    `Criterio #${formData.criterio}`,
+  );
+
+  const basePlanOptions = (planMejoraOptions || []).filter((opt) => {
+    if (!formData.autoevaluacion) return true;
+    if (!opt.autoevaluacionId) return true;
+    return opt.autoevaluacionId === formData.autoevaluacion;
+  });
+
+  const prestadorSelectOptions = withSelectedOption(
+    datosPrestadorOptions,
+    formData.datos_prestador,
+    `Prestador #${formData.datos_prestador}`,
+  );
+
+  const planSelectOptions = withSelectedOption(
+    basePlanOptions,
+    formData.plan_mejora,
+    `Plan #${formData.plan_mejora}`,
+  );
+
+  useEffect(() => {
+    if (formData.origen_tipo !== 'HABILITACION') return;
+    if (!formData.autoevaluacion) return;
+    if (!prestadorByAutoevaluacion) return;
+
+    const prestadorId = prestadorByAutoevaluacion[formData.autoevaluacion];
+    if (!prestadorId) return;
+
+    setFormData((prev) => {
+      if (prev.datos_prestador === prestadorId) return prev;
+      return { ...prev, datos_prestador: prestadorId };
+    });
+  }, [formData.origen_tipo, formData.autoevaluacion, prestadorByAutoevaluacion]);
 
   useEffect(() => {
     if (hallazgo) {
@@ -135,11 +206,47 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
         return;
       }
 
+      if (formData.origen_tipo === 'HABILITACION' && !formData.autoevaluacion) {
+        setError('Para origen HABILITACION, el ID de Autoevaluación es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.origen_tipo === 'AUDITORIA' && !formData.auditoria) {
+        setError('Para origen AUDITORIA, el ID de Auditoría es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.origen_tipo === 'INDICADOR' && !formData.resultado_indicador) {
+        setError('Para origen INDICADOR, el ID de Resultado Indicador es obligatorio');
+        setLoading(false);
+        return;
+      }
+
+      const payload: Partial<HallazgoCreate> = { ...formData };
+
+      // Mantiene consistencia con validaciones del backend por origen.
+      if (payload.origen_tipo === 'HABILITACION') {
+        payload.auditoria = undefined;
+        payload.resultado_indicador = undefined;
+      } else if (payload.origen_tipo === 'AUDITORIA') {
+        payload.autoevaluacion = undefined;
+        payload.criterio = undefined;
+        payload.datos_prestador = undefined;
+        payload.resultado_indicador = undefined;
+      } else if (payload.origen_tipo === 'INDICADOR') {
+        payload.autoevaluacion = undefined;
+        payload.criterio = undefined;
+        payload.datos_prestador = undefined;
+        payload.auditoria = undefined;
+      }
+
       if (isEdit && hallazgo) {
-        await updateHallazgo(hallazgo.id, { id: hallazgo.id, ...formData });
+        await updateHallazgo(hallazgo.id, { id: hallazgo.id, ...payload });
         notifySuccess('Hallazgo actualizado satisfactoriamente');
       } else {
-        await createHallazgo(formData as HallazgoCreate);
+        await createHallazgo(payload as HallazgoCreate);
         notifySuccess('Hallazgo creado satisfactoriamente');
       }
       onSuccess();
@@ -306,58 +413,150 @@ const HallazgoFormModal: React.FC<HallazgoFormModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   ID Autoevaluación
                 </label>
-                <input
-                  type="number"
-                  name="autoevaluacion"
-                  value={formData.autoevaluacion || ''}
-                  onChange={handleChange}
-                  disabled={!!autoevaluacionId}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-                />
+                {autoevaluacionSelectOptions.length > 0 ? (
+                  <select
+                    name="autoevaluacion"
+                    value={formData.autoevaluacion || ''}
+                    onChange={handleChange}
+                    disabled={!!autoevaluacionId}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                  >
+                    {!formData.autoevaluacion && <option value="">Selecciona una autoevaluación</option>}
+                    {autoevaluacionSelectOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="number"
+                    name="autoevaluacion"
+                    value={formData.autoevaluacion || ''}
+                    onChange={handleChange}
+                    disabled={!!autoevaluacionId}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   ID Criterio
                 </label>
-                <input
-                  type="number"
-                  name="criterio"
-                  value={formData.criterio || ''}
-                  onChange={handleChange}
-                  disabled={!!criterioId}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-                />
+                {criterioSelectOptions.length > 0 ? (
+                  <select
+                    name="criterio"
+                    value={formData.criterio || ''}
+                    onChange={handleChange}
+                    disabled={!!criterioId}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                  >
+                    <option value="">Sin criterio</option>
+                    {criterioSelectOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="number"
+                    name="criterio"
+                    value={formData.criterio || ''}
+                    onChange={handleChange}
+                    disabled={!!criterioId}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                  />
+                )}
               </div>
             </div>
           )}
 
           {/* IDs opcionales */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {formData.origen_tipo === 'AUDITORIA' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  ID Auditoría <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="auditoria"
+                  value={formData.auditoria || ''}
+                  onChange={handleChange}
+                  placeholder="ID de la auditoría"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            {formData.origen_tipo === 'INDICADOR' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  ID Resultado Indicador <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="resultado_indicador"
+                  value={formData.resultado_indicador || ''}
+                  onChange={handleChange}
+                  placeholder="ID del resultado indicador"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID Prestador
               </label>
-              <input
-                type="number"
-                name="datos_prestador"
-                value={formData.datos_prestador || ''}
-                onChange={handleChange}
-                disabled={!!datosPrestadorId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
+              {prestadorSelectOptions.length > 0 ? (
+                <select
+                  name="datos_prestador"
+                  value={formData.datos_prestador || ''}
+                  onChange={handleChange}
+                  disabled={!!datosPrestadorId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                >
+                  <option value="">Sin prestador</option>
+                  {prestadorSelectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="datos_prestador"
+                  value={formData.datos_prestador || ''}
+                  onChange={handleChange}
+                  disabled={!!datosPrestadorId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID Plan de Mejora
               </label>
-              <input
-                type="number"
-                name="plan_mejora"
-                value={formData.plan_mejora || ''}
-                onChange={handleChange}
-                disabled={!!planMejoraId}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-              />
+              {planSelectOptions.length > 0 ? (
+                <select
+                  name="plan_mejora"
+                  value={formData.plan_mejora || ''}
+                  onChange={handleChange}
+                  disabled={!!planMejoraId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                >
+                  <option value="">Sin plan de mejora</option>
+                  {planSelectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="plan_mejora"
+                  value={formData.plan_mejora || ''}
+                  onChange={handleChange}
+                  disabled={!!planMejoraId}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+              )}
             </div>
           </div>
 

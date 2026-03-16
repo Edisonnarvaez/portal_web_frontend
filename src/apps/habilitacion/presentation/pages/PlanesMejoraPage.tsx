@@ -13,7 +13,7 @@ import {
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { usePlanMejora } from '../hooks';
+import { usePlanMejora, useAutoevaluacion, useCriterio } from '../hooks';
 import { PlanMejoraFormModal, Breadcrumbs } from '../components';
 import { ESTADOS_PLAN_MEJORA } from '../../domain/types';
 import { getEstadoLabel, getEstadoColor, formatDate } from '../utils/formatters';
@@ -40,6 +40,8 @@ const PlanesMejoraPage: React.FC = () => {
         planes, loading, error,
         fetchPlanes, deletePlan,
     } = usePlanMejora();
+    const { autoevaluaciones, fetchAutoevaluaciones } = useAutoevaluacion();
+    const { criterios, fetchCriterios } = useCriterio();
 
     const [filtroEstado, setFiltroEstado] = useState('');
     const [search, setSearch] = useState('');
@@ -50,7 +52,25 @@ const PlanesMejoraPage: React.FC = () => {
 
     useEffect(() => {
         fetchPlanes();
+        fetchAutoevaluaciones();
+        fetchCriterios();
     }, []);
+
+    const autoevaluacionOptions = useMemo(
+        () => autoevaluaciones.map((a) => ({
+            value: a.id,
+            label: a.numero_autoevaluacion || `Autoevaluación #${a.id}`,
+        })),
+        [autoevaluaciones],
+    );
+
+    const criterioOptions = useMemo(
+        () => criterios.map((c) => ({
+            value: c.id,
+            label: `${c.codigo || c.numero_criterio || 'SIN-COD'} - ${c.nombre || 'Sin nombre'}`,
+        })),
+        [criterios],
+    );
 
     /* ─── derived ─── */
     const filtered = useMemo(() => {
@@ -385,6 +405,8 @@ const PlanesMejoraPage: React.FC = () => {
             {showFormModal && (
                 <PlanMejoraFormModal
                     isOpen={showFormModal}
+                    autoevaluacionOptions={autoevaluacionOptions}
+                    criterioOptions={criterioOptions}
                     onClose={() => { setShowFormModal(false); setEditing(null); }}
                     onSuccess={() => { setShowFormModal(false); setEditing(null); fetchPlanes(); }}
                     planMejora={editing || undefined}

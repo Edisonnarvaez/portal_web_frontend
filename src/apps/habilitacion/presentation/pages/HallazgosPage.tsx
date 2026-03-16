@@ -14,7 +14,7 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
-import { useHallazgo } from '../hooks';
+import { useHallazgo, useAutoevaluacion, useCriterio, useDatosPrestador, usePlanMejora } from '../hooks';
 import { HallazgoFormModal, Breadcrumbs } from '../components';
 import { TIPOS_HALLAZGO, SEVERIDADES_HALLAZGO, ESTADOS_HALLAZGO } from '../../domain/types';
 import { getEstadoLabel, getEstadoColor, formatDate } from '../utils/formatters';
@@ -47,6 +47,10 @@ const HallazgosPage: React.FC = () => {
         hallazgos, loading, error,
         fetchHallazgos, deleteHallazgo,
     } = useHallazgo();
+    const { autoevaluaciones, fetchAutoevaluaciones } = useAutoevaluacion();
+    const { criterios, fetchCriterios } = useCriterio();
+    const { datos: prestadores, fetchDatos } = useDatosPrestador();
+    const { planes, fetchPlanes } = usePlanMejora();
 
     const [filtroTipo, setFiltroTipo] = useState('');
     const [filtroSeveridad, setFiltroSeveridad] = useState('');
@@ -58,6 +62,10 @@ const HallazgosPage: React.FC = () => {
 
     useEffect(() => {
         fetchHallazgos();
+        fetchAutoevaluaciones();
+        fetchCriterios();
+        fetchDatos();
+        fetchPlanes();
     }, []);
 
     /* ─── derived ─── */
@@ -99,6 +107,52 @@ const HallazgosPage: React.FC = () => {
             fill: SEV_COLORS[s.value] || '#6b7280',
         })),
         [hallazgos]);
+
+    const autoevaluacionOptions = useMemo(
+        () => autoevaluaciones.map((a) => ({
+            value: a.id,
+            label: `${a.numero_autoevaluacion || `Autoevaluación #${a.id}`}`,
+        })),
+        [autoevaluaciones],
+    );
+
+    const prestadorByAutoevaluacion = useMemo(() => {
+        const map: Record<number, number> = {};
+        autoevaluaciones.forEach((a) => {
+            const prestadorIdDirect = a.datos_prestador?.id || a.datos_prestador_detail?.id;
+            const prestadorIdByCodigo = a.prestador_codigo
+                ? prestadores.find((p) => p.codigo_reps === a.prestador_codigo)?.id
+                : undefined;
+            const prestadorId = prestadorIdDirect || prestadorIdByCodigo;
+            if (prestadorId) map[a.id] = prestadorId;
+        });
+        return map;
+    }, [autoevaluaciones, prestadores]);
+
+    const criterioOptions = useMemo(
+        () => criterios.map((c) => ({
+            value: c.id,
+            label: `${c.codigo || c.numero_criterio || 'SIN-COD'} - ${c.nombre || 'Sin nombre'}`,
+        })),
+        [criterios],
+    );
+
+    const prestadorOptions = useMemo(
+        () => prestadores.map((p) => ({
+            value: p.id,
+            label: `${p.codigo_reps || `Prestador #${p.id}`} - ${p.company_name || p.nombre_prestador || ''}`.trim(),
+        })),
+        [prestadores],
+    );
+
+    const planOptions = useMemo(
+        () => planes.map((p) => ({
+            value: p.id,
+            label: `${p.numero_plan} - ${p.descripcion || 'Sin descripción'}`,
+            autoevaluacionId: p.autoevaluacion_id,
+        })),
+        [planes],
+    );
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
@@ -307,6 +361,11 @@ const HallazgosPage: React.FC = () => {
             {showFormModal && (
                 <HallazgoFormModal
                     isOpen={showFormModal}
+                    autoevaluacionOptions={autoevaluacionOptions}
+                    criterioOptions={criterioOptions}
+                    datosPrestadorOptions={prestadorOptions}
+                    planMejoraOptions={planOptions}
+                    prestadorByAutoevaluacion={prestadorByAutoevaluacion}
                     onClose={() => { setShowFormModal(false); setEditing(null); }}
                     onSuccess={() => { setShowFormModal(false); setEditing(null); fetchHallazgos(); }}
                     hallazgo={editing || undefined}
