@@ -47,6 +47,7 @@ export interface ServicioSede {
   estado_display?: string;                      // ← COMPUTED/DISPLAY: "Habilitado"
   fecha_habilitacion?: string | null; // ISO date (YYYY-MM-DD)
   fecha_vencimiento?: string | null; // ISO date (YYYY-MM-DD)
+  requiere_renovacion?: boolean;                // ← Does service require renewal
   vencido?: boolean;                            // ← COMPUTED: fecha_vencimiento < today
   dias_vencimiento?: number | null;             // ← COMPUTED: Days until expiration
   fecha_creacion: string; // ISO datetime
@@ -55,7 +56,7 @@ export interface ServicioSede {
 
 /**
  * DTO para crear un nuevo ServicioSede
- * El backend asigna automáticamente: id, fecha_creacion, fecha_actualizacion
+ * El backend asigna automáticamente: id, fecha_creacion, fecha_actualizacion, requiere_renovacion (computed)
  */
 export interface ServicioSedeCreate {
   prestador_id: number;

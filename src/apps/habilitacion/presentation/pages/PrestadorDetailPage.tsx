@@ -73,6 +73,13 @@ const PrestadorDetailPage: React.FC = () => {
             setPrestador(data);
             return data;
         } catch (err) {
+            const errorMsg = extractErrorMessage(err, `No se pudo cargar el prestador con ID ${prestadorId}`);
+            console.error('❌ Error cargando prestador:', {
+                prestadorId,
+                error: errorMsg,
+                rawError: err,
+                endpoint: `/api/habilitacion/prestadores/${prestadorId}/`
+            });
             setPrestador(null);
             return null;
         }

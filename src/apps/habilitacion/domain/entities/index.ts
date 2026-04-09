@@ -8,3 +8,4 @@ export * from './Estandar';
 export * from './PlanMejora';
 export * from './Hallazgo';
 export * from './PaginatedResponse';
+export * from './SoporteDocumental';

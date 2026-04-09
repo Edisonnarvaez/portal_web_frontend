@@ -138,7 +138,7 @@ export default function AreasEmpresa() {
     setIsModalOpen(true);
   };
 
-  if (deptLoading || compLoading) return <LoadingScreen message="Cargando áreas..." />;
+  if (deptLoading || compLoading) return <LoadingScreen message="Cargando áreas..." fullScreen={true} />;
   if (deptError) return <div className="text-center py-8 text-red-600 dark:text-red-400">{deptError}</div>;
 
   return (
@@ -154,155 +154,205 @@ export default function AreasEmpresa() {
       </div>
       {mensaje && <div className="mb-4 text-green-600 dark:text-green-400">{mensaje}</div>}
       {isModalOpen && (
-        <div className="fixed z-50 inset-0 overflow-y-auto bg-black bg-opacity-60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-lg mx-auto my-4 sm:p-8">
-            <h2 className="text-xl sm:text-2xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">{isEditing ? "Editar" : "Agregar"} Área</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {formError && <div className="text-red-600 dark:text-red-400">{formError}</div>}
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre del Área</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Nombre"
-                    value={form.name || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
+        <div className="fixed z-50 inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white rounded-t-xl">
+              <h2 className="text-2xl font-bold">
+                📋 {isEditing ? "Editar" : "Agregar"} Área
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {formError && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+                    {formError}
+                  </div>
+                )}
+
+                {/* Sección: Información General */}
+                <div className="border-b-2 border-blue-600 pb-4">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">📋 Información General</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        Nombre del Área *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Nombre del área"
+                        value={form.name || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-600 focus:border-transparent transition"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        Código del Área *
+                      </label>
+                      <input
+                        type="text"
+                        name="departmentCode"
+                        placeholder="Código de área"
+                        value={form.departmentCode || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-600 focus:border-transparent transition"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        Descripción *
+                      </label>
+                      <input
+                        type="text"
+                        name="description"
+                        placeholder="Descripción del área"
+                        value={form.description || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-600 focus:border-transparent transition"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Código de Área</label>
-                  <input
-                    type="text"
-                    name="departmentCode"
-                    placeholder="Código de área"
-                    value={form.departmentCode || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
+
+                {/* Sección: Configuración */}
+                <div className="border-b-2 border-blue-600 pb-4">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">⚙️ Configuración</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        Empresa *
+                      </label>
+                      <select
+                        name="company"
+                        value={form.company || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-600 focus:border-transparent transition"
+                        required
+                      >
+                        <option value="">Seleccione Empresa</option>
+                        {companies.map((company) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        Estado
+                      </label>
+                      <select
+                        name="status"
+                        value={form.status ? "true" : "false"}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-600 focus:border-transparent transition"
+                        required
+                      >
+                        <option value="true">✓ Activo</option>
+                        <option value="false">○ Inactivo</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Empresa</label>
-                  <select
-                    name="company"
-                    value={form.company || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  >
-                    <option value="">Seleccione Empresa</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Descripción</label>
-                  <input
-                    type="text"
-                    name="description"
-                    placeholder="Descripción"
-                    value={form.description || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Estado</label>
-                  <select
-                    name="status"
-                    value={form.status ? "true" : "false"}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-center sm:justify-end space-x-4 mt-8">
-                <button
-                  type="button"
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  {isEditing ? "Actualizar" : "Guardar"}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 pt-6 px-6 pb-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
+              <button
+                type="button"
+                className="flex-1 px-6 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setIsModalOpen(false)}
+              >
+                ✕ Cancelar
+              </button>
+              <button
+                type="submit"
+                form="areasForm"
+                onClick={handleSubmit}
+                className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+              >
+                💾 {isEditing ? "Actualizar" : "Guardar"}
+              </button>
+            </div>
           </div>
         </div>
       )}
       {/* Modal de visualización */}
       {isViewModalOpen && viewResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4 transition-opacity duration-300 ease-out">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-2xl sm:p-8 transform transition-all duration-300 scale-100 hover:scale-[1.01]">
-            <button
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-              onClick={() => setIsViewModalOpen(false)}
-              aria-label="Cerrar modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white rounded-t-xl flex justify-between items-start">
+              <h2 className="text-2xl font-bold">📋 Detalles del Área</h2>
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="text-white hover:text-blue-100 transition-colors"
+                aria-label="Cerrar modal"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center tracking-tight">
-              Detalles del Área
-            </h2>
-            <div className="space-y-4 text-gray-700 dark:text-gray-200">
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Nombre:</span>
-                <span>{viewResult.name || "N/A"}</span>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+              {/* Sección: Información General */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-blue-600">📋 Información General</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nombre</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{viewResult.name || "N/A"}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Código</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{viewResult.departmentCode || "N/A"}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg md:col-span-2">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Descripción</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{viewResult.description || "N/A"}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Código de Área:</span>
-                <span>{viewResult.departmentCode || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Empresa:</span>
-                <span>
-                  {companies.find((company) => company.id === viewResult.company)?.name || "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Descripción:</span>
-                <span>{viewResult.description || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Estado:</span>
-                <span>{viewResult.status ? "Activo" : "Inactivo"}</span>
+
+              {/* Sección: Configuración */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-blue-600">⚙️ Configuración</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Empresa</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{companies.find((c) => c.id === viewResult.company)?.name || "N/A"}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estado</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                      viewResult.status
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}>
+                      {viewResult.status ? '✓ Activo' : '○ Inactivo'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="mt-8 flex justify-center">
+
+            {/* Footer */}
+            <div className="flex justify-end pt-6 px-6 pb-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
               <button
-                className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
                 onClick={() => setIsViewModalOpen(false)}
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
               >
-                Cerrar
+                ✕ Cerrar
               </button>
             </div>
           </div>

@@ -27,3 +27,10 @@ export type { BreadcrumbItem } from './Breadcrumbs';
 export { default as VencimientoBadge, getVencimientoLevel } from './VencimientoBadge';
 export { default as AccionesContextuales, getAccionesPrestador } from './AccionesContextuales';
 export type { AccionContextual } from './AccionesContextuales';
+
+// Phase 4 – Soportes Module Components
+export { default as SoporteCard } from './SoporteCard';
+export { default as SoporteUploadModal } from './SoporteUploadModal';
+export { default as SoporteChecklist } from './SoporteChecklist';
+export { default as SoporteExpiration } from './SoporteExpiration';
+export { default as SoporteCategories } from './SoporteCategories';

@@ -7,3 +7,4 @@ export * from './CriterioRepository';
 export * from './EstandarRepository';
 export * from './PlanMejoraRepository';
 export * from './HallazgoRepository';
+export * from './SoporteRepository';

@@ -148,7 +148,7 @@ export default function InformacionEmpresa() {
     };
 
     if (loading) {
-        return <LoadingScreen message="Cargando información de la empresa..." />;
+        return <LoadingScreen message="Cargando información de la empresa..." fullScreen={true} />;
     }
 
     if (!form) {
@@ -164,11 +164,11 @@ export default function InformacionEmpresa() {
             className="w-full bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden"
             onSubmit={handleSubmit}
         >
-            {/* Header */}
+            {/* Header 
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
                 <h2 className="text-2xl sm:text-3xl font-bold">Información de la Empresa</h2>
                 <p className="text-blue-100 text-sm mt-1">Gestiona los datos principales de tu organización</p>
-            </div>
+            </div>*/}
 
             {/* Content */}
             <div className="p-6 sm:p-8">

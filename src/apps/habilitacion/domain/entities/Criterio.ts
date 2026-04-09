@@ -26,6 +26,8 @@ export interface Criterio {
   aplica_todos?: boolean;                       // Applies to all IPS
   es_mandatorio?: boolean;                      // Mandatory requirement
   requiere_evidencia_documental?: boolean;      // Requires document evidence
+  requiere_documento?: boolean;                 // Requires quality document attachment
+  requiere_soporte?: boolean;                   // Requires normative support attachment
   notas_interpretacion?: string;                // Interpretation notes
   estado?: boolean;                             // Active/inactive
   categoria?: string;                           // LEGACY: can be derived from estandar
@@ -42,8 +44,11 @@ export interface CriterioCreate {
   complejidad?: 'BAJA' | 'MEDIA' | 'ALTA';     // Complexity level
   es_mandatorio?: boolean;                      // Mandatory requirement flag
   requiere_evidencia_documental?: boolean;      // Requires documentation
+  requiere_documento?: boolean;                 // Requires quality document attachment
+  requiere_soporte?: boolean;                   // Requires normative support attachment
   notas_interpretacion?: string;                // Interpretation notes
   estandar_id?: number;                         // Optional reference to Estandar
+  aplica_todos?: boolean;                       // Whether it applies to all IPS
   // Legacy fields for backward compatibility
   numero_criterio?: string;                     // Deprecated, use codigo instead
   categoria?: string;                           // Deprecated

@@ -153,7 +153,7 @@ export default function TiposProceso() {
 
     if (ptLoading) {
         console.log('[TiposProceso] Estado: LOADING');
-        return <LoadingScreen message="Cargando tipos de proceso..." />;
+        return <LoadingScreen message="Cargando tipos de proceso..." fullScreen={true} />;
     }
     if (ptError) {
         console.log('[TiposProceso] Estado: ERROR -', ptError);
@@ -189,148 +189,204 @@ export default function TiposProceso() {
             {/* Modal de formulario */}
             {isModalOpen && (
                 <div className="fixed z-50 inset-0 overflow-y-auto bg-black bg-opacity-60 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-md mx-auto">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                            {isEditing ? "Editar" : "Crear"} Tipo de Proceso
-                        </h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                    Nombre *
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={form.name || ""}
-                                    onChange={handleChange}
-                                    className="mt-1 p-2 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                    Descripción *
-                                </label>
-                                <textarea
-                                    name="description"
-                                    value={form.description || ""}
-                                    onChange={handleChange}
-                                    rows={3}
-                                    className="mt-1 p-2 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                    Empresa *
-                                </label>
-                                <select
-                                    name="company"
-                                    value={form.company || ""}
-                                    onChange={handleChange}
-                                    className="mt-1 p-2 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                    required
-                                >
-                                    <option value="">Seleccione una empresa</option>
-                                    {Array.isArray(companies) && companies.map(company => (
-                                        <option key={company.id} value={company.id}>{company.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    name="status"
-                                    checked={form.status || false}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                    Activo
-                                </label>
-                            </div>
-                            <div className="flex justify-end space-x-2 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        resetForm();
-                                        setIsModalOpen(false);
-                                    }}
-                                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                >
-                                    {isEditing ? "Actualizar" : "Crear"}
-                                </button>
-                            </div>
-                        </form>
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white">
+                            <h2 className="text-2xl font-bold">{isEditing ? "Editar" : "Agregar"} Tipo de Proceso</h2>
+                            <p className="text-blue-100 text-sm mt-1">Completa los datos del tipo de proceso</p>
+                        </div>
+
+                        {/* Content */}
+                        <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {formError && (
+                                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                                        ⚠️ {formError}
+                                    </div>
+                                )}
+
+                                {/* Sección 1: Información */}
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                                        📋 Información General
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Nombre *</label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                placeholder="Ej: Proceso Administrativo"
+                                                value={form.name || ""}
+                                                onChange={handleChange}
+                                                className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Descripción *</label>
+                                            <textarea
+                                                name="description"
+                                                placeholder="Describe el tipo de proceso..."
+                                                value={form.description || ""}
+                                                onChange={handleChange}
+                                                rows={4}
+                                                className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition resize-none"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Sección 2: Configuración */}
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                                        ⚙️ Configuración
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Empresa *</label>
+                                            <select
+                                                name="company"
+                                                value={form.company || ""}
+                                                onChange={handleChange}
+                                                className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition"
+                                                required
+                                            >
+                                                <option value="">Selecciona una empresa</option>
+                                                {Array.isArray(companies) && companies.map(company => (
+                                                    <option key={company.id} value={company.id}>{company.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="status"
+                                                checked={form.status || false}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600 dark:accent-blue-500 cursor-pointer"
+                                                id="status"
+                                            />
+                                            <label htmlFor="status" className="ml-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                                                Tipo de proceso activo
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex flex-col sm:flex-row gap-3 pt-6 px-6 sm:px-8 pb-6 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                type="button"
+                                className="flex-1 px-6 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                                onClick={() => setIsModalOpen(false)}
+                            >
+                                ✕ Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 transition"
+                                onClick={handleSubmit}
+                            >
+                                💾 {isEditing ? "Actualizar" : "Guardar"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Modal de visualización */}
             {isViewModalOpen && viewResult && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
-                    <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-lg">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Detalles del Tipo de Proceso
-                            </h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white flex justify-between items-start">
+                            <div>
+                                <h2 className="text-2xl font-bold">Detalles del Tipo de Proceso</h2>
+                                <p className="text-blue-100 text-sm mt-1">{viewResult.name}</p>
+                            </div>
                             <button
+                                className="text-white hover:bg-blue-600 rounded-lg p-2 transition"
                                 onClick={() => setIsViewModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                aria-label="Cerrar modal"
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Nombre:</span>
-                                <span className="text-gray-900 dark:text-gray-100">{viewResult.name}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Descripción:</span>
-                                <span className="text-gray-900 dark:text-gray-100 text-right max-w-xs">{viewResult.description}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Empresa:</span>
-                                <span className="text-gray-900 dark:text-gray-100">{getCompanyName(viewResult.company)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Estado:</span>
-                                <span className={`px-2 py-1 rounded text-xs ${viewResult.status ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                                    {viewResult.status ? 'Activo' : 'Inactivo'}
-                                </span>
-                            </div>
-                            {viewResult.creationDate && (
-                                <div className="flex justify-between">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
-                                    <span className="text-gray-900 dark:text-gray-100">
-                                        {new Date(viewResult.creationDate).toLocaleDateString("es-CO")}
-                                    </span>
+
+                        {/* Content */}
+                        <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+                            {/* Sección 1: Información */}
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                                    📋 Información General
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Nombre</p>
+                                        <p className="text-gray-900 dark:text-gray-100 font-semibold text-base">{viewResult.name}</p>
+                                    </div>
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Descripción</p>
+                                        <p className="text-gray-900 dark:text-gray-100 font-semibold text-base whitespace-pre-wrap">{viewResult.description}</p>
+                                    </div>
                                 </div>
-                            )}
-                            {viewResult.updateDate && (
-                                <div className="flex justify-between">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Última actualización:</span>
-                                    <span className="text-gray-900 dark:text-gray-100">
-                                        {new Date(viewResult.updateDate).toLocaleDateString("es-CO")}
-                                    </span>
+                            </div>
+
+                            {/* Sección 2: Configuración */}
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                                    ⚙️ Configuración
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Empresa</p>
+                                        <p className="text-gray-900 dark:text-gray-100 font-semibold text-base">{getCompanyName(viewResult.company)}</p>
+                                    </div>
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Estado</p>
+                                        <span className={`px-3 py-1 rounded-full font-semibold text-sm ${
+                                            viewResult.status 
+                                                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                                        }`}>
+                                            {viewResult.status ? "✓ Activo" : "○ Inactivo"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Fechas */}
+                            {(viewResult.creationDate || viewResult.updateDate) && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">📅 Información de Control</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600 dark:text-gray-400">
+                                        {viewResult.creationDate && (
+                                            <p>Creado: {new Date(viewResult.creationDate).toLocaleDateString("es-CO")}</p>
+                                        )}
+                                        {viewResult.updateDate && (
+                                            <p>Actualizado: {new Date(viewResult.updateDate).toLocaleDateString("es-CO")}</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        <div className="mt-6 flex justify-end">
+
+                        {/* Footer */}
+                        <div className="flex justify-end pt-6 px-6 sm:px-8 pb-6 border-t border-gray-200 dark:border-gray-700">
                             <button
+                                type="button"
+                                className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 transition"
                                 onClick={() => setIsViewModalOpen(false)}
-                                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600"
                             >
-                                Cerrar
+                                ✓ Cerrar
                             </button>
                         </div>
                     </div>
@@ -394,14 +450,14 @@ export default function TiposProceso() {
                                         <div className="flex space-x-2">
                                             <button
                                                 onClick={() => handleView(processType)}
-                                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                                                 title="Ver detalles"
                                             >
                                                 <FaEye size={20} />
                                             </button>
                                             <button
                                                 onClick={() => handleEdit(processType)}
-                                                className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
+                                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                                 title="Editar"
                                             >
                                                 <FaEdit size={20} />

@@ -7,3 +7,4 @@ export * from './ICriterioRepository';
 export * from './IEstandarRepository';
 export * from './IPlanMejoraRepository';
 export * from './IHallazgoRepository';
+export * from './ISoporteRepository';

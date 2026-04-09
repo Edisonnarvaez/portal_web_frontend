@@ -25,6 +25,10 @@ export default function SedesEmpresa() {
     municipality: 0,
     address: "",
     status: true,
+    concepto_sanitario: false,
+    reserva_agua_24h: false,
+    planta_electrica: false,
+    es_domicilio_ong: false,
   });
   const [mensaje, setMensaje] = useState("");
   const [formError, setFormError] = useState("");
@@ -141,6 +145,10 @@ export default function SedesEmpresa() {
       municipality: 0,
       address: "",
       status: true,
+      concepto_sanitario: false,
+      reserva_agua_24h: false,
+      planta_electrica: false,
+      es_domicilio_ong: false,
     });
     setIsEditing(false);
     setIsModalOpen(false);
@@ -161,7 +169,20 @@ export default function SedesEmpresa() {
     return municipality ? municipality.name : 'N/A';
   };
 
-  if (hqLoading || compLoading) return <LoadingScreen message="Cargando sedes..." />;
+  const getFilteredMunicipalities = () => {
+    if (!form.region) return [];
+    // Filtrar municipios que pertenecen a la región seleccionada
+    // Convertir ambos a números por si hay incompatibilidad de tipos
+    return Array.isArray(municipalities) 
+      ? municipalities.filter(m => {
+          const mRegion = Number(m.region);
+          const formRegion = Number(form.region);
+          return mRegion === formRegion;
+        })
+      : [];
+  };
+
+  if (hqLoading || compLoading) return <LoadingScreen message="Cargando sedes..." fullScreen={true} />;
   if (hqError) return <div className="text-center py-8 text-red-600 dark:text-red-400">{hqError}</div>;
 
   return (
@@ -178,174 +199,339 @@ export default function SedesEmpresa() {
       {mensaje && <div className="mb-4 text-green-600 dark:text-green-400">{mensaje}</div>}
       {isModalOpen && (
         <div className="fixed z-50 inset-0 overflow-y-auto bg-black bg-opacity-60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-lg mx-auto my-4 sm:p-8">
-            <h2 className="text-xl sm:text-2xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">{isEditing ? "Editar" : "Agregar"} Sede</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {formError && <div className="text-red-600 dark:text-red-400">{formError}</div>}
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white">
+              <h2 className="text-2xl font-bold">{isEditing ? "Editar" : "Agregar"} Sede</h2>
+              <p className="text-blue-100 text-sm mt-1">Completa los datos de la nueva sede</p>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {formError && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                    ⚠️ {formError}
+                  </div>
+                )}
+
+                {/* Sección 1: Datos Básicos */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Nombre de la sede"
-                    value={form.name || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                    📋 Datos Básicos
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Nombre de la Sede *</label>
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Ej: Sede Principal"
+                        value={form.name || ""}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Empresa *</label>
+                      <select
+                        name="company"
+                        value={form.company || ""}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition"
+                        required
+                      >
+                        <option value="">Seleccione empresa</option>
+                        {Array.isArray(companies) && companies.map(company => (
+                          <option key={company.id} value={company.id}>{company.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                
+
+                {/* Sección 2: Ubicación */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Empresa</label>
-                  <select
-                    name="company"
-                    value={form.company || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  >
-                    <option value="">Seleccione una empresa</option>
-                    {Array.isArray(companies) && companies.map(company => (
-                      <option key={company.id} value={company.id}>{company.name}</option>
-                    ))}
-                  </select>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                    📍 Ubicación
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Región *</label>
+                      <select
+                        name="region"
+                        value={form.region || ""}
+                        onChange={(e) => {
+                          handleChange(e);
+                          // Resetear municipio al cambiar región
+                          setForm(prev => ({
+                            ...prev,
+                            municipality: 0
+                          }));
+                        }}
+                        className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition"
+                        required
+                      >
+                        <option value="">Seleccione una región</option>
+                        {Array.isArray(regions) && regions.map(region => (
+                          <option key={region.id} value={region.id}>{region.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Municipio *</label>
+                      <select
+                        name="municipality"
+                        value={form.municipality || ""}
+                        onChange={handleChange}
+                        disabled={!form.region}
+                        className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        required
+                      >
+                        <option value="">
+                          {!form.region ? "Primero selecciona una región" : "Selecciona un municipio"}
+                        </option>
+                        {getFilteredMunicipalities().map(municipality => (
+                          <option key={municipality.id} value={municipality.id}>{municipality.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block font-medium mb-2 text-gray-700 dark:text-gray-200 text-sm">Dirección *</label>
+                      <input
+                        type="text"
+                        name="address"
+                        placeholder="Ej: Calle 10 #20-50"
+                        value={form.address || ""}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Sección 3: Infraestructura */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Región</label>
-                  <select
-                    name="region"
-                    value={form.region || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  >
-                    <option value="">Seleccione una región</option>
-                    {Array.isArray(regions) && regions.map(region => (
-                      <option key={region.id} value={region.id}>{region.name}</option>
-                    ))}
-                  </select>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                    🏗️ Infraestructura
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="concepto_sanitario"
+                        checked={form.concepto_sanitario || false}
+                        onChange={handleChange}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600 dark:accent-blue-500 cursor-pointer"
+                        id="concepto_sanitario"
+                      />
+                      <label htmlFor="concepto_sanitario" className="ml-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                        Concepto sanitario
+                      </label>
+                    </div>
+
+                    <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="reserva_agua_24h"
+                        checked={form.reserva_agua_24h || false}
+                        onChange={handleChange}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600 dark:accent-blue-500 cursor-pointer"
+                        id="reserva_agua_24h"
+                      />
+                      <label htmlFor="reserva_agua_24h" className="ml-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                        Reserva agua 24h
+                      </label>
+                    </div>
+
+                    <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="planta_electrica"
+                        checked={form.planta_electrica || false}
+                        onChange={handleChange}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600 dark:accent-blue-500 cursor-pointer"
+                        id="planta_electrica"
+                      />
+                      <label htmlFor="planta_electrica" className="ml-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                        Planta eléctrica
+                      </label>
+                    </div>
+
+                    <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="es_domicilio_ong"
+                        checked={form.es_domicilio_ong || false}
+                        onChange={handleChange}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600 dark:accent-blue-500 cursor-pointer"
+                        id="es_domicilio_ong"
+                      />
+                      <label htmlFor="es_domicilio_ong" className="ml-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                        Es domicilio ONG
+                      </label>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Sección 4: Configuración */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Municipio</label>
-                  <select
-                    name="municipality"
-                    value={form.municipality || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  >
-                    <option value="">Seleccione un municipio</option>
-                    {Array.isArray(municipalities) && municipalities.map(municipality => (
-                      <option key={municipality.id} value={municipality.id}>{municipality.name}</option>
-                    ))}
-                  </select>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-600">
+                    ⚙️ Configuración
+                  </h3>
+                  <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="status"
+                      checked={form.status || false}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-blue-600 dark:accent-blue-500 cursor-pointer"
+                      id="status"
+                    />
+                    <label htmlFor="status" className="ml-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                      Sede activa
+                    </label>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Dirección</label>
-                  <input
-                    type="text"
-                    name="address"
-                    placeholder="Dirección de la sede"
-                    value={form.address || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Estado</label>
-                  <select
-                    name="status"
-                    value={form.status ? "true" : "false"}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-center sm:justify-end space-x-4 mt-8">
-                <button
-                  type="button"
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  {isEditing ? "Actualizar" : "Guardar"}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-6 px-6 sm:px-8 pb-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                className="flex-1 px-6 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                onClick={() => setIsModalOpen(false)}
+              >
+                ✕ Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 transition"
+                onClick={handleSubmit}
+              >
+                💾 {isEditing ? "Actualizar" : "Guardar"}
+              </button>
+            </div>
           </div>
         </div>
       )}
       {/* Modal de visualización */}
       {isViewModalOpen && viewResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4 transition-opacity duration-300 ease-out">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-2xl sm:p-8 transform transition-all duration-300 scale-100 hover:scale-[1.01]">
-            <button
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-              onClick={() => setIsViewModalOpen(false)}
-              aria-label="Cerrar modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white flex justify-between items-start">
+              <h2 className="text-2xl font-bold">🏢 Detalles de la Sede</h2>
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="text-white hover:text-blue-100 transition-colors"
+                aria-label="Cerrar modal"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center tracking-tight">
-              Detalles de la Sede
-            </h2>
-            <div className="space-y-4 text-gray-700 dark:text-gray-200">
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Nombre:</span>
-                <span>{viewResult.name || "N/A"}</span>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+              {/* Sección 1: Datos Básicos */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-blue-600">
+                  📋 Datos Básicos
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Nombre</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{viewResult.name || "N/A"}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Empresa</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">
+                      {companies.find((company) => company.id === viewResult.company)?.name || "N/A"}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Empresa:</span>
-                <span>
-                  {companies.find((company) => company.id === viewResult.company)?.name || "N/A"}
-                </span>
+
+              {/* Sección 2: Ubicación */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-blue-600">
+                  📍 Ubicación
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Región</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{getRegionName(viewResult.region) || "N/A"}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Municipio</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{getMunicipalityName(viewResult.municipality) || "N/A"}</p>
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Dirección</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-semibold">{viewResult.address || "N/A"}</p>
+                </div>
               </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Región:</span>
-                <span>{getRegionName(viewResult.region) || "N/A"}</span>
+
+              {/* Sección 3: Infraestructura */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-blue-600">
+                  🏗️ Infraestructura
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Concepto sanitario</p>
+                    <span className={`inline-block w-5 h-5 rounded ${viewResult.concepto_sanitario ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Reserva agua 24h</p>
+                    <span className={`inline-block w-5 h-5 rounded ${viewResult.reserva_agua_24h ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Planta eléctrica</p>
+                    <span className={`inline-block w-5 h-5 rounded ${viewResult.planta_electrica ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Es domicilio ONG</p>
+                    <span className={`inline-block w-5 h-5 rounded ${viewResult.es_domicilio_ong ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Municipio:</span>
-                <span>{getMunicipalityName(viewResult.municipality) || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Dirección:</span>
-                <span>{viewResult.address || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Estado:</span>
-                <span>{viewResult.status ? "Activo" : "Inactivo"}</span>
+
+              {/* Sección 4: Estado */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-blue-600">
+                  ⚙️ Estado
+                </h3>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">Sede activa</p>
+                  <span className={`inline-block px-3 py-1 rounded-full font-semibold text-sm ${
+                    viewResult.status 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {viewResult.status ? "✓ Activa" : "○ Inactiva"}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="mt-8 flex justify-center">
+
+            {/* Footer */}
+            <div className="flex justify-end pt-6 px-6 sm:px-8 pb-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
               <button
-                className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                type="button"
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
                 onClick={() => setIsViewModalOpen(false)}
               >
-                Cerrar
+                ✕ Cerrar
               </button>
             </div>
           </div>

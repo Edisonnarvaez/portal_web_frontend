@@ -7,3 +7,4 @@ export * from './useCriterio';
 export * from './useEstandar';
 export * from './usePlanMejora';
 export * from './useHallazgo';
+export * from './useSoporte';

@@ -13,6 +13,7 @@ import AlertasHabilitacionPage from "./presentation/pages/AlertasHabilitacionPag
 import EstandaresPage from "./presentation/pages/EstandaresPage";
 import CriteriosPage from "./presentation/pages/CriteriosPage";
 import NormasPage from "./presentation/pages/NormasPage";
+import SoportesPage from "./presentation/pages/SoportesPage";
 
 const HabilitacionRoutes = () => (
   <Routes>
@@ -29,6 +30,8 @@ const HabilitacionRoutes = () => (
     <Route path="/estandares" element={<EstandaresPage />} />
     <Route path="/criterios" element={<CriteriosPage />} />
     <Route path="/normas" element={<NormasPage />} />
+    <Route path="/soportes/:prestadorId" element={<SoportesPage />} />
+    <Route path="/soportes" element={<SoportesPage />} />
     <Route path="/" element={<HabilitacionPage />} />
     <Route path="/*" element={<HabilitacionPage />} />
   </Routes>

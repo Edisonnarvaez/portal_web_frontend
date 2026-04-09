@@ -19,6 +19,7 @@ import {
   HiDocumentChartBar,
   HiArrowTrendingUp,
   HiBellAlert,
+  HiEye
 } from "react-icons/hi2";
 import { useAuthContext } from "../../apps/auth/presentation/context/AuthContext";
 import { getProfilePicUrl } from "../utils/profile";
@@ -206,6 +207,12 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
                 icon: <HiTableCells className="w-4 h-4" />,
                 requiredRole: ["admin"],
               },
+              {
+                to: "/habilitacion/soportes",
+                label: "Soportes",
+                icon: <HiEye className="w-4 h-4" />,
+                requiredRole: ["admin"],
+              },
             ],
           },
         ]
@@ -290,7 +297,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
           </button>
         </div>
 
-        <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+        {/* <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <img
               src={
@@ -312,7 +319,7 @@ export default function Sidebar({ isOpen = false, onToggle }: SidebarProps) {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
