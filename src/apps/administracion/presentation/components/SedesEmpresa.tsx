@@ -1,87 +1,47 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
+import { useHeadquarters, useCompany, useRegion, useMunicipality } from "../hooks";
+import type { Headquarters } from "../../domain/entities";
 import LoadingScreen from "../../../../shared/components/LoadingScreen";
 import { FaEdit } from "react-icons/fa";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 
-interface Company {
-  id: number;
-  name: string;
-}
-
-interface Headquarter {
-  id: number;
-  name: string;
-  habilitationCode: string;
-  company: number;
-  departament: string;
-  city: string;
-  address: string;
-  habilitationDate: string;
-  closingDate: string;
-  status: boolean;
-}
-
 export default function SedesEmpresa() {
-  const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { headquarters, loading: hqLoading, error: hqError, fetchHeadquarters, createHeadquarter, updateHeadquarter, deleteHeadquarter, toggleStatus } = useHeadquarters();
+  const { companies, loading: compLoading, fetchCompanies } = useCompany();
+  const { regions, fetchRegions } = useRegion();
+  const { municipalities, fetchMunicipalities } = useMunicipality();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [headquarterIdToDelete, setHeadquarterIdToDelete] = useState<number | null>(null);
   const [headquarterToToggle, setHeadquarterToToggle] = useState<{ id: number; currentStatus: boolean } | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewResult, setViewResult] = useState<Headquarter | null>(null);
-  const [form, setForm] = useState<Partial<Headquarter>>({
+  const [viewResult, setViewResult] = useState<Headquarters | null>(null);
+  const [form, setForm] = useState<Partial<Headquarters>>({
     name: "",
-    habilitationCode: "",
     company: 0,
-    departament: "",
-    city: "",
+    region: 0,
+    municipality: 0,
     address: "",
-    habilitationDate: "",
-    closingDate: "",
     status: true,
   });
   const [mensaje, setMensaje] = useState("");
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    const fetchHeadquarters = async () => {
-      try {
-        const response = await axiosInstance.get("/companies/headquarters/");
-        setHeadquarters(response.data);
-        setLoading(false);
-      } catch (err: any) {
-        setError("No se pudieron cargar las sedes");
-        setLoading(false);
-      }
-    };
-
-    const fetchCompanies = async () => {
-      try {
-        // Verificar la URL correcta del endpoint
-        const response = await axiosInstance.get("/companies/companies/"); // O la URL correcta
-        //console.log("Companies response:", response.data); // Para debuggear
-        
-        // Verificar que response.data sea un array
-        if (Array.isArray(response.data)) {
-          setCompanies(response.data);
-        } else {
-          console.error("Companies response is not an array:", response.data);
-          setCompanies([]); // Establecer array vacío como fallback
-        }
-      } catch (err: any) {
-        console.error("Error fetching companies:", err);
-        setError("No se pudieron cargar las empresas");
-        setCompanies([]); // Importante: establecer array vacío en caso de error
-      }
-    };
-
-    fetchHeadquarters();
-    fetchCompanies();
+    fetchHeadquarters().catch(() => {
+      // Manejar errores
+    });
+    fetchCompanies().catch(() => {
+      // Manejar errores
+    });
+    fetchRegions().catch(() => {
+      // Manejar errores
+    });
+    fetchMunicipalities().catch(() => {
+      // Manejar errores
+    });
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -96,7 +56,7 @@ export default function SedesEmpresa() {
   };
 
   const validateForm = () => {
-    if (!form.name || !form.habilitationCode || !form.company || !form.departament || !form.city || !form.address || !form.habilitationDate) {
+    if (!form.name || !form.company || !form.region || !form.municipality || !form.address) {
       setFormError("Todos los campos obligatorios deben estar completos.");
       return false;
     }
@@ -111,15 +71,13 @@ export default function SedesEmpresa() {
 
     try {
       if (isEditing && form.id) {
-        const response = await axiosInstance.put(`/companies/headquarters/${form.id}/`, form);
-        setHeadquarters((prev) =>
-          prev.map((headquarter) => (headquarter.id === response.data.id ? response.data : headquarter))
-        );
+        await updateHeadquarter(form.id, form as Headquarters);
         setMensaje("Sede actualizada exitosamente");
       } else {
-        const response = await axiosInstance.post("/companies/headquarters/", form);
-        setHeadquarters((prev) => [...prev, response.data]);
-        setMensaje("Sede creada exitosamente");
+        if (form && form.name && form.company && form.region && form.municipality && form.address) {
+          await createHeadquarter(form as Headquarters);
+          setMensaje("Sede creada exitosamente");
+        }
       }
       setIsModalOpen(false);
       resetForm();
@@ -128,13 +86,13 @@ export default function SedesEmpresa() {
     }
   };
 
-  const handleEdit = (headquarter: Headquarter) => {
+  const handleEdit = (headquarter: Headquarters) => {
     setForm(headquarter);
     setIsEditing(true);
     setIsModalOpen(true);
   };
 
-  const handleView = (headquarter: Headquarter) => {
+  const handleView = (headquarter: Headquarters) => {
     setViewResult(headquarter);
     setIsViewModalOpen(true);
   };
@@ -147,8 +105,7 @@ export default function SedesEmpresa() {
   const confirmDelete = async () => {
     if (!headquarterIdToDelete) return;
     try {
-      await axiosInstance.delete(`/companies/headquarters/${headquarterIdToDelete}/`);
-      setHeadquarters((prev) => prev.filter((headquarter) => headquarter.id !== headquarterIdToDelete));
+      await deleteHeadquarter(headquarterIdToDelete);
       setMensaje("Sede eliminada exitosamente");
     } catch {
       setFormError("Error al eliminar la sede.");
@@ -166,14 +123,7 @@ export default function SedesEmpresa() {
   const confirmToggleStatus = async () => {
     if (!headquarterToToggle) return;
     try {
-      const response = await axiosInstance.patch(`/companies/headquarters/${headquarterToToggle.id}/`, {
-        status: !headquarterToToggle.currentStatus,
-      });
-      setHeadquarters((prev) =>
-        prev.map((headquarter) =>
-          headquarter.id === headquarterToToggle.id ? { ...headquarter, status: response.data.status } : headquarter
-        )
-      );
+      await toggleStatus(headquarterToToggle.id, !headquarterToToggle.currentStatus);
       setMensaje(`Sede ${headquarterToToggle.currentStatus ? "inactivada" : "activada"} exitosamente`);
     } catch {
       setFormError("Error al cambiar el estado de la sede.");
@@ -186,13 +136,10 @@ export default function SedesEmpresa() {
   const resetForm = () => {
     setForm({
       name: "",
-      habilitationCode: "",
       company: 0,
-      departament: "",
-      city: "",
+      region: 0,
+      municipality: 0,
       address: "",
-      habilitationDate: "",
-      closingDate: "",
       status: true,
     });
     setIsEditing(false);
@@ -204,8 +151,18 @@ export default function SedesEmpresa() {
     setIsModalOpen(true);
   };
 
-  if (loading) return <LoadingScreen message="Cargando sedes..." />;
-  if (error) return <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>;
+  const getRegionName = (regionId: number) => {
+    const region = regions.find(r => r.id === regionId);
+    return region ? region.name : 'N/A';
+  };
+
+  const getMunicipalityName = (municipalityId: number) => {
+    const municipality = municipalities.find(m => m.id === municipalityId);
+    return municipality ? municipality.name : 'N/A';
+  };
+
+  if (hqLoading || compLoading) return <LoadingScreen message="Cargando sedes..." />;
+  if (hqError) return <div className="text-center py-8 text-red-600 dark:text-red-400">{hqError}</div>;
 
   return (
     <div className="p-4 sm:p-8">
@@ -238,18 +195,7 @@ export default function SedesEmpresa() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Código de habilitación</label>
-                  <input
-                    type="text"
-                    name="habilitationCode"
-                    placeholder="Código de habilitación de la sede"
-                    value={form.habilitationCode || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
-                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Empresa</label>
                   <select
@@ -260,35 +206,40 @@ export default function SedesEmpresa() {
                     required
                   >
                     <option value="">Seleccione una empresa</option>
-                    {/* Verificación doble para evitar errores */}
                     {Array.isArray(companies) && companies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Departamento</label>
-                  <input
-                    type="text"
-                    name="departament"
-                    placeholder="Departamento de la sede"
-                    value={form.departament || ""}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Región</label>
+                  <select
+                    name="region"
+                    value={form.region || ""}
                     onChange={handleChange}
                     className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     required
-                  />
+                  >
+                    <option value="">Seleccione una región</option>
+                    {Array.isArray(regions) && regions.map(region => (
+                      <option key={region.id} value={region.id}>{region.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Ciudad</label>
-                  <input
-                    type="text"
-                    name="city"
-                    placeholder="Ciudad de la sede"
-                    value={form.city || ""}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Municipio</label>
+                  <select
+                    name="municipality"
+                    value={form.municipality || ""}
                     onChange={handleChange}
                     className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     required
-                  />
+                  >
+                    <option value="">Seleccione un municipio</option>
+                    {Array.isArray(municipalities) && municipalities.map(municipality => (
+                      <option key={municipality.id} value={municipality.id}>{municipality.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Dirección</label>
@@ -300,27 +251,6 @@ export default function SedesEmpresa() {
                     onChange={handleChange}
                     className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Fecha de habilitación</label>
-                  <input
-                    type="date"
-                    name="habilitationDate"
-                    value={form.habilitationDate || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Fecha de cierre</label>
-                  <input
-                    type="date"
-                    name="closingDate"
-                    value={form.closingDate || ""}
-                    onChange={handleChange}
-                    className="mt-1 p-3 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -388,34 +318,22 @@ export default function SedesEmpresa() {
                 <span>{viewResult.name || "N/A"}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Código de Habilitación:</span>
-                <span>{viewResult.habilitationCode || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
                 <span className="font-medium">Empresa:</span>
                 <span>
                   {companies.find((company) => company.id === viewResult.company)?.name || "N/A"}
                 </span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Departamento:</span>
-                <span>{viewResult.departament || "N/A"}</span>
+                <span className="font-medium">Región:</span>
+                <span>{getRegionName(viewResult.region) || "N/A"}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Ciudad:</span>
-                <span>{viewResult.city || "N/A"}</span>
+                <span className="font-medium">Municipio:</span>
+                <span>{getMunicipalityName(viewResult.municipality) || "N/A"}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-medium">Dirección:</span>
                 <span>{viewResult.address || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Fecha de Habilitación:</span>
-                <span>{viewResult.habilitationDate || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Fecha de Cierre:</span>
-                <span>{viewResult.closingDate || "N/A"}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-medium">Estado:</span>
@@ -439,11 +357,9 @@ export default function SedesEmpresa() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Código</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Departamento</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ciudad</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Región</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Municipio</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Dirección</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Habilitación</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Acciones</th>
             </tr>
           </thead>
@@ -452,11 +368,9 @@ export default function SedesEmpresa() {
               <tr key={headquarter.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.id}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.habilitationCode}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.departament}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.city}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{getRegionName(headquarter.region)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{getMunicipalityName(headquarter.municipality)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.address}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{headquarter.habilitationDate}</td>
                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 flex space-x-4">
                   <button
                     className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"

@@ -15,10 +15,6 @@ import { usePlanMejora } from '../hooks/usePlanMejora';
 import { useAutoevaluacion } from '../hooks/useAutoevaluacion';
 import { useHallazgo } from '../hooks/useHallazgo';
 import { formatDate, diasParaVencimiento } from '../utils/formatters';
-import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
-import type { PlanMejora } from '../../domain/entities/PlanMejora';
-import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
-import type { Hallazgo } from '../../domain/entities/Hallazgo';
 
 // ─── Alert Types ────────────────────────────────────────────────
 type AlertSeverity = 'critical' | 'warning' | 'info';
@@ -84,13 +80,12 @@ export default function AlertasHabilitacionPanel({
   const navigate = useNavigate();
 
   // Hooks for data
-  const { datos, fetchDatos, getProximosAVencer } = useDatosPrestador();
-  const { planes, fetchPlanes, fetchVencidos, fetchProximosAVencer, vencidos, proximosVencer } = usePlanMejora();
+  const { datos, fetchDatos } = useDatosPrestador();
+  const { planes, fetchPlanes, fetchVencidos, fetchProximosAVencer } = usePlanMejora();
   const { autoevaluaciones, fetchAutoevaluaciones } = useAutoevaluacion();
-  const { hallazgos, fetchHallazgos, abiertos, criticos, fetchAbiertos, fetchCriticos } = useHallazgo();
+  const { hallazgos, fetchHallazgos, fetchAbiertos, fetchCriticos } = useHallazgo();
 
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [proximosAVencerPrestador, setProximosAVencerPrestador] = useState<DatosPrestador[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   // Load all data on mount
@@ -107,14 +102,6 @@ export default function AlertasHabilitacionPanel({
           fetchAbiertos(),
           fetchCriticos(),
         ]);
-
-        try {
-          const proximos = await getProximosAVencer(180);
-          setProximosAVencerPrestador(proximos);
-        } catch {
-          // Calculate locally if endpoint fails
-          setProximosAVencerPrestador([]);
-        }
       } catch {
         // Partial load is acceptable
       }

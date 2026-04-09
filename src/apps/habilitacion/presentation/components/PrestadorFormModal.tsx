@@ -66,7 +66,7 @@ const PrestadorFormModal: React.FC<PrestadorFormModalProps> = ({ isOpen, prestad
   useEffect(() => {
     if (isOpen && !headquartersId) {
       setLoadingSedes(true);
-      axiosInstance.get('/companies/headquarters/')
+      axiosInstance.get('/administracion/sedes/')
         .then(res => setSedes(res.data))
         .catch(() => setSedes([]))
         .finally(() => setLoadingSedes(false));

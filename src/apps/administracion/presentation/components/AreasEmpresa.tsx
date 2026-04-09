@@ -1,28 +1,14 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
+import { useDepartment, useCompany } from "../hooks";
+import type { Department } from "../../domain/entities";
 import LoadingScreen from "../../../../shared/components/LoadingScreen";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 
-interface Company {
-  id: number;
-  name: string;
-}
-
-interface Department {
-  id: number;
-  name: string;
-  departmentCode: string;
-  company: number;
-  description: string;
-  status: boolean;
-}
-
 export default function AreasEmpresa() {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { departments, loading: deptLoading, error: deptError, fetchDepartments, createDepartment, updateDepartment, deleteDepartment, toggleStatus } = useDepartment();
+  const { companies, loading: compLoading, fetchCompanies } = useCompany();
+  
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -42,28 +28,8 @@ export default function AreasEmpresa() {
   });
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const response = await axiosInstance.get("/companies/departments/");
-        setDepartments(response.data);
-        setLoading(false);
-      } catch (err: any) {
-        setError("No se pudieron cargar las áreas");
-        setLoading(false);
-      }
-    };
-
-    const fetchCompanies = async () => {
-      try {
-        const response = await axiosInstance.get("/companies/companies/");
-        setCompanies(response.data);
-      } catch (err: any) {
-        setError("No se pudieron cargar las empresas");
-      }
-    };
-
-    fetchDepartments();
-    fetchCompanies();
+    fetchDepartments().catch(() => {});
+    fetchCompanies().catch(() => {});
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -93,15 +59,13 @@ export default function AreasEmpresa() {
 
     try {
       if (isEditing && form.id) {
-        const response = await axiosInstance.put(`/companies/departments/${form.id}/`, form);
-        setDepartments((prev) =>
-          prev.map((department) => (department.id === response.data.id ? response.data : department))
-        );
+        await updateDepartment(form.id, form as Department);
         setMensaje("Área actualizada exitosamente");
       } else {
-        const response = await axiosInstance.post("/companies/departments/", form);
-        setDepartments((prev) => [...prev, response.data]);
-        setMensaje("Área creada exitosamente");
+        if (form && form.name && form.description && form.company) {
+          await createDepartment(form as Department);
+          setMensaje("Área creada exitosamente");
+        }
       }
       setIsModalOpen(false);
       resetForm();
@@ -129,8 +93,7 @@ export default function AreasEmpresa() {
   const confirmDelete = async () => {
     if (!departmentIdToDelete) return;
     try {
-      await axiosInstance.delete(`/companies/departments/${departmentIdToDelete}/`);
-      setDepartments((prev) => prev.filter((department) => department.id !== departmentIdToDelete));
+      await deleteDepartment(departmentIdToDelete);
       setMensaje("Área eliminada exitosamente");
     } catch {
       setFormError("Error al eliminar el área.");
@@ -148,14 +111,7 @@ export default function AreasEmpresa() {
   const confirmToggleStatus = async () => {
     if (!departmentToToggle) return;
     try {
-      const response = await axiosInstance.patch(`/companies/departments/${departmentToToggle.id}/`, {
-        status: !departmentToToggle.currentStatus,
-      });
-      setDepartments((prev) =>
-        prev.map((department) =>
-          department.id === departmentToToggle.id ? { ...department, status: response.data.status } : department
-        )
-      );
+      await toggleStatus(departmentToToggle.id, !departmentToToggle.currentStatus);
       setMensaje(`Área ${departmentToToggle.currentStatus ? "inactivada" : "activada"} exitosamente`);
     } catch {
       setFormError("Error al cambiar el estado del área.");
@@ -182,8 +138,8 @@ export default function AreasEmpresa() {
     setIsModalOpen(true);
   };
 
-  if (loading) return <LoadingScreen message="Cargando áreas..." />;
-  if (error) return <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>;
+  if (deptLoading || compLoading) return <LoadingScreen message="Cargando áreas..." />;
+  if (deptError) return <div className="text-center py-8 text-red-600 dark:text-red-400">{deptError}</div>;
 
   return (
     <div className="p-4 sm:p-8">

@@ -324,7 +324,7 @@ const HabilitacionPage = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Habilitación</h1>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Gestión de prestadores, servicios y autoevaluaciones</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Gestión de sedes, servicios y autoevaluaciones</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -379,7 +379,7 @@ const HabilitacionPage = () => {
               : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
           }`}
         >
-          Prestadores ({prestadores.length})
+          Sedes ({prestadores.length})
         </button>
         <button
           onClick={() => setActiveTab('servicios')}

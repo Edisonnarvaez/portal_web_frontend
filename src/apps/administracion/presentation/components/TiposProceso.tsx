@@ -1,32 +1,14 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
-import { useAuthContext } from "../../../auth/presentation/context/AuthContext";
+import { useProcessType, useCompany } from "../hooks";
+import type { ProcessType } from "../../domain/entities";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 import LoadingScreen from "../../../../shared/components/LoadingScreen";
 
-interface Company {
-    id: number;
-    name: string;
-}
-
-interface ProcessType {
-    id: number;
-    name: string;
-    description: string;
-    company: number;
-    status: boolean;
-    creationDate: string;
-    updateDate: string;
-    user: number;
-}
-
 export default function TiposProceso() {
-    const { user } = useAuthContext(); // Obtener usuario autenticado
-    const [processTypes, setProcessTypes] = useState<ProcessType[]>([]);
-    const [companies, setCompanies] = useState<Company[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { processTypes, loading: ptLoading, error: ptError, fetchProcessTypes, createProcessType, updateProcessType, deleteProcessType, toggleStatus } = useProcessType();
+    const { companies, fetchCompanies } = useCompany();
+    
     const [isEditing, setIsEditing] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -42,49 +24,25 @@ export default function TiposProceso() {
         description: "",
         company: 0,
         status: true,
-        user: user?.id || 0, // Asignar ID del usuario autenticado
     });
 
     useEffect(() => {
-        const fetchProcessTypes = async () => {
-            try {
-                const response = await axiosInstance.get("/companies/process_types/");
-                //console.log("Process types response:", response.data);
-                setProcessTypes(Array.isArray(response.data) ? response.data : []);
-                setLoading(false);
-            } catch (err: any) {
-                console.error("Error fetching process types:", err);
-                setError("No se pudieron cargar los tipos de proceso");
-                setProcessTypes([]);
-                setLoading(false);
-            }
-        };
-
-        const fetchCompanies = async () => {
-            try {
-                const response = await axiosInstance.get("/companies/companies/");
-                //console.log("Companies response:", response.data);
-                setCompanies(Array.isArray(response.data) ? response.data : []);
-            } catch (err: any) {
-                console.error("Error fetching companies:", err);
-                setError("No se pudieron cargar las empresas");
-                setCompanies([]);
-            }
-        };
-
-        fetchProcessTypes();
-        fetchCompanies();
+        console.log('[TiposProceso] Iniciando carga de datos...');
+        fetchProcessTypes()
+            .then(data => {
+                console.log('[TiposProceso] Datos cargados:', data);
+            })
+            .catch(err => {
+                console.error('[TiposProceso] Error cargando tipos de proceso:', err);
+            });
+        fetchCompanies()
+            .then(data => {
+                console.log('[TiposProceso] Empresas cargadas:', data);
+            })
+            .catch(err => {
+                console.error('[TiposProceso] Error cargando empresas:', err);
+            });
     }, []);
-
-    // Actualizar el usuario en el formulario cuando cambie el usuario autenticado
-    useEffect(() => {
-        if (user?.id) {
-            setForm(prev => ({
-                ...prev,
-                user: user.id
-            }));
-        }
-    }, [user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -99,10 +57,6 @@ export default function TiposProceso() {
             setFormError("Todos los campos obligatorios deben estar completos.");
             return false;
         }
-        if (!user?.id) {
-            setFormError("Error: Usuario no autenticado.");
-            return false;
-        }
         return true;
     };
 
@@ -113,56 +67,24 @@ export default function TiposProceso() {
         if (!validateForm()) return;
 
         try {
-            // Asegurar que el usuario esté asignado
-            const formData = {
-                ...form,
-                user: user?.id, // Siempre asignar el usuario autenticado
-            };
-
             if (isEditing && form.id) {
-                // Para actualizaciones, usar PATCH para enviar solo campos modificados
-                const changedFields: Partial<Record<keyof ProcessType, any>> = {};
-
-                // Comparar con los datos originales y solo incluir campos modificados
-                const originalProcessType = processTypes.find(pt => pt.id === form.id);
-                if (originalProcessType) {
-                    Object.keys(formData).forEach(key => {
-                        const formValue = formData[key as keyof ProcessType];
-                        const originalValue = originalProcessType[key as keyof ProcessType];
-
-                        if (formValue !== originalValue && formValue !== undefined && formValue !== null && formValue !== "") {
-                            changedFields[key as keyof ProcessType] = formValue;
-                        }
-                    });
-
-                    // Siempre incluir el usuario para mantener el registro de quién modificó
-                    changedFields.user = user?.id;
-                }
-
-                const response = await axiosInstance.patch(`/companies/process_types/${form.id}/`, changedFields);
-                setProcessTypes((prev) =>
-                    prev.map((processType) => (processType.id === response.data.id ? response.data : processType))
-                );
+                await updateProcessType(form.id, form as ProcessType);
                 setMensaje("Tipo de proceso actualizado exitosamente");
             } else {
-                // Para creación, enviar todos los datos
-                const response = await axiosInstance.post("/companies/process_types/", formData);
-                setProcessTypes((prev) => [...prev, response.data]);
-                setMensaje("Tipo de proceso creado exitosamente");
+                if (form && form.name && form.description && form.company) {
+                    await createProcessType(form as ProcessType);
+                    setMensaje("Tipo de proceso creado exitosamente");
+                }
             }
             setIsModalOpen(false);
             resetForm();
         } catch (error: any) {
-            console.error("Error saving process type:", error.response?.data);
-            setFormError(error.response?.data?.detail || "Error al guardar el tipo de proceso.");
+            setFormError("Error al guardar el tipo de proceso.");
         }
     };
 
     const handleEdit = (processType: ProcessType) => {
-        setForm({
-            ...processType,
-            user: user?.id || processType.user, // Mantener usuario actual para la edición
-        });
+        setForm(processType);
         setIsEditing(true);
         setIsModalOpen(true);
     };
@@ -180,8 +102,7 @@ export default function TiposProceso() {
     const confirmDelete = async () => {
         if (!processTypeIdToDelete) return;
         try {
-            await axiosInstance.delete(`/companies/process_types/${processTypeIdToDelete}/`);
-            setProcessTypes((prev) => prev.filter((processType) => processType.id !== processTypeIdToDelete));
+            await deleteProcessType(processTypeIdToDelete);
             setMensaje("Tipo de proceso eliminado exitosamente");
         } catch {
             setFormError("Error al eliminar el tipo de proceso.");
@@ -199,15 +120,7 @@ export default function TiposProceso() {
     const confirmToggleStatus = async () => {
         if (!processTypeToToggle) return;
         try {
-            const response = await axiosInstance.patch(`/companies/process_types/${processTypeToToggle.id}/`, {
-                status: !processTypeToToggle.currentStatus,
-                user: user?.id, // Registrar quién cambió el estado
-            });
-            setProcessTypes((prev) =>
-                prev.map((processType) =>
-                    processType.id === processTypeToToggle.id ? { ...processType, status: response.data.status } : processType
-                )
-            );
+            await toggleStatus(processTypeToToggle.id, !processTypeToToggle.currentStatus);
             setMensaje(`Tipo de proceso ${processTypeToToggle.currentStatus ? "inactivado" : "activado"} exitosamente`);
         } catch {
             setFormError("Error al cambiar el estado del tipo de proceso.");
@@ -223,11 +136,9 @@ export default function TiposProceso() {
             description: "",
             company: 0,
             status: true,
-            user: user?.id || 0, // Resetear con el usuario autenticado
         });
         setIsEditing(false);
         setIsModalOpen(false);
-        setFormError("");
     };
 
     const openModal = () => {
@@ -235,36 +146,21 @@ export default function TiposProceso() {
         setIsModalOpen(true);
     };
 
-    // Función para obtener el nombre de la empresa
     const getCompanyName = (companyId: number) => {
         const company = companies.find(c => c.id === companyId);
         return company ? company.name : 'N/A';
     };
 
-    // Función para obtener el nombre del usuario (si tienes acceso a esta información)
-    const getUserName = (userId: number) => {
-        // Si tienes acceso a la información de usuarios, implementa esta función
-        // Por ahora retorna el ID
-        return `Usuario ${userId}`;
-    };
-
-    if (loading) {
+    if (ptLoading) {
+        console.log('[TiposProceso] Estado: LOADING');
         return <LoadingScreen message="Cargando tipos de proceso..." />;
     }
-
-    if (error) {
-        return (
-            <div className="text-center py-8 text-red-600 dark:text-red-400">
-                {error}
-                <button
-                    onClick={() => window.location.reload()}
-                    className="block mx-auto mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                    Reintentar
-                </button>
-            </div>
-        );
+    if (ptError) {
+        console.log('[TiposProceso] Estado: ERROR -', ptError);
+        return <div className="text-center py-8 text-red-600 dark:text-red-400">{ptError}</div>;
     }
+
+    console.log('[TiposProceso] Estado: READY - Renderizando con', processTypes.length, 'tipos de proceso');
 
     return (
         <div className="p-4 sm:p-8">
@@ -412,22 +308,22 @@ export default function TiposProceso() {
                                     {viewResult.status ? 'Activo' : 'Inactivo'}
                                 </span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Creado por:</span>
-                                <span className="text-gray-900 dark:text-gray-100">{getUserName(viewResult.user)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
-                                <span className="text-gray-900 dark:text-gray-100">
-                                    {new Date(viewResult.creationDate).toLocaleDateString("es-CO")}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Última actualización:</span>
-                                <span className="text-gray-900 dark:text-gray-100">
-                                    {new Date(viewResult.updateDate).toLocaleDateString("es-CO")}
-                                </span>
-                            </div>
+                            {viewResult.creationDate && (
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
+                                    <span className="text-gray-900 dark:text-gray-100">
+                                        {new Date(viewResult.creationDate).toLocaleDateString("es-CO")}
+                                    </span>
+                                </div>
+                            )}
+                            {viewResult.updateDate && (
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Última actualización:</span>
+                                    <span className="text-gray-900 dark:text-gray-100">
+                                        {new Date(viewResult.updateDate).toLocaleDateString("es-CO")}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                         <div className="mt-6 flex justify-end">
                             <button
@@ -489,7 +385,10 @@ export default function TiposProceso() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {new Date(processType.creationDate).toLocaleDateString("es-CO")}
+                                        {processType.creationDate
+                                            ? new Date(processType.creationDate).toLocaleDateString("es-CO")
+                                            : 'N/A'
+                                        }
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2">

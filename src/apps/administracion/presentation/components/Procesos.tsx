@@ -1,41 +1,17 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../../../../core/infrastructure/http/axiosInstance";
+import { useProcess, useProcessType, useDepartment } from "../hooks";
+import type { Process } from "../../domain/entities";
 import { useAuthContext } from "../../../auth/presentation/context/AuthContext";
 import { FaEye, FaToggleOff, FaToggleOn, FaTrash } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 import LoadingScreen from "../../../../shared/components/LoadingScreen";
 
-interface ProcessType {
-    id: number;
-    name: string;
-}
-
-interface Department {
-    id: number;
-    name: string;
-}
-
-interface Process {
-    id: number;
-    name: string;
-    description: string;
-    code: string;
-    version: string;
-    processType: number;
-    department: number;
-    status: boolean;
-    creationDate: string;
-    updateDate: string;
-    user: number;
-}
-
 export default function Procesos() {
-    const { user } = useAuthContext(); // Obtener usuario autenticado
-    const [processes, setProcesses] = useState<Process[]>([]);
-    const [processTypes, setProcessTypes] = useState<ProcessType[]>([]);
-    const [departments, setDepartments] = useState<Department[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { user } = useAuthContext();
+    const { processes, loading: procLoading, error: procError, fetchProcesses, createProcess, updateProcess, deleteProcess, toggleStatus } = useProcess();
+    const { processTypes, fetchProcessTypes } = useProcessType();
+    const { departments, fetchDepartments } = useDepartment();
+    
     const [isEditing, setIsEditing] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -54,51 +30,31 @@ export default function Procesos() {
         status: true,
         processType: 0,
         department: 0,
-        user: user?.id || 0, // Asignar ID del usuario autenticado
     });
 
     useEffect(() => {
-        const fetchProcesses = async () => {
-            try {
-                const response = await axiosInstance.get("/companies/processes/");
-                //.log("Processes response:", response.data);
-                setProcesses(Array.isArray(response.data) ? response.data : []);
-                setLoading(false);
-            } catch (err: any) {
-                console.error("Error fetching processes:", err);
-                setError("No se pudieron cargar los procesos");
-                setProcesses([]);
-                setLoading(false);
-            }
-        };
-
-        const fetchProcessTypes = async () => {
-            try {
-                const response = await axiosInstance.get("/companies/process_types/");
-                //console.log("Process types response:", response.data);
-                setProcessTypes(Array.isArray(response.data) ? response.data : []);
-            } catch (err: any) {
-                console.error("Error fetching process types:", err);
-                setError("No se pudieron cargar los tipos de proceso");
-                setProcessTypes([]);
-            }
-        };
-
-        const fetchDepartments = async () => {
-            try {
-                const response = await axiosInstance.get("/companies/departments/");
-                //console.log("Departments response:", response.data);
-                setDepartments(Array.isArray(response.data) ? response.data : []);
-            } catch (err: any) {
-                console.error("Error fetching departments:", err);
-                setError("No se pudieron cargar las áreas");
-                setDepartments([]);
-            }
-        };
-
-        fetchProcesses();
-        fetchProcessTypes();
-        fetchDepartments();
+        console.log('[Procesos] Iniciando carga de datos...');
+        fetchProcesses()
+            .then(data => {
+                console.log('[Procesos] Datos cargados:', data);
+            })
+            .catch(err => {
+                console.error('[Procesos] Error cargando procesos:', err);
+            });
+        fetchProcessTypes()
+            .then(data => {
+                console.log('[Procesos] Tipos de proceso cargados:', data);
+            })
+            .catch(err => {
+                console.error('[Procesos] Error cargando tipos de proceso:', err);
+            });
+        fetchDepartments()
+            .then(data => {
+                console.log('[Procesos] Departamentos cargados:', data);
+            })
+            .catch(err => {
+                console.error('[Procesos] Error cargando departamentos:', err);
+            });
     }, []);
 
     // Actualizar el usuario en el formulario cuando cambie el usuario autenticado
@@ -139,48 +95,20 @@ export default function Procesos() {
         if (!validateForm()) return;
 
         try {
-            // Asegurar que el usuario esté asignado
-            const formData = {
-                ...form,
-                user: user?.id, // Siempre asignar el usuario autenticado
-            };
-
             if (isEditing && form.id) {
-                // Para actualizaciones, usar PATCH para enviar solo campos modificados
-                const changedFields: Partial<Record<keyof Process, string | number | boolean>> = {};
-
-                // Comparar con los datos originales y solo incluir campos modificados
-                const originalProcess = processes.find(p => p.id === form.id);
-                if (originalProcess) {
-                    Object.keys(formData).forEach(key => {
-                        const formValue = formData[key as keyof Process];
-                        const originalValue = originalProcess[key as keyof Process];
-
-                        if (formValue !== originalValue && formValue !== undefined && formValue !== null && formValue !== "") {
-                            changedFields[key as keyof Process] = formValue as string | number | boolean;
-                        }
-                    });
-
-                    // Siempre incluir el usuario para mantener el registro de quién modificó
-                    changedFields.user = user?.id as number;
-                }
-
-                const response = await axiosInstance.patch(`/companies/processes/${form.id}/`, changedFields);
-                setProcesses((prev) =>
-                    prev.map((process) => (process.id === response.data.id ? response.data : process))
-                );
+                await updateProcess(form.id, form as Process);
                 setMensaje("Proceso actualizado exitosamente");
             } else {
-                // Para creación, enviar todos los datos
-                const response = await axiosInstance.post("/companies/processes/", formData);
-                setProcesses((prev) => [...prev, response.data]);
-                setMensaje("Proceso creado exitosamente");
+                if (form && form.name && form.description && form.code && form.version && form.processType && form.department) {
+                    await createProcess(form as Process);
+                    setMensaje("Proceso creado exitosamente");
+                }
             }
+            await fetchProcesses();
             setIsModalOpen(false);
             resetForm();
         } catch (error: any) {
-            console.error("Error saving process:", error.response?.data);
-            setFormError(error.response?.data?.detail || "Error al guardar el proceso.");
+            setFormError("Error al guardar el proceso.");
         }
     };
 
@@ -206,8 +134,8 @@ export default function Procesos() {
     const confirmDelete = async () => {
         if (!processIdToDelete) return;
         try {
-            await axiosInstance.delete(`/companies/processes/${processIdToDelete}/`);
-            setProcesses((prev) => prev.filter((process) => process.id !== processIdToDelete));
+            await deleteProcess(processIdToDelete);
+            await fetchProcesses();
             setMensaje("Proceso eliminado exitosamente");
         } catch {
             setFormError("Error al eliminar el proceso.");
@@ -225,15 +153,8 @@ export default function Procesos() {
     const confirmToggleStatus = async () => {
         if (!processToToggle) return;
         try {
-            const response = await axiosInstance.patch(`/companies/processes/${processToToggle.id}/`, {
-                status: !processToToggle.currentStatus,
-                user: user?.id, // Registrar quién cambió el estado
-            });
-            setProcesses((prev) =>
-                prev.map((process) =>
-                    process.id === processToToggle.id ? { ...process, status: response.data.status } : process
-                )
-            );
+            await toggleStatus(processToToggle.id, !processToToggle.currentStatus);
+            await fetchProcesses();
             setMensaje(`Proceso ${processToToggle.currentStatus ? "inactivado" : "activado"} exitosamente`);
         } catch {
             setFormError("Error al cambiar el estado del proceso.");
@@ -276,21 +197,16 @@ export default function Procesos() {
         return department ? department.name : 'N/A';
     };
 
-    // Función para obtener el nombre del usuario (si tienes acceso a esta información)
-    const getUserName = (userId: number) => {
-        // Si tienes acceso a la información de usuarios, implementa esta función
-        // Por ahora retorna el ID
-        return `Usuario ${userId}`;
-    };
-
-    if (loading) {
+    if (procLoading) {
+        console.log('[Procesos] Estado: LOADING');
         return <LoadingScreen message="Cargando procesos..." />;
     }
 
-    if (error) {
+    if (procError) {
+        console.log('[Procesos] Estado: ERROR -', procError);
         return (
             <div className="text-center py-8 text-red-600 dark:text-red-400">
-                {error}
+                {procError}
                 <button
                     onClick={() => window.location.reload()}
                     className="block mx-auto mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -300,6 +216,8 @@ export default function Procesos() {
             </div>
         );
     }
+
+    console.log('[Procesos] Estado: READY - Renderizando con', processes.length, 'procesos');
 
     return (
         <div className="p-4 sm:p-8">
@@ -504,22 +422,22 @@ export default function Procesos() {
                                     {viewResult.status ? 'Activo' : 'Inactivo'}
                                 </span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Creado por:</span>
-                                <span className="text-gray-900 dark:text-gray-100">{getUserName(viewResult.user)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
-                                <span className="text-gray-900 dark:text-gray-100">
-                                    {new Date(viewResult.creationDate).toLocaleDateString("es-CO")}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Última actualización:</span>
-                                <span className="text-gray-900 dark:text-gray-100">
-                                    {new Date(viewResult.updateDate).toLocaleDateString("es-CO")}
-                                </span>
-                            </div>
+                            {viewResult.creationDate && (
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
+                                    <span className="text-gray-900 dark:text-gray-100">
+                                        {new Date(viewResult.creationDate).toLocaleDateString("es-CO")}
+                                    </span>
+                                </div>
+                            )}
+                            {viewResult.updateDate && (
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Última actualización:</span>
+                                    <span className="text-gray-900 dark:text-gray-100">
+                                        {new Date(viewResult.updateDate).toLocaleDateString("es-CO")}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                         <div className="mt-6 flex justify-end">
                             <button

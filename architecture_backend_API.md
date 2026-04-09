@@ -1,798 +1,408 @@
 # Arquitectura del Sistema - Portal Web Backend
 
-## Descripción General
+## Proposito del Documento
 
-Este documento describe la arquitectura completa del Portal Web Backend, incluyendo la estructura de componentes, flujo de datos, patrones de diseño y diagramas técnicos. El sistema está construido con Django siguiendo principios de arquitectura limpia y patrones de microservicios modulares.
+Este documento describe la arquitectura real implementada en el backend.
+Esta pensado para onboarding tecnico, mantenimiento evolutivo, analisis de impactos y soporte operativo.
 
----
+Alcance:
 
-## 📐 Arquitectura de Alto Nivel
+- Componentes reales en codigo
+- Flujos tecnicos principales
+- Relaciones entre apps
+- Convenciones de implementacion
+- Operacion local y despliegue
+- Riesgos y deuda tecnica observable
 
-### Diagrama de Arquitectura General
+No se documentan como "activos" componentes planeados que no esten implementados.
 
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        WEB[Web Application]
-        MOBILE[Mobile App]
-        API_CLIENT[API Clients]
-    end
+## 1. Contexto General
 
-    subgraph "Load Balancer & Proxy"
-        LB[Load Balancer/Nginx]
-    end
+Portal Web Backend es una API REST construida con Django + DRF para soportar procesos de calidad y cumplimiento en organizaciones del sector salud.
+El dominio esta dividido en modulos por responsabilidad de negocio:
 
-    subgraph "Application Layer"
-        subgraph "Django Backend"
-            API_GATEWAY[API Gateway]
-            AUTH[Authentication Service]
-            
-            subgraph "Core Modules"
-                USERS[Users Module]
-                COMPANIES[Companies Module]
-                INVOICING[Invoicing Module]
-                INDICATORS[Indicators Module]
-                AUDIT[Audit Module]
-                PROCESSES[Processes Module]
-            end
-            
-            MIDDLEWARE[Django Middleware]
-            SERIALIZERS[DRF Serializers]
-        end
-        
-        TASK_QUEUE[Celery Task Queue]
-        EMAIL_SERVICE[Email Service]
-    end
+- Gestion organizacional (`users`, `companies`, `main`)
+- Gestion documental (`processes`, `soportes`)
+- Cumplimiento normativo y habilitacion (`normativity`, `habilitacion`)
+- Seguimiento de mejora y auditoria (`mejoras`, `audit`)
+- Indicadores (`indicators`)
 
-    subgraph "Data Layer"
-        DB[(PostgreSQL Database)]
-        CACHE[(Redis Cache)]
-        FILE_STORAGE[File Storage]
-        
-        subgraph "External Services"
-            SMTP[SMTP Gmail]
-            GOVT_API[Government APIs]
-        end
-    end
+## 2. Estilo Arquitectonico
 
-    subgraph "Infrastructure"
-        MONITORING[Monitoring/Sentry]
-        LOGGING[Centralized Logging]
-        BACKUP[Database Backup]
-    end
+### 2.1 Tipo de arquitectura
 
-    %% Connections
-    WEB --> LB
-    MOBILE --> LB
-    API_CLIENT --> LB
-    
-    LB --> API_GATEWAY
-    API_GATEWAY --> AUTH
-    AUTH --> USERS
-    
-    API_GATEWAY --> COMPANIES
-    API_GATEWAY --> INVOICING
-    API_GATEWAY --> INDICATORS
-    API_GATEWAY --> AUDIT
-    API_GATEWAY --> PROCESSES
-    
-    COMPANIES --> DB
-    INVOICING --> DB
-    INDICATORS --> DB
-    AUDIT --> DB
-    PROCESSES --> DB
-    USERS --> DB
-    
-    TASK_QUEUE --> EMAIL_SERVICE
-    EMAIL_SERVICE --> SMTP
-    
-    API_GATEWAY --> CACHE
-    COMPANIES --> CACHE
-    PROVIDERS --> CACHE
-    
-    PROCESSES --> FILE_STORAGE
-    INVOICING --> FILE_STORAGE
-    
-    API_GATEWAY --> MONITORING
-    DB --> BACKUP
-```
+- Monolito modular Django
+- API REST en una sola aplicacion desplegable
+- Separacion por apps de Django (bounded contexts ligeros)
 
----
+### 2.2 Implicaciones del estilo
 
-## 🏗️ Arquitectura de Capas
+Ventajas actuales:
 
-### Diagrama de Capas del Sistema
+- Baja friccion para cambios transversales
+- Desarrollo y depuracion local simples
+- Reuso natural de modelo de datos entre modulos
+
+Trade-offs:
+
+- Acoplamiento entre apps por FK cruzadas
+- Riesgo de crecimiento del monolito si no se controla frontera de modulos
+- Cambios de alto impacto requieren pruebas de regresion mas amplias
+
+## 3. Stack Tecnologico Verificado
+
+Runtime y framework:
+
+- Python 3.12.x (entorno local)
+- Django 5.2.2
+- Django REST Framework 3.16.0
+- SimpleJWT 5.5.0
+
+Infraestructura de aplicacion:
+
+- WhiteNoise (estaticos)
+- django-cors-headers
+- django-filter
+- Waitress (arranque alterno local)
+
+Persistencia y cache:
+
+- SQLite activo por defecto
+- PostgreSQL disponible como configuracion alternativa (comentada)
+- LocMemCache para cache temporal
+
+Soporte funcional:
+
+- SMTP Gmail para notificaciones por correo
+- pyotp para 2FA
+
+## 4. Vista de Componentes
 
 ```mermaid
-graph TB
-    subgraph "Presentation Layer"
-        REST_API[REST API Endpoints]
-        ADMIN[Django Admin Interface]
-        SWAGGER[API Documentation]
-    end
+graph TD
+    FE[Frontend / API Client]
+    DJ[Django Monolito]
+    API[DRF API Layer]
+    AUTH[JWT + 2FA]
+    APPS[Apps de Dominio]
+    DB[(SQLite)]
+    CACHE[(LocMemCache)]
+    MEDIA[(media/)]
+    SMTP[SMTP]
 
-    subgraph "Business Logic Layer"
-        subgraph "Views & ViewSets"
-            USER_VIEWS[User Views]
-            COMPANY_VIEWS[Company Views]
-            INVOICE_VIEWS[Invoice Views]
-            INDICATOR_VIEWS[Indicator Views]
-        end
-        
-        subgraph "Services"
-            AUTH_SERVICE[Authentication Service]
-            EMAIL_SERVICE[Email Service]
-            VALIDATION_SERVICE[Validation Service]
-            REPORT_SERVICE[Report Service]
-        end
-    end
-
-    subgraph "Data Access Layer"
-        subgraph "Models & ORM"
-            USER_MODEL[User Models]
-            COMPANY_MODEL[Company Models]
-            INVOICE_MODEL[Invoice Models]
-            INDICATOR_MODEL[Indicator Models]
-        end
-        
-        subgraph "Serializers"
-            USER_SERIAL[User Serializers]
-            COMPANY_SERIAL[Company Serializers]
-            INVOICE_SERIAL[Invoice Serializers]
-        end
-    end
-
-    subgraph "Infrastructure Layer"
-        DATABASE[(Database)]
-        CACHE_LAYER[(Cache)]
-        FILE_SYSTEM[File System]
-        EXTERNAL_APIS[External APIs]
-    end
-
-    REST_API --> USER_VIEWS
-    REST_API --> COMPANY_VIEWS
-    REST_API --> INVOICE_VIEWS
-    REST_API --> INDICATOR_VIEWS
-    
-    USER_VIEWS --> AUTH_SERVICE
-    PROVIDER_VIEWS --> EMAIL_SERVICE
-    INVOICE_VIEWS --> VALIDATION_SERVICE
-    INDICATOR_VIEWS --> REPORT_SERVICE
-    
-    USER_VIEWS --> USER_SERIAL
-    COMPANY_VIEWS --> COMPANY_SERIAL
-    INVOICE_VIEWS --> INVOICE_SERIAL
-    
-    USER_SERIAL --> USER_MODEL
-    COMPANY_SERIAL --> COMPANY_MODEL
-    INVOICE_SERIAL --> INVOICE_MODEL
-    
-    USER_MODEL --> DATABASE
-    COMPANY_MODEL --> DATABASE
-    INVOICE_MODEL --> DATABASE
-    INDICATOR_MODEL --> DATABASE
-    
-    AUTH_SERVICE --> CACHE_LAYER
-    EMAIL_SERVICE --> EXTERNAL_APIS
-    REPORT_SERVICE --> FILE_SYSTEM
+    FE --> DJ
+    DJ --> API
+    API --> AUTH
+    API --> APPS
+    APPS --> DB
+    AUTH --> CACHE
+    APPS --> MEDIA
+    APPS --> SMTP
 ```
 
----
+## 5. Capas de la Aplicacion
 
-## 💾 Modelo de Datos
+### 5.1 Capa de entrada
 
-### Diagrama de Entidad-Relación Principal
+- `backend/urls.py` centraliza prefijos
+- Routers DRF por app en `*/urls.py`
+- Endpoints APIView puntuales (principalmente en `users`)
+
+### 5.2 Capa de API
+
+- `ModelViewSet` como patron dominante de CRUD
+- `@action` para operaciones de negocio no CRUD
+- `serializers.py` para validacion/shape de payload
+- Filtros con `django-filter`, busqueda y ordenamiento
+
+### 5.3 Capa de dominio y datos
+
+- Modelos Django ORM por app
+- Relaciones FK/M2M entre modulos
+- Managers y metodos de modelo para reglas especificas
+
+### 5.4 Capa de infraestructura
+
+- Configuracion central en `backend/settings.py`
+- Static/media en filesystem
+- Email backend SMTP
+- Cache local en memoria
+
+## 6. Enrutamiento y Superficie API
+
+### 6.1 Endpoints globales
+
+- `POST /api/token/`
+- `POST /api/token/refresh/`
+- `admin/`
+
+### 6.2 Prefijos por modulo
+
+- `/api/users/`
+- `/api/companies/`
+- `/api/processes/`
+- `/api/main/`
+- `/api/indicators/`
+- `/api/normativity/`
+- `/api/habilitacion/`
+- `/api/soportes/`
+- `/api/mejoras/`
+- `/api/audit/`
+
+Referencia de detalle por endpoint:
+
+- `ENDPOINTS_API.md`
+
+## 7. Mapa de Modulos
+
+### 7.1 users
+
+Responsabilidad:
+
+- Autenticacion, roles, perfil actual, 2FA y password reset
+
+Puntos tecnicos:
+
+- Custom user model (`users.User`)
+- Flujos de login con OTP temporal
+- Endpoints de 2FA (`enable`, `verify`, `toggle`)
+
+### 7.2 companies
+
+Responsabilidad:
+
+- Catalogo organizacional: empresas, sedes, procesos, regiones
+
+Puntos tecnicos:
+
+- Nucleo de referencias para otros modulos (`Headquarters`, `Process`)
+
+### 7.3 processes
+
+Responsabilidad:
+
+- Gestion de documentos por proceso
+
+Puntos tecnicos:
+
+- Endpoints de `preview` y `download`
+- Middleware custom vinculado a visualizacion embebida
+
+### 7.4 main
+
+Responsabilidad:
+
+- Contenido transversal (funcionarios, eventos, felicitaciones, reconocimientos)
+
+### 7.5 indicators
+
+Responsabilidad:
+
+- Indicadores y resultados
+
+Puntos tecnicos:
+
+- Endpoint `results/detailed` para agregados orientados a dashboard
+
+### 7.6 normativity
+
+Responsabilidad:
+
+- Estandares, criterios y documentos normativos
+
+Puntos tecnicos:
+
+- Endpoints de consulta especializada (`mandatorios`, `con-evidencia`, etc.)
+
+### 7.7 habilitacion
+
+Responsabilidad:
+
+- Prestadores, servicios, autoevaluaciones, cumplimientos y componentes complementarios
+
+Puntos tecnicos:
+
+- Subdominio mas amplio del sistema
+- Integraciones directas con `normativity`, `processes`, `soportes`, `mejoras`
+- Acciones de negocio para vencimientos, resumenes, validaciones y checklists
+
+### 7.8 soportes
+
+Responsabilidad:
+
+- Catalogacion y almacenamiento de soportes documentales
+
+### 7.9 mejoras
+
+Responsabilidad:
+
+- Planes de mejora y hallazgos con trazabilidad por origen
+
+Puntos tecnicos:
+
+- Origenes vinculables a habilitacion, auditoria e indicadores
+- Manejo de soportes por plan
+
+### 7.10 audit
+
+Responsabilidad:
+
+- Ciclo de auditorias, equipo auditor, hallazgos, actas y programas
+
+Puntos tecnicos:
+
+- Transicion de fase en auditorias
+- Integracion con modulo `mejoras`
+
+## 8. Relaciones de Datos (Vista de Ingenieria)
 
 ```mermaid
-erDiagram
-    User ||--o{ UserProfile : has
-    User ||--o{ Role : has
-    Role ||--o{ App : accesses
-    
-    Company ||--o{ Department : contains
-    Company ||--o{ Headquarters : has
-    Department ||--o{ Process : contains
-    Process ||--o{ ProcessType : belongs_to
-    
-    Headquarters ||--o{ Result : generates
-    Indicator ||--o{ Result : measures
-    
-    Auditoria ||--o{ SedeAuditada : audits
-    Auditoria }o--|| TipoAuditoria : is_type
-    Auditoria }o--|| EntidadAuditoria : performed_by
-    
-    User {
-        int id PK
-        string email
-        string first_name
-        string last_name
-        boolean is_active
-        datetime date_joined
-    }
-    
-    Company {
-        int id PK
-        string name
-        string nit
-        string legal_representative
-        string phone
-        string address
-        email contact_email
-        date foundation_date
-        boolean status
-    }
-    
-    Factura {
-        int factura_id PK
-        string factura_id_factura_electronica
-        date factura_fecha
-        decimal factura_valor
-        string factura_concepto
-        string factura_etapa
-        boolean factura_estado
-    }
-    
+graph LR
+    Company --> Headquarters
+    Company --> Department
+    Department --> Process
+    ProcessType --> Process
+
+    Headquarters --> DatosPrestador
+    Company --> DatosPrestador
+    DatosPrestador --> ServicioSede
+    DatosPrestador --> Autoevaluacion
+    Autoevaluacion --> Cumplimiento
+    ServicioSede --> Cumplimiento
+    Criterio --> Cumplimiento
+
+    Indicator --> Result
+    Headquarters --> Result
+
+    Auditoria --> HallazgoAuditoria
+    Auditoria --> ActaReunion
+    ProgramaAuditoria --> Auditoria
+
+    PlanMejora --> Hallazgo
+    PlanMejora --> SoportePlan
+    HallazgoAuditoria --> PlanMejora
 ```
 
----
-
-## 🔄 Flujo de Procesos de Negocio
-
-
-### Flujo de Autenticación con 2FA
+## 9. Flujo de Request (Runtime)
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-    participant EmailService
-    participant Database
+    participant C as Cliente
+    participant U as URLConf
+    participant V as ViewSet/APIView
+    participant S as Serializer
+    participant M as Model/ORM
+    participant D as DB
 
-    User->>Frontend: Ingresa credenciales
-    Frontend->>Backend: POST /api/users/login/
-    Backend->>Database: Validar usuario
-    Database-->>Backend: Usuario válido
-    
-    Backend->>EmailService: Generar código 2FA
-    EmailService-->>Backend: Código generado
-    Backend->>Database: Guardar código temporal
-    EmailService->>User: Enviar email con código
-    
-    Backend-->>Frontend: Respuesta: "2FA requerido"
-    Frontend->>User: Mostrar formulario 2FA
-    
-    User->>Frontend: Ingresa código 2FA
-    Frontend->>Backend: POST /api/users/verify-2fa/
-    Backend->>Database: Validar código
-    Database-->>Backend: Código válido
-    
-    Backend->>Database: Generar JWT tokens
-    Database-->>Backend: Tokens generados
-    Backend-->>Frontend: JWT Access + Refresh tokens
-    Frontend-->>User: Acceso autorizado
+    C->>U: HTTP Request
+    U->>V: Resolucion de ruta
+    V->>S: Validacion y transformacion
+    S->>M: Operacion de dominio
+    M->>D: Query ORM
+    D-->>M: Resultado
+    M-->>V: Entidad/coleccion
+    V-->>C: Response JSON
 ```
+
+## 10. Seguridad y Control de Acceso
+
+Estado implementado:
+
+- JWT como autenticacion por defecto en DRF
+- 2FA disponible y operativo en modulo users
+- CORS activo via middleware
+- `CSRF_TRUSTED_ORIGINS` configurable por `FRONTEND_URL`
+- `ALLOWED_HOSTS` acotado a localhost en configuracion actual
+
+Observaciones:
+
+- `DEBUG=True` en estado actual de settings
+- Para despliegue productivo se requiere hardening explicito
+
+## 11. Configuracion Operativa
+
+### 11.1 Parametros relevantes
+
+- `DJANGO_SECRET_KEY`
+- `FRONTEND_URL`
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+- `EMAIL_PORT`
+- `EMAIL_USE_TLS`
+
+### 11.2 Recursos de filesystem
+
+- `MEDIA_ROOT = media/`
+- `STATIC_ROOT = staticfiles/`
+
+### 11.3 Carga de datos
+
+- `cargar_estandares.py`
+- `python manage.py cargar_catalogo_soportes`
+
+## 12. Deployment
+
+### 12.1 Modo desarrollo
+
+- `python manage.py runserver`
+
+### 12.2 Ejecucion local tipo produccion
+
+- `python run_waitress.py`
+
+### 12.3 Escenario IIS
+
+- Existe `web.config` en repositorio
+
+## 13. Convenciones de Desarrollo
+
+- Cada app expone su `urls.py` y `views.py`/`views/`
+- Preferencia por ViewSets para CRUD
+- Operaciones de negocio como `@action`
+- Documentar endpoints nuevos en `ENDPOINTS_API.md`
+- Mantener coherencia entre README, arquitectura y endpoints
+
+## 14. Checklist para Nuevos Ingenieros
+
+1. Levantar entorno virtual y dependencias
+2. Revisar `backend/settings.py`
+3. Ejecutar migraciones y cargas de catalogo
+4. Revisar `backend/urls.py` y `ENDPOINTS_API.md`
+5. Iniciar por modulo objetivo (models -> serializers -> views -> urls)
+6. Ejecutar `python manage.py check` y pruebas relevantes por app
+
+## 15. Riesgos Tecnicos Actuales
+
+Riesgos visibles en el estado actual:
+
+- Acoplamiento transversal alto por relaciones entre apps
+- Posible crecimiento de complejidad del monolito
+- `DEBUG=True` y configuracion local en settings base
+- Cache local no distribuida
+- Dependencia de SQLite para entorno por defecto
+
+## 16. Hallazgos de Revision Estricta
+
+Estos puntos estaban documentados como actuales en versiones anteriores y no correspondian al estado real:
+
+- Arquitectura de microservicios
+- Celery operando en background
+- Redis como cache activa principal
+- PostgreSQL activo por defecto
+- Modulo de facturacion activo en apps/urls
+
+## 17. Fuente de Verdad Tecnica
+
+Validar siempre contra:
+
+- `backend/settings.py`
+- `backend/urls.py`
+- `*/urls.py`
+- `*/views.py` o `*/views/`
+- `*/models.py` o `*/models/`
+- `requirements.txt`
+- `ENDPOINTS_API.md`
 
 ---
 
-## 🔧 Arquitectura de Módulos
-
-### Diagrama de Módulos y Dependencias
-
-```mermaid
-graph TD
-    subgraph "Core Django"
-        DJANGO[Django Framework]
-        DRF[Django REST Framework]
-        JWT[JWT Authentication]
-    end
-
-    subgraph "Custom Apps"
-        USERS[users/]
-        COMPANIES[companies/]
-        INDICATORS[indicators/]
-        PROCESSES[processes/]
-        MAIN[main/]
-        AUDIT[audit/]
-    end
-
-    subgraph "External Dependencies"
-        EMAIL[Email Backend]
-        CORS[CORS Headers]
-        WHITENOISE[WhiteNoise]
-        WAITRESS[Waitress WSGI]
-    end
-
-    DJANGO --> USERS
-    DJANGO --> COMPANIES
-    DJANGO --> INDICATORS
-    DJANGO --> PROCESSES
-    DJANGO --> MAIN
-    DJANGO --> AUDIT
-
-    DRF --> USERS
-    DRF --> COMPANIES
-    DRF --> INDICATORS
-    DRF --> PROCESSES
-
-    JWT --> USERS
-    JWT --> INDICATORS
-
-    USERS --> COMPANIES
-    INDICATORS --> COMPANIES
-    AUDIT --> COMPANIES
-    PROCESSES --> COMPANIES
-
-    EMAIL --> USERS
-    CORS --> DRF
-    WHITENOISE --> DJANGO
-    WAITRESS --> DJANGO
-```
-
----
-
-## 🌐 Arquitectura de Red y Deployment
-
-### Diagrama de Infraestructura de Producción
-
-```mermaid
-graph TB
-    subgraph "Internet"
-        USERS[Users]
-        MOBILE_USERS[Mobile Users]
-    end
-
-    subgraph "DMZ"
-        LB[Load Balancer/Nginx]
-        SSL[SSL Termination]
-    end
-
-    subgraph "Web Tier"
-        WEB1[Web Server 1]
-        WEB2[Web Server 2]
-        STATIC[Static Files Server]
-    end
-
-    subgraph "Application Tier"
-        APP1[Django App 1]
-        APP2[Django App 2]
-        CELERY[Celery Workers]
-    end
-
-    subgraph "Data Tier"
-        PRIMARY_DB[(Primary PostgreSQL)]
-        REPLICA_DB[(Read Replica)]
-        REDIS[(Redis Cache)]
-        FILES[File Storage]
-    end
-
-    subgraph "External Services"
-        SMTP_SERVICE[Gmail SMTP]
-        GOVT_SERVICES[Government APIs]
-        MONITORING[Sentry/Monitoring]
-    end
-
-    USERS --> SSL
-    MOBILE_USERS --> SSL
-    SSL --> LB
-
-    LB --> WEB1
-    LB --> WEB2
-    LB --> STATIC
-
-    WEB1 --> APP1
-    WEB2 --> APP2
-
-    APP1 --> PRIMARY_DB
-    APP2 --> PRIMARY_DB
-    APP1 --> REPLICA_DB
-    APP2 --> REPLICA_DB
-    APP1 --> REDIS
-    APP2 --> REDIS
-    APP1 --> FILES
-    APP2 --> FILES
-
-    CELERY --> PRIMARY_DB
-    CELERY --> SMTP_SERVICE
-    CELERY --> GOVT_SERVICES
-
-    APP1 --> MONITORING
-    APP2 --> MONITORING
-```
-
----
-
-## 🔐 Arquitectura de Seguridad
-
-### Diagrama de Seguridad y Autenticación
-
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        subgraph "Perimeter Security"
-            FIREWALL[Firewall]
-            WAF[Web Application Firewall]
-            DDOS[DDoS Protection]
-        end
-
-        subgraph "Application Security"
-            JWT_AUTH[JWT Authentication]
-            RBAC[Role-Based Access Control]
-            TWO_FA[Two-Factor Authentication]
-            VALIDATION[Input Validation]
-        end
-
-        subgraph "Data Security"
-            ENCRYPTION[Data Encryption at Rest]
-            TLS[TLS Encryption in Transit]
-            HASH[Password Hashing]
-            SANITIZATION[SQL Injection Protection]
-        end
-
-        subgraph "Infrastructure Security"
-            VPN[VPN Access]
-            KEY_MGMT[Key Management]
-            AUDIT_LOG[Security Audit Logs]
-            BACKUP_ENC[Encrypted Backups]
-        end
-    end
-
-    subgraph "Monitoring & Compliance"
-        SEC_MONITOR[Security Monitoring]
-        COMPLIANCE[Compliance Checks]
-        INCIDENT[Incident Response]
-    end
-
-    FIREWALL --> WAF
-    WAF --> JWT_AUTH
-    JWT_AUTH --> RBAC
-    RBAC --> TWO_FA
-
-    JWT_AUTH --> ENCRYPTION
-    VALIDATION --> SANITIZATION
-    ENCRYPTION --> TLS
-
-    VPN --> KEY_MGMT
-    AUDIT_LOG --> SEC_MONITOR
-    BACKUP_ENC --> COMPLIANCE
-```
-
----
-
-## 📊 Arquitectura de Datos
-
-### Diagrama de Flujo de Datos
-
-```mermaid
-graph TD
-    subgraph "Data Sources"
-        USER_INPUT[User Input]
-        FILE_UPLOAD[File Uploads]
-        EMAIL_DATA[Email Data]
-        GOVT_DATA[Government APIs]
-    end
-
-    subgraph "Data Processing"
-        VALIDATION[Data Validation]
-        TRANSFORMATION[Data Transformation]
-        ENRICHMENT[Data Enrichment]
-    end
-
-    subgraph "Data Storage"
-        TRANSACTIONAL[(Transactional DB)]
-        ANALYTICAL[(Analytics DB)]
-        CACHE[(Cache Layer)]
-        FILES[File Storage]
-    end
-
-    subgraph "Data Access"
-        API_LAYER[REST API Layer]
-        REPORT_ENGINE[Report Engine]
-        DASHBOARD[Dashboard Queries]
-    end
-
-    subgraph "Data Consumers"
-        WEB_APP[Web Application]
-        MOBILE_APP[Mobile App]
-        REPORTS[Generated Reports]
-        ANALYTICS[Analytics Dashboard]
-    end
-
-    USER_INPUT --> VALIDATION
-    FILE_UPLOAD --> VALIDATION
-    EMAIL_DATA --> VALIDATION
-    GOVT_DATA --> VALIDATION
-
-    VALIDATION --> TRANSFORMATION
-    TRANSFORMATION --> ENRICHMENT
-
-    ENRICHMENT --> TRANSACTIONAL
-    ENRICHMENT --> ANALYTICAL
-    ENRICHMENT --> CACHE
-    FILE_UPLOAD --> FILES
-
-    TRANSACTIONAL --> API_LAYER
-    ANALYTICAL --> REPORT_ENGINE
-    CACHE --> API_LAYER
-    TRANSACTIONAL --> DASHBOARD
-
-    API_LAYER --> WEB_APP
-    API_LAYER --> MOBILE_APP
-    REPORT_ENGINE --> REPORTS
-    DASHBOARD --> ANALYTICS
-```
-
----
-
-## 🚀 Patrones de Arquitectura Implementados
-
-### 1. Model-View-Controller (MVC)
-```python
-# Django implementa MTV (Model-Template-View)
-# Model: Django Models (ORM)
-# View: Django Views/ViewSets
-# Template: Frontend (React/Vue) separado
-```
-
-### 2. Repository Pattern
-```python
-# Implementado a través de Django ORM
-# Managers personalizados actúan como repositories
-class FacturaManager(models.Manager):
-    def get_by_etapa(self, etapa):
-        return self.filter(factura_etapa=etapa)
-```
-
-### 3. Service Layer Pattern
-```python
-# Servicios de negocio separados de las vistas
-class EmailService:
-    def send_2fa_code(self, user, code):
-        # Lógica de envío de email
-        pass
-```
-
-### 4. Serializer Pattern (DTO)
-```python
-# Django REST Framework Serializers
-class FacturaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Factura
-        fields = '__all__'
-```
-
----
-
-## 📈 Escalabilidad y Performance
-
-### Estrategias de Escalabilidad
-
-```mermaid
-graph TB
-    subgraph "Horizontal Scaling"
-        LB[Load Balancer]
-        APP1[App Instance 1]
-        APP2[App Instance 2]
-        APP3[App Instance N]
-    end
-
-    subgraph "Database Scaling"
-        MASTER[(Master DB)]
-        SLAVE1[(Read Replica 1)]
-        SLAVE2[(Read Replica 2)]
-    end
-
-    subgraph "Caching Strategy"
-        REDIS[(Redis Cluster)]
-        CDN[Content Delivery Network]
-        BROWSER[Browser Cache]
-    end
-
-    subgraph "Performance Optimization"
-        CONNECTION_POOL[DB Connection Pooling]
-        QUERY_OPT[Query Optimization]
-        LAZY_LOAD[Lazy Loading]
-        PAGINATION[API Pagination]
-    end
-
-    LB --> APP1
-    LB --> APP2
-    LB --> APP3
-
-    APP1 --> MASTER
-    APP2 --> SLAVE1
-    APP3 --> SLAVE2
-
-    APP1 --> REDIS
-    APP2 --> REDIS
-    APP3 --> REDIS
-
-    CDN --> BROWSER
-```
-
----
-
-## 🔍 Monitoreo y Observabilidad
-
-### Arquitectura de Monitoreo
-
-```mermaid
-graph TB
-    subgraph "Application Metrics"
-        APP_METRICS[Application Metrics]
-        ERROR_TRACKING[Error Tracking]
-        PERFORMANCE[Performance Monitoring]
-    end
-
-    subgraph "Infrastructure Metrics"
-        SYSTEM_METRICS[System Metrics]
-        DB_METRICS[Database Metrics]
-        NETWORK_METRICS[Network Metrics]
-    end
-
-    subgraph "Logging"
-        APP_LOGS[Application Logs]
-        ACCESS_LOGS[Access Logs]
-        ERROR_LOGS[Error Logs]
-    end
-
-    subgraph "Monitoring Tools"
-        SENTRY[Sentry]
-        PROMETHEUS[Prometheus]
-        GRAFANA[Grafana]
-        ELK[ELK Stack]
-    end
-
-    subgraph "Alerting"
-        ALERTS[Alert Manager]
-        NOTIFICATIONS[Notifications]
-        ESCALATION[Escalation Policies]
-    end
-
-    APP_METRICS --> SENTRY
-    ERROR_TRACKING --> SENTRY
-    PERFORMANCE --> PROMETHEUS
-
-    SYSTEM_METRICS --> PROMETHEUS
-    DB_METRICS --> PROMETHEUS
-    NETWORK_METRICS --> PROMETHEUS
-
-    APP_LOGS --> ELK
-    ACCESS_LOGS --> ELK
-    ERROR_LOGS --> ELK
-
-    PROMETHEUS --> GRAFANA
-    ELK --> GRAFANA
-
-    GRAFANA --> ALERTS
-    ALERTS --> NOTIFICATIONS
-    NOTIFICATIONS --> ESCALATION
-```
-
----
-
-## 🛠️ Tecnologías y Herramientas
-
-### Stack Tecnológico Completo
-
-| Capa | Tecnología | Propósito |
-|------|------------|-----------|
-| **Backend Framework** | Django 5.2.2 | Framework web principal |
-| **API Framework** | Django REST Framework | API REST |
-| **Database** | PostgreSQL/SQLite | Base de datos relacional |
-| **Cache** | Redis | Cache y sesiones |
-| **Authentication** | JWT | Autenticación stateless |
-| **Task Queue** | Celery | Tareas asíncronas |
-| **Web Server** | Nginx + Waitress | Servidor web y WSGI |
-| **Monitoring** | Sentry | Monitoreo de errores |
-| **Documentation** | DRF-Spectacular | Documentación API |
-| **Testing** | Pytest | Testing framework |
-| **Code Quality** | Black, Flake8 | Formateo y linting |
-
-### Configuración de Entornos
-
-```python
-# settings/base.py
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
-    # Custom apps
-    'users',
-    'companies',
-    'indicators',
-    'processes',
-    'main',
-]
-
-# settings/production.py
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
-            'MAX_CONNS': 20,
-            'conn_max_age': 600,
-        }
-    }
-}
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-    }
-}
-```
-
----
-
-## 📋 Decisiones de Arquitectura
-
-### Architecture Decision Records (ADR)
-
-#### ADR-001: Elección de Django REST Framework
-- **Fecha**: 2024-01-15
-- **Estado**: Aceptado
-- **Contexto**: Necesidad de crear API REST robusta
-- **Decisión**: Usar Django REST Framework
-- **Consecuencias**: 
-  - ✅ Serialización automática
-  - ✅ Autenticación integrada
-  - ✅ Documentación automática
-  - ❌ Curva de aprendizaje
-
-#### ADR-002: Autenticación JWT vs Sessions
-- **Fecha**: 2024-01-20
-- **Estado**: Aceptado
-- **Contexto**: API stateless para múltiples clientes
-- **Decisión**: JWT con refresh tokens
-- **Consecuencias**:
-  - ✅ Escalabilidad horizontal
-  - ✅ Soporte multi-cliente
-  - ❌ Complejidad en invalidación
-
-#### ADR-003: Estructura Modular de Apps
-- **Fecha**: 2024-01-25
-- **Estado**: Aceptado
-- **Contexto**: Mantenibilidad y separación de responsabilidades
-- **Decisión**: Apps Django por dominio de negocio
-- **Consecuencias**:
-  - ✅ Separación clara de responsabilidades
-  - ✅ Reutilización de código
-  - ✅ Testing independiente
-  - ❌ Complejidad en relaciones entre apps
-
----
-
-## 🔮 Roadmap de Arquitectura
-
-### Fase 1: Consolidación (Q1 2025)
-- [ ] Completar módulo de auditoría
-- [ ] Implementar testing completo
-- [ ] Optimizar consultas de base de datos
-- [ ] Documentar APIs con OpenAPI
-
-### Fase 2: Escalabilidad (Q2 2025)
-- [ ] Migrar a PostgreSQL en producción
-- [ ] Implementar Redis para caching
-- [ ] Configurar Celery para tareas asíncronas
-- [ ] Implementar monitoring con Sentry
-
-### Fase 3: Optimización (Q3 2025)
-- [ ] Implementar CDN para archivos estáticos
-- [ ] Optimizar performance de APIs
-- [ ] Implementar circuit breakers
-- [ ] Configurar auto-scaling
-
-### Fase 4: Avanzada (Q4 2025)
-- [ ] Implementar Event Sourcing para auditoría
-- [ ] Migrar a arquitectura de microservicios
-- [ ] Implementar GraphQL API
-- [ ] Machine Learning para predicciones
-
----
-
-*Documento actualizado: Octubre 2025*  
-*Próxima revisión: Enero 2026*
+Documento de arquitectura tecnica orientado a uso real de ingenieria.
