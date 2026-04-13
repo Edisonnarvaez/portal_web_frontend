@@ -238,6 +238,18 @@ export class SoporteService {
   }
 
   /**
+   * ✅ NUEVO: Get all documents by prestador (con aislamiento de datos)
+   */
+  async getSoportesByPrestador(prestadorId: number): Promise<SoporteDocumental[]> {
+    try {
+      if (!prestadorId || prestadorId <= 0) throw new Error('Invalid prestador ID');
+      return await this.repository.getSoportesByPrestador(prestadorId);
+    } catch (error) {
+      throw this.handleError(error, 'getSoportesByPrestador');
+    }
+  }
+
+  /**
    * Get all documents at headquarters level
    */
   async getSoportesBySede(sedeId: number): Promise<SoporteDocumental[]> {
@@ -279,31 +291,61 @@ export class SoporteService {
    * Upload new supporting document
    * If document exists, creates new version and marks previous as inactive
    */
-  async uploadSoporte(data: Partial<SoporteDocumental>): Promise<SoporteDocumental> {
+  async uploadSoporte(data: any): Promise<SoporteDocumental> {
     try {
+      if (!data.prestador || data.prestador <= 0) {
+        throw new Error('Prestador is required');
+      }
       if (!data.tipo_documento || data.tipo_documento <= 0) {
         throw new Error('Document type is required');
       }
       if (!data.nivel || !this.isValidNivel(data.nivel)) {
         throw new Error('Valid nivel is required');
       }
-      if (!data.archivo || (typeof data.archivo === 'string' && data.archivo.trim().length === 0)) {
+      if (!data.archivo) {
         throw new Error('Document file is required');
       }
       
-      const createData = {
+      // ✅ NUEVO: Crear FormData si el archivo es File (multipart/form-data)
+      if (data.archivo instanceof File) {
+        const formData = new FormData();
+        
+        // Append all fields to FormData
+        formData.append('prestador', data.prestador!.toString());
+        formData.append('tipo_documento', data.tipo_documento!.toString());
+        formData.append('nivel', data.nivel!);
+        if (data.empresa) formData.append('empresa', data.empresa.toString());
+        if (data.sede) formData.append('sede', data.sede.toString());
+        if (data.servicio) formData.append('servicio', data.servicio.toString());
+        if (data.fecha_emision) formData.append('fecha_emision', data.fecha_emision);
+        if (data.fecha_vencimiento) formData.append('fecha_vencimiento', data.fecha_vencimiento);
+        if (data.observaciones) formData.append('observaciones', data.observaciones);
+        formData.append('archivo', data.archivo);
+        
+        // Send FormData directly with flag to bypass JSON serialization
+        const soporte = await this.repository.createSoporteFormData(formData);
+        return soporte;
+      }
+      
+      // Regular JSON upload for non-file data
+      const createData: any = {
+        prestador: data.prestador!,
         tipo_documento: data.tipo_documento!,
         nivel: data.nivel!,
-        empresa: data.empresa,
-        sede: data.sede,
-        servicio: data.servicio,
         archivo: data.archivo as any,
-        fecha_emision: data.fecha_emision,
-        fecha_vencimiento: data.fecha_vencimiento,
-        observaciones: data.observaciones,
       };
       
-      const soporte = await this.repository.createSoporte(createData as any);
+      // ✅ Only add context field if it exists and is valid
+      if (data.empresa) createData.empresa = data.empresa;
+      else if (data.sede) createData.sede = data.sede;
+      else if (data.servicio) createData.servicio = data.servicio;
+      
+      // ✅ Only add optional fields if they exist
+      if (data.fecha_emision) createData.fecha_emision = data.fecha_emision;
+      if (data.fecha_vencimiento) createData.fecha_vencimiento = data.fecha_vencimiento;
+      if (data.observaciones) createData.observaciones = data.observaciones;
+      
+      const soporte = await this.repository.createSoporte(createData);
       return soporte;
     } catch (error) {
       throw this.handleError(error, 'uploadSoporte');

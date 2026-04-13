@@ -45,10 +45,15 @@ export interface ISoporteRepository {
   deleteSoporte(id: number): Promise<void>;
 
   // Multi-level queries
+  getSoportesByPrestador(prestadorId: number): Promise<SoporteDocumental[]>; // ✅ NUEVO
   getSoportesByEmpresa(empresaId: number): Promise<SoporteDocumental[]>;
   getSoportesBySede(sedeId: number): Promise<SoporteDocumental[]>;
   getSoportesByServicio(servicioId: number): Promise<SoporteDocumental[]>;
   getSoportesByNivel(nivel: NivelSoporte): Promise<SoporteDocumental[]>;
+
+  // File uploads
+  createSoporte(data: SoporteDocumentalCreate): Promise<SoporteDocumental>;
+  createSoporteFormData(formData: FormData): Promise<SoporteDocumental>; // ✅ NUEVO: Multipart upload
 
   // Versioning
   getSoporteVersions(tipoDocumentoId: number): Promise<SoporteDocumental[]>;

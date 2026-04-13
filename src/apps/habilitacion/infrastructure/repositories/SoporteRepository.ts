@@ -90,6 +90,14 @@ export class SoporteRepository implements ISoporteRepository {
     return parseListResponse<SoporteDocumental>(response.data);
   }
 
+  // ✅ NUEVO: Filtrar por prestador (aislamiento de datos)
+  async getSoportesByPrestador(prestadorId: number): Promise<SoporteDocumental[]> {
+    const response = await axiosInstance.get(`${this.baseUrl}/documentos/`, {
+      params: { prestador_id: prestadorId },
+    });
+    return parseListResponse<SoporteDocumental>(response.data);
+  }
+
   async getSoporte(id: number): Promise<SoporteDocumental> {
     const response = await axiosInstance.get(`${this.baseUrl}/documentos/${id}/`);
     return response.data;
@@ -124,7 +132,23 @@ export class SoporteRepository implements ISoporteRepository {
   }
 
   async createSoporte(data: any): Promise<SoporteDocumental> {
+    // For non-file uploads, send as regular JSON
     const response = await axiosInstance.post(`${this.baseUrl}/documentos/`, data);
+    return response.data;
+  }
+
+  /**
+   * ✅ NUEVO: Create soporte with FormData (multipart/form-data) for file uploads
+   * Removes the default JSON Content-Type header to allow proper multipart encoding
+   */
+  async createSoporteFormData(formData: FormData): Promise<SoporteDocumental> {
+    // When sending FormData, the browser must set Content-Type with multipart boundary
+    // Remove the default 'application/json' header by setting it to undefined
+    const response = await axiosInstance.post(`${this.baseUrl}/documentos/`, formData, {
+      headers: {
+        'Content-Type': undefined,
+      },
+    } as any);
     return response.data;
   }
 

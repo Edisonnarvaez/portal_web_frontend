@@ -38,7 +38,7 @@ export interface TipoDocumentoSoporte {
   categoria: number; // API sends this as ID only
   categoria_nombre?: string; // API also sends category name as read-only field
   nombre: string;
-  nivel_aplica?: NivelAplica; // EMPRESA, SEDE, SERVICIO
+  nivel_aplica: NivelAplica; // ✅ ACTUALIZADO: Ahora REQUERIDO (backend valida que coincida con el nivel del soporte)
   es_obligatorio: boolean;
   requiere_vencimiento: boolean;
   activo: boolean;
@@ -67,6 +67,8 @@ export type NivelSoporte = 'EMPRESA' | 'SEDE' | 'SERVICIO';
 
 export interface SoporteDocumental {
   id: number;
+  prestador: number; // ✅ NUEVO: Prestador propietario del documento
+  prestador_nombre?: string; // ✅ NUEVO: Nombre del prestador (desde API)
   tipo_documento: number; // Changed from tipo_documento_id to match API
   tipo_nombre?: string; // API returns this as read-only field
   tipo_documento_objeto?: TipoDocumentoSoporte; // Full type object if expanded
@@ -94,6 +96,7 @@ export interface SoporteDocumental {
 }
 
 export interface SoporteDocumentalCreate {
+  prestador: number; // ✅ REQUERIDO: Prestador propietario (validado por backend)
   tipo_documento: number; // Changed from tipo_documento_id
   nivel: NivelSoporte;
   empresa?: number;

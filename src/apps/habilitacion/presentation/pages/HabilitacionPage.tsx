@@ -271,6 +271,7 @@ const HabilitacionPage = () => {
       const acciones = getAccionesPrestador(r, ultimaAuto, {
         onRenovar: () => navigate(`/habilitacion/prestador/${r.id}`),
         onCrearEvaluacion: () => { setShowAutoModal(true); },
+        onVerSoportes: (id) => navigate(`/habilitacion/soportes/${id}`),
         onVerDetalle: (id) => navigate(`/habilitacion/prestador/${id}`),
       });
       return <AccionesContextuales acciones={acciones} compact />;

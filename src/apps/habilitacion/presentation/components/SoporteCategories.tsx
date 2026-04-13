@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { CategoriaSoporte } from '../../domain/entities/SoporteDocumental';
+import { useSoporte } from '../hooks/useSoporte'; // ✅ NUEVO: Importar hook
 
 interface SoporteCategoriesProps {
   prestadorId: number;
@@ -30,7 +31,7 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
   onCreateCategory,
   isLoading = false,
 }) => {
-  const [categories, setCategories] = useState<CategoriaSoporte[]>([]);
+  const { categorias, fetchCategorias, loading: hookLoading } = useSoporte(); // ✅ NUEVO
   const [categoryStats, setCategoryStats] = useState<Map<number, CategoryStats>>(new Map());
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [showForm, setShowForm] = useState(showCreateForm);
@@ -40,6 +41,7 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
   });
   const [formError, setFormError] = useState<string | null>(null);
 
+  // ✅ NUEVO: Cargar categorías del API
   useEffect(() => {
     loadCategories();
   }, [prestadorId]);
@@ -47,51 +49,11 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
   const loadCategories = async () => {
     try {
       setIsLoadingData(true);
+      await fetchCategorias(); // ✅ Usar fetchCategorias del hook
 
-      // Mock categories (in real implementation, would fetch from API)
-      const mockCategories: CategoriaSoporte[] = [
-        {
-          id: 1,
-          nombre: 'Documentos Administrativos',
-          descripcion: 'Certificados y permisos administrativos',
-          activo: true,
-          fecha_creacion: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          nombre: 'Documentos Sanitarios',
-          descripcion: 'Certificados de calidad y bioseguridad',
-          activo: true,
-          fecha_creacion: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          nombre: 'Acreditación de Personal',
-          descripcion: 'Títulos y licencias de profesionales',
-          activo: true,
-          fecha_creacion: new Date().toISOString(),
-        },
-        {
-          id: 4,
-          nombre: 'Documentos Técnicos',
-          descripcion: 'Manuales, protocolos y procedimientos',
-          activo: true,
-          fecha_creacion: new Date().toISOString(),
-        },
-        {
-          id: 5,
-          nombre: 'Otros Documentos',
-          descripcion: 'Documentación adicional o complementaria',
-          activo: true,
-          fecha_creacion: new Date().toISOString(),
-        },
-      ];
-
-      setCategories(mockCategories);
-
-      // Calculate mock stats
+      // Calculate stats (mock para ahora)
       const stats = new Map<number, CategoryStats>();
-      mockCategories.forEach((cat) => {
+      categorias.forEach((cat) => {
         stats.set(cat.id, {
           categoryId: cat.id,
           totalDocuments: Math.floor(Math.random() * 20),
@@ -133,14 +95,8 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
       setShowForm(false);
       setFormError(null);
 
-      // Add new category to list
-      const createdCategory: CategoriaSoporte = {
-        ...newCategory,
-        id: Math.max(...categories.map((c) => c.id), 0) + 1,
-        fecha_creacion: new Date().toISOString(),
-      } as CategoriaSoporte;
-
-      setCategories([...categories, createdCategory]);
+      // Reload categories
+      await fetchCategorias(); // ✅ Recargar categorías del API
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Error al crear categoría');
     }
@@ -153,89 +109,87 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
   };
 
   const handleToggleCategory = (categoryId: number, currentActive: boolean) => {
-    // Update active status
-    setCategories(
-      categories.map((cat) =>
-        cat.id === categoryId ? { ...cat, activo: !currentActive } : cat
-      )
-    );
+    // This would require updating via API in real implementation
+    console.log(`Toggle category ${categoryId} from ${currentActive} to ${!currentActive}`);
   };
 
-  if (isLoading || isLoadingData) {
+  if (isLoading || isLoadingData || hookLoading) {
     return (
       <div className="animate-pulse space-y-3">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-16 bg-gray-200 rounded" />
+          <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Categorías de Documentos</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            {categories.length} categoría(s) disponible(s)
+    <div className="space-y-1">
+      {/* Header - Responsive */}
+      <div className="flex flex-col gap-0.5">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xs font-bold text-gray-800 dark:text-gray-100">
+            Cats
+          </h2>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            {categorias.length} cat(s)
           </p>
         </div>
         {showCreateForm && (
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="w-full sm:w-auto px-1.5 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-xs transition-colors flex-shrink-0"
           >
-            {showForm ? '✕ Cancelar' : '+ Nueva Categoría'}
+            {showForm ? '✕' : '↳ Nuevo'}
           </button>
         )}
       </div>
 
-      {/* Create Form */}
+      {/* Create Form - Responsive */}
       {showForm && showCreateForm && (
-        <form onSubmit={handleCreateCategory} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <form onSubmit={handleCreateCategory} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-1">
+          <div className="mb-2">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
               Nombre *
             </label>
             <input
               type="text"
               value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              placeholder="Ej: Documentos Administrativos"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Admin"
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <div className="mb-2">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
               Descripción
             </label>
             <textarea
               value={formData.descripcion}
               onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-              placeholder="Describa el propósito de esta categoría..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows={3}
+              placeholder="Propósito..."
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white resize-none"
+              rows={2}
             />
           </div>
 
           {formError && (
-            <div className="bg-red-50 border border-red-200 rounded p-2 mb-4">
-              <p className="text-sm text-red-700">❌ {formError}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-1.5 mb-2">
+              <p className="text-xs text-red-700 dark:text-red-300">❌ {formError}</p>
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-1.5">
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+              className="flex-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-xs transition-colors"
             >
-              Crear Categoría
+              Crear
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+              className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 font-medium text-xs transition-colors"
             >
               Cancelar
             </button>
@@ -243,14 +197,26 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
         </form>
       )}
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {categories.length === 0 ? (
-          <div className="col-span-full text-center py-8 bg-gray-50 rounded-lg">
-            <p className="text-gray-500">No hay categorías disponibles</p>
+      {/* Categories Grid - Fully Responsive */}
+      <div className="grid grid-cols-1 gap-1.5">
+        {/* "Show All" Button - ✅ NUEVO */}
+        {selectedCategoryId && (
+          <button
+            onClick={() => handleSelectCategory(0)}
+            className="w-full px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium text-xs transition-colors"
+          >
+            📍 Mostrar todos
+          </button>
+        )}
+
+        {categorias.length === 0 ? (
+          <div className="col-span-full text-center py-4 bg-gray-50 dark:bg-gray-800 rounded">
+            <p className="text-gray-500 dark:text-gray-400 text-xs">
+              Sin categorías
+            </p>
           </div>
         ) : (
-          categories.map((category) => {
+          categorias.map((category) => {
             const stats = categoryStats.get(category.id);
             const isSelected = selectedCategoryId === category.id;
 
@@ -258,103 +224,70 @@ const SoporteCategories: React.FC<SoporteCategoriesProps> = ({
               <div
                 key={category.id}
                 onClick={() => handleSelectCategory(category.id)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-blue-300'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700'
                 } ${!category.activo ? 'opacity-60' : ''}`}
               >
                 {/* Header */}
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-gray-800">{category.nombre}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{category.descripcion}</p>
+                <div className="flex justify-between items-start gap-1 mb-1.5">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-xs line-clamp-1">
+                      {category.nombre}
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-1">
+                      {category.descripcion}
+                    </p>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleToggleCategory(category.id, category.activo);
                     }}
-                    className={`text-xs font-medium px-2 py-1 rounded ${
+                    className={`text-xs px-1 py-0.5 rounded flex-shrink-0 ${
                       category.activo
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    {category.activo ? '✓ Activo' : '○ Inactivo'}
+                    {category.activo ? '✓' : '○'}
                   </button>
                 </div>
 
-                {/* Description */}
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                  {category.descripcion}
-                </p>
-
-                {/* Stats */}
+                {/* Stats Grid - Responsive (always 4 columns) */}
                 {stats && (
-                  <div className="grid grid-cols-4 gap-2">
-                    <div className="bg-gray-50 rounded p-2 text-center">
-                      <p className="text-xs text-gray-600">Total</p>
-                      <p className="text-lg font-bold text-gray-800">{stats.totalDocuments}</p>
+                  <div className="grid grid-cols-4 gap-1 mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded p-1 text-center">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">📊</p>
+                      <p className="text-xs font-bold text-gray-900 dark:text-white">
+                        {stats.totalDocuments}
+                      </p>
                     </div>
-                    <div className="bg-green-50 rounded p-2 text-center">
-                      <p className="text-xs text-green-600">Activos</p>
-                      <p className="text-lg font-bold text-green-700">{stats.activeDocuments}</p>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded p-1 text-center">
+                      <p className="text-xs text-green-700 dark:text-green-300">✓</p>
+                      <p className="text-xs font-bold text-green-800 dark:text-green-200">
+                        {stats.activeDocuments}
+                      </p>
                     </div>
-                    <div className="bg-orange-50 rounded p-2 text-center">
-                      <p className="text-xs text-orange-600">Próximos</p>
-                      <p className="text-lg font-bold text-orange-700">{stats.expiringDocuments}</p>
+                    <div className="bg-red-50 dark:bg-red-900/20 rounded p-1 text-center">
+                      <p className="text-xs text-red-700 dark:text-red-300">✗</p>
+                      <p className="text-xs font-bold text-red-800 dark:text-red-200">
+                        {stats.expiredDocuments}
+                      </p>
                     </div>
-                    <div className="bg-red-50 rounded p-2 text-center">
-                      <p className="text-xs text-red-600">Vencidos</p>
-                      <p className="text-lg font-bold text-red-700">{stats.expiredDocuments}</p>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded p-1 text-center">
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300">⏰</p>
+                      <p className="text-xs font-bold text-yellow-800 dark:text-yellow-200">
+                        {stats.expiringDocuments}
+                      </p>
                     </div>
                   </div>
                 )}
-
-                {/* Action */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="mt-3 w-full text-blue-600 hover:text-blue-800 text-sm font-medium py-2 rounded hover:bg-blue-50"
-                >
-                  Ver documentos →
-                </button>
               </div>
             );
           })
         )}
-      </div>
-
-      {/* Summary */}
-      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-xs text-gray-600 uppercase tracking-wide">Total Documentos</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {Array.from(categoryStats.values()).reduce((sum, stat) => sum + stat.totalDocuments, 0)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 uppercase tracking-wide">Vigentes</p>
-            <p className="text-2xl font-bold text-green-600">
-              {Array.from(categoryStats.values()).reduce((sum, stat) => sum + stat.activeDocuments, 0)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 uppercase tracking-wide">Por Vencer</p>
-            <p className="text-2xl font-bold text-orange-600">
-              {Array.from(categoryStats.values()).reduce((sum, stat) => sum + stat.expiringDocuments, 0)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 uppercase tracking-wide">Vencidos</p>
-            <p className="text-2xl font-bold text-red-600">
-              {Array.from(categoryStats.values()).reduce((sum, stat) => sum + stat.expiredDocuments, 0)}
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

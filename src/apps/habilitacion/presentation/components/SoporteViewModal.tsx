@@ -57,9 +57,22 @@ const SoporteViewModal: React.FC<SoporteViewModalProps> = ({
             <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 break-words">
               {soporte.tipo_nombre || 'Documento sin nombre'}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 font-mono truncate">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 font-mono truncate min-w-0">
               {soporte.archivo?.split('/').pop() || 'Sin archivo'}
             </p>
+          </div>
+
+          {/* Prestador Badge - ✅ ACTUALIZADO: Mostrar nombre o ID */}
+          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 sm:p-4 border-l-4 border-purple-600">
+            <p className="text-xs text-purple-600 dark:text-purple-400 uppercase tracking-wide font-medium">Prestador</p>
+            <p className="text-base sm:text-lg font-bold text-purple-900 dark:text-purple-100 mt-1">
+              {soporte.prestador_nombre || `ID: ${soporte.prestador}`}
+            </p>
+            {soporte.prestador_nombre && (
+              <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                (#{soporte.prestador})
+              </p>
+            )}
           </div>
 
           {/* Status Badges */}
@@ -96,6 +109,38 @@ const SoporteViewModal: React.FC<SoporteViewModalProps> = ({
                 {soporte.nivel} (ID: {soporte.empresa || soporte.sede || soporte.servicio || 'N/A'})
               </p>
             </div>
+
+            {/* Requisitos - ✅ ACTUALIZADO: Mostrar nivel_aplica requerido */}
+            {soporte.tipo_documento_objeto && (
+              <>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide font-medium">Nivel Aplica</p>
+                  <p className="text-sm sm:text-base font-semibold text-indigo-700 dark:text-indigo-400 mt-1">
+                    {soporte.tipo_documento_objeto.nivel_aplica}
+                  </p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide font-medium">Obligatorio</p>
+                  <p className="text-sm sm:text-base font-medium mt-1">
+                    {soporte.tipo_documento_objeto.es_obligatorio ? (
+                      <span className="text-green-700 dark:text-green-400">✓ Sí</span>
+                    ) : (
+                      <span className="text-gray-700 dark:text-gray-400">○ No</span>
+                    )}
+                  </p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide font-medium">Vencible</p>
+                  <p className="text-sm sm:text-base font-medium mt-1">
+                    {soporte.tipo_documento_objeto.requiere_vencimiento ? (
+                      <span className="text-amber-700 dark:text-amber-400">⏰ Sí</span>
+                    ) : (
+                      <span className="text-gray-700 dark:text-gray-400">∞ No</span>
+                    )}
+                  </p>
+                </div>
+              </>
+            )}
 
             {/* Fecha Emisión */}
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">

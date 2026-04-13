@@ -227,7 +227,13 @@ const PrestadorDetailPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={() => navigate(`/habilitacion/soportes/${prestador.id}`)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                    >
+                        <HiOutlineDocumentText className="h-4 w-4" /> Soportes
+                    </button>
                     {dias !== null && dias <= 180 && (
                         <button
                             onClick={() => setShowRenovacionWizard(true)}

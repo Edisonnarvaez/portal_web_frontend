@@ -211,6 +211,24 @@ export const useSoporte = () => {
   }, []);
 
   /**
+   * ✅ NUEVO: Fetch documents by prestador (con aislamiento de datos)
+   */
+  const fetchSoportesByPrestador = useCallback(async (prestadorId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await service.getSoportesByPrestador(prestadorId);
+      setSoportes(data);
+      return data;
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Error al cargar soportes del prestador'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
    * Get documents by company level
    */
   const getSoportesByEmpresa = useCallback(async (empresaId: number) => {
@@ -484,6 +502,7 @@ export const useSoporte = () => {
 
     // Soporte Documental methods
     fetchSoportes,
+    fetchSoportesByPrestador, // ✅ NUEVO: Filtro por prestador
     getSoportesByEmpresa,
     getSoportesBySede,
     getSoportesByServicio,

@@ -7,6 +7,7 @@ interface SoporteExpirationProps {
   onExpiringDocuments?: (documents: SoporteDocumental[]) => void;
   showDismissible?: boolean;
   compact?: boolean;
+  onViewExpiringClick?: () => void;
 }
 
 /**
@@ -27,6 +28,7 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
   onExpiringDocuments,
   showDismissible = true,
   compact = false,
+  onViewExpiringClick,
 }) => {
   const [dismissedAlerts, setDismissedAlerts] = useState<number[]>([]);
 
@@ -66,28 +68,28 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
 
   if (compact && hasAnyIssues) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3">
+        <div className="flex items-center justify-between gap-1 sm:gap-2">
           <div>
-            <p className="font-bold text-red-800">
-              ⚠️ {totalAlerts} documento(s) requiere(n) atención inmediata
+            <p className="font-bold text-red-800 text-xs sm:text-sm">
+              ⚠️ {totalAlerts} documento(s) requiere atención
             </p>
             {expired.length > 0 && (
-              <p className="text-sm text-red-700 mt-1">
+              <p className="text-xs text-red-700 mt-0.5">
                 {expired.length} vencido(s)
               </p>
             )}
             {critical.length > 0 && (
-              <p className="text-sm text-orange-700 mt-1">
-                {critical.length} por vencer en menos de 7 días
+              <p className="text-xs text-orange-700 mt-0.5">
+                {critical.length} próximos a vencer
               </p>
             )}
           </div>
           <button
-            onClick={handleRefresh}
-            className="text-red-600 hover:text-red-800 font-medium text-sm px-3 py-1 rounded hover:bg-red-100"
+            onClick={onViewExpiringClick}
+            className="text-red-600 hover:text-red-800 font-medium text-xs px-2 py-0.5 rounded hover:bg-red-100 flex-shrink-0"
           >
-            Ver detalles
+            Ver
           </button>
         </div>
       </div>
@@ -95,49 +97,49 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 sm:space-y-3">
       {/* Expired Documents Alert */}
       {expired.length > 0 && (
-        <div className="bg-red-50 border-l-4 border-red-500 rounded p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">🚨</div>
+        <div className="bg-red-50 border-l-4 border-red-500 rounded p-2 sm:p-3">
+          <div className="flex items-start justify-between mb-2 gap-2">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="text-xl sm:text-2xl flex-shrink-0">🚨</div>
               <div>
-                <h3 className="font-bold text-red-900">Documentos Vencidos</h3>
-                <p className="text-sm text-red-700 mt-1">
-                  {expired.length} documento(s) ya no son válidos
+                <h3 className="font-bold text-red-900 text-sm">Vencidos</h3>
+                <p className="text-xs text-red-700 mt-0.5">
+                  {expired.length} doc. expirados
                 </p>
               </div>
             </div>
             {showDismissible && (
               <button
                 onClick={() => expired.forEach((d) => handleDismissAlert(d.id))}
-                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                className="text-red-600 hover:text-red-800 text-xs font-medium flex-shrink-0"
               >
                 Descartar
               </button>
             )}
           </div>
 
-          <div className="space-y-2 ml-11">
+          <div className="space-y-1 sm:space-y-2 ml-7 sm:ml-9">
             {expired
               .filter((doc) => !dismissedAlerts.includes(doc.id))
               .map((doc) => (
                 <div
                   key={doc.id}
-                  className="bg-white rounded p-3 border border-red-200 flex items-center justify-between"
+                  className="bg-white rounded p-1.5 sm:p-2 border border-red-200 flex items-center justify-between gap-1"
                 >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                       {doc.tipo_nombre || 'Documento'}
                     </p>
-                    <p className="text-xs text-red-600 mt-1">
-                      ❌ Vencido desde {formatDate(doc.fecha_vencimiento)}
+                    <p className="text-xs text-red-600 mt-0.5">
+                      ❌ Vencido {formatDate(doc.fecha_vencimiento)}
                     </p>
                   </div>
                   <button
                     onClick={() => handleDismissAlert(doc.id)}
-                    className="text-red-600 hover:text-red-800 font-medium text-sm ml-2"
+                    className="text-red-600 hover:text-red-800 font-medium text-sm flex-shrink-0"
                     title="Renovar"
                   >
                     🔄
@@ -150,28 +152,28 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
 
       {/* Critical Expiration Alert (< 7 days) */}
       {critical.length > 0 && (
-        <div className="bg-orange-50 border-l-4 border-orange-500 rounded p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">🔴</div>
+        <div className="bg-orange-50 border-l-4 border-orange-500 rounded p-2 sm:p-3">
+          <div className="flex items-start justify-between mb-2 gap-2">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="text-xl sm:text-2xl flex-shrink-0">🔴</div>
               <div>
-                <h3 className="font-bold text-orange-900">Vencimiento Crítico</h3>
-                <p className="text-sm text-orange-700 mt-1">
-                  {critical.length} documento(s) vence(n) en menos de 7 días
+                <h3 className="font-bold text-orange-900 text-sm">Crítico</h3>
+                <p className="text-xs text-orange-700 mt-0.5">
+                  {critical.length} doc. en menos de 7d
                 </p>
               </div>
             </div>
             {showDismissible && (
               <button
                 onClick={() => critical.forEach((d) => handleDismissAlert(d.id))}
-                className="text-orange-600 hover:text-orange-800 text-sm font-medium"
+                className="text-orange-600 hover:text-orange-800 text-xs font-medium flex-shrink-0"
               >
                 Descartar
               </button>
             )}
           </div>
 
-          <div className="space-y-2 ml-11">
+          <div className="space-y-1 sm:space-y-2 ml-7 sm:ml-9">
             {critical
               .filter((doc) => !dismissedAlerts.includes(doc.id))
               .map((doc) => {
@@ -179,19 +181,19 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
                 return (
                   <div
                     key={doc.id}
-                    className="bg-white rounded p-3 border border-orange-200 flex items-center justify-between"
+                    className="bg-white rounded p-1.5 sm:p-2 border border-orange-200 flex items-center justify-between gap-1"
                   >
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                         {doc.tipo_nombre || 'Documento'}
                       </p>
-                      <p className="text-xs text-orange-600 mt-1">
-                        ⏰ Vence en {daysLeft} {daysLeft === 1 ? 'día' : 'días'} ({formatDate(doc.fecha_vencimiento)})
+                      <p className="text-xs text-orange-600 mt-0.5">
+                        ⏰ {daysLeft}d
                       </p>
                     </div>
                     <button
                       onClick={() => handleDismissAlert(doc.id)}
-                      className="text-orange-600 hover:text-orange-800 font-medium text-sm ml-2"
+                      className="text-orange-600 hover:text-orange-800 font-medium text-sm flex-shrink-0"
                       title="Renovar"
                     >
                       🔄
@@ -205,31 +207,29 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
 
       {/* Expiring Soon Alert (7-30 days) */}
       {expiring.length > 0 && (
-        <div className="bg-amber-50 border-l-4 border-amber-500 rounded p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">🟡</div>
-              <div>
-                <h3 className="font-bold text-amber-900">Próximos a Vencer</h3>
-                <p className="text-sm text-amber-700 mt-1">
-                  {expiring.length} documento(s) vence(n) en 8-30 días
-                </p>
-              </div>
+        <div className="bg-amber-50 border-l-4 border-amber-500 rounded p-2 sm:p-3">
+          <div className="flex items-start gap-2 sm:gap-3 mb-2">
+            <div className="text-xl sm:text-2xl flex-shrink-0">🟡</div>
+            <div>
+              <h3 className="font-bold text-amber-900 text-sm">Próximos</h3>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {expiring.length} por vencer en 8-30 días
+              </p>
             </div>
           </div>
 
-          <div className="space-y-2 ml-11">
+          <div className="space-y-1 sm:space-y-2 ml-7 sm:ml-9">
             {expiring
               .filter((doc) => !dismissedAlerts.includes(doc.id))
               .map((doc) => {
                 const daysLeft = getDaysUntilExpiry(doc.fecha_vencimiento);
                 return (
-                  <div key={doc.id} className="bg-white rounded p-3 border border-amber-200">
-                    <p className="text-sm font-medium text-gray-800">
+                  <div key={doc.id} className="bg-white rounded p-1.5 sm:p-2 border border-amber-200">
+                    <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                       {doc.tipo_nombre || 'Documento'}
                     </p>
-                    <p className="text-xs text-amber-600 mt-1">
-                      📅 Vence en {daysLeft} días ({formatDate(doc.fecha_vencimiento)})
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      📅 {daysLeft}d
                     </p>
                   </div>
                 );
@@ -240,8 +240,8 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
 
       {/* No Issues */}
       {expired.length === 0 && critical.length === 0 && expiring.length === 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-          <p className="text-green-800 font-medium">✅ Todos los documentos están vigentes</p>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-1.5 sm:p-2 text-center">
+          <p className="text-green-800 font-medium text-xs sm:text-sm">✅ Documentos vigentes</p>
         </div>
       )}
 
@@ -250,9 +250,9 @@ const SoporteExpiration: React.FC<SoporteExpirationProps> = ({
         <div className="text-center">
           <button
             onClick={handleRefresh}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+            className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium underline"
           >
-            ↻ Actualizar estado de documentos
+            ↻ Actualizar
           </button>
         </div>
       )}

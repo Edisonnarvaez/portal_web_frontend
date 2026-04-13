@@ -323,6 +323,13 @@ const DashboardHabilitacionPageEnhanced: React.FC = () => {
       {/* ── KPIs row 2 ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
+          title="Soportes"
+          value="Gestionar"
+          icon={<HiOutlineDocumentText className="h-7 w-7" />}
+          color="indigo"
+          onClick={() => navigate('/habilitacion/soportes')}
+        />
+        <KPICard
           title="Cumplimientos"
           value={metrics.totalCumplimientos}
           icon={<HiOutlineCheckCircle className="h-7 w-7" />}

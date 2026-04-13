@@ -3,6 +3,7 @@ import {
   HiOutlineArrowPath,
   HiOutlineDocumentPlus,
   HiOutlineEye,
+  HiOutlineDocumentText,
 } from 'react-icons/hi2';
 import type { DatosPrestador } from '../../domain/entities/DatosPrestador';
 import type { Autoevaluacion } from '../../domain/entities/Autoevaluacion';
@@ -29,6 +30,7 @@ export const getAccionesPrestador = (
     onCrearEvaluacion?: (prestadorId: number) => void;
     onVerDetalle?: (id: number) => void;
     onEditar?: (id: number) => void;
+    onVerSoportes?: (id: number) => void;
   },
 ): AccionContextual[] => {
   const acciones: AccionContextual[] = [];
@@ -56,6 +58,17 @@ export const getAccionesPrestador = (
       icon: <HiOutlineDocumentPlus className="h-4 w-4" />,
       variant: 'primary',
       onClick: () => callbacks.onCrearEvaluacion!(prestador.id),
+    });
+  }
+
+  // "Ver Soportes" always available
+  if (callbacks?.onVerSoportes) {
+    acciones.push({
+      key: 'ver-soportes',
+      label: 'Soportes',
+      icon: <HiOutlineDocumentText className="h-4 w-4" />,
+      variant: 'neutral',
+      onClick: () => callbacks.onVerSoportes!(prestador.id),
     });
   }
 
