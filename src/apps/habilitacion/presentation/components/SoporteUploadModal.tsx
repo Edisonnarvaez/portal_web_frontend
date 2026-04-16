@@ -21,6 +21,7 @@ interface Empresa {
 interface Sede {
   id: number;
   nombre_prestador?: string;
+  razon_social?: string;
   nombre?: string;
   name?: string;
   company_detail?: { id: number; name: string };
@@ -29,8 +30,11 @@ interface Sede {
 
 interface Servicio {
   id: number;
-  nombre: string;
-  codigo_servicio: string;
+  nombre?: string;
+  nombre_servicio?: string;
+  nombre_completo?: string;
+  codigo_servicio?: string;
+  descripcion?: string;
   sede?: number;
 }
 
@@ -166,6 +170,12 @@ const SoporteUploadModal: React.FC<SoporteUploadModalProps> = ({
           const response = await axiosInstance.get('/habilitacion/prestadores/', { params });
           const sedesData = Array.isArray(response.data) ? response.data : response.data?.results || [];
           console.log('✅ Prestadores/Sedes cargados:', sedesData);
+          // 🔍 DEBUG: Mostrar estructura exacta del primer elemento
+          if (sedesData.length > 0) {
+            console.log('🔍 ESTRUCTURA DEL PRIMER PRESTADOR/SEDE:');
+            console.log(JSON.stringify(sedesData[0], null, 2));
+            console.log('📋 CAMPOS DISPONIBLES:', Object.keys(sedesData[0]));
+          }
           setSedes(sedesData);
           setSedeSeleccionada(0); // Reset sede
           setServicios([]); // Reset servicios
@@ -201,6 +211,12 @@ const SoporteUploadModal: React.FC<SoporteUploadModalProps> = ({
           });
           console.log('✅ Servicios cargados:', response.data);
           const serviciosData = Array.isArray(response.data) ? response.data : response.data?.results || [];
+          // 🔍 DEBUG: Mostrar estructura exacta del primer elemento
+          if (serviciosData.length > 0) {
+            console.log('🔍 ESTRUCTURA DEL PRIMER SERVICIO:');
+            console.log(JSON.stringify(serviciosData[0], null, 2));
+            console.log('📋 CAMPOS DISPONIBLES:', Object.keys(serviciosData[0]));
+          }
           console.log('📊 Servicios filtrados:', serviciosData);
           setServicios(serviciosData);
           setServicioSeleccionado(0); // Reset servicio
@@ -216,6 +232,27 @@ const SoporteUploadModal: React.FC<SoporteUploadModalProps> = ({
   }, [isOpen, nivelSeleccionado, prestadorSedeId]);
 
   if (!isOpen) return null;
+
+  // 🔧 FUNCIONES AUXILIARES: Extraer nombres de forma robusta
+  const getSedeDisplayName = (sede: Sede): string => {
+    // Intenta múltiples campos en orden de prioridad
+    if (sede.nombre_prestador) return sede.nombre_prestador;
+    if (sede.razon_social) return sede.razon_social;
+    if (sede.nombre) return sede.nombre;
+    if (sede.name) return sede.name;
+    // Si nada funciona, muestra el ID
+    return `Prestador ${sede.id}`;
+  };
+
+  const getServicioDisplayName = (servicio: Servicio): string => {
+    // Intenta múltiples campos en orden de prioridad
+    if (servicio.nombre) return servicio.nombre;
+    if (servicio.nombre_servicio) return servicio.nombre_servicio;
+    if (servicio.descripcion) return (servicio as any).descripcion;
+    if (servicio.nombre_completo) return (servicio as any).nombre_completo;
+    // Si nada funciona, muestra el código
+    return `Servicio ${servicio.codigo_servicio || servicio.id}`;
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -558,7 +595,7 @@ const SoporteUploadModal: React.FC<SoporteUploadModalProps> = ({
                   </option>
                   {sedes.map(sede => (
                     <option key={sede.id} value={sede.id}>
-                      {sede.nombre_prestador || sede.name} (ID: {sede.id})
+                      {getSedeDisplayName(sede)} (ID: {sede.id})
                     </option>
                   ))}
                 </select>
@@ -619,7 +656,7 @@ const SoporteUploadModal: React.FC<SoporteUploadModalProps> = ({
                   </option>
                   {sedes.map(sede => (
                     <option key={sede.id} value={sede.id}>
-                      {sede.nombre_prestador || sede.name} (ID: {sede.id})
+                      {getSedeDisplayName(sede)} (ID: {sede.id})
                     </option>
                   ))}
                 </select>
@@ -644,7 +681,7 @@ const SoporteUploadModal: React.FC<SoporteUploadModalProps> = ({
                   </option>
                   {servicios.map(servicio => (
                     <option key={servicio.id} value={servicio.id}>
-                      {servicio.nombre} ({servicio.codigo_servicio})
+                      {getServicioDisplayName(servicio)} ({servicio.codigo_servicio})
                     </option>
                   ))}
                 </select>
